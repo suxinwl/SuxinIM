@@ -1,0 +1,42 @@
+{
+  "createdUtc": "2026-11-01T18:54:40.903931+00:00",
+  "status": "PASS_DEPLOYED_WEB_387_NO_LOGIN_INITIALIZATION",
+  "version": "3.8.7",
+  "normalTLS": true,
+  "noLoginOrUserDataAccess": true,
+  "entry": {
+    "url": "https://192.168.10.11:29880/",
+    "status": 200,
+    "contentType": "text/html",
+    "bytes": 615,
+    "sha256": "ca2df30d64abf2659794f3877203a299719b1d2367a8637b344b158f72f285c0"
+  },
+  "linkedModule": {
+    "path": "/assets/index-8465f936.js",
+    "status": 200,
+    "contentType": "application/javascript",
+    "bytes": 2970571,
+    "sha256": "926f44e98b27203f828dfa04faddf232879e10f563bcc76be1de464f27d3c255"
+  },
+  "readyElapsedMs": 2030,
+  "commonEventFunc": "function",
+  "loginEntry": "function",
+  "crossOriginIsolated": true,
+  "fullWasmDecodedBytes": 37763413,
+  "consoleInitializationErrors": 0,
+  "pageErrors": 0,
+  "evidence": [
+    {
+      "path": "tests/delivery/media-resume-20261102/web-runtime/deployed-static-387-initialization-review.json",
+      "sha256": "eb40f4ce3d2570f53bf9a5a00f21a6b3fb8b9722096615a5b5e831193822c59e"
+    },
+    {
+      "path": "tests/delivery/media-resume-20261102/web-runtime/initialization-diagnostic-20261101T184704541Z/deployed-static-387.json",
+      "sha256": "6ae27ebb839e6e898ac67793fa801ccc52a013302dad96e4a654e702a9f8ca1f"
+    }
+  ],
+  "limits": [
+    "Original deployed login page only. No account submitted or authenticated operation asserted.",
+    "A separate old Vite development server stalled the large WASM response; its source runtime became healthy after one controlled restart. This does not alter the deployed application."
+  ]
+}

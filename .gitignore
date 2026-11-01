@@ -91,6 +91,7 @@ clients/flutter/android/app/proguard/unused.txt
 !/tests/delivery/windows-386-native-smoke.json
 !/tests/delivery/windows-386-documentation-review.json
 !/tests/delivery/windows-387-delivery.json
+!/tests/delivery/windows-387-deployed-web-init.json
 !/tests/delivery/windows-387-search-review.json
 !/tests/delivery/windows-387-video-download-review.json
 !/tests/delivery/windows-387-quote-facade-review.json
