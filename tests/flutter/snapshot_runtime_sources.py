@@ -2,6 +2,10 @@
 from pathlib import Path
 import hashlib,json,os,sys,re
 ROOT=Path(__file__).absolute().parents[2]
+# Windows silently reports long source paths as absent without the extended
+# prefix. Keep canonical and SUBST invocations in the same complete scope.
+if os.name=='nt' and not str(ROOT).startswith('\\\\?\\'):
+    ROOT=Path('\\\\?\\'+str(ROOT))
 CLIENT=ROOT/'clients/flutter'
 excluded_cache={'.git','.dart_tool','.gradle','.kotlin','.cxx','build'}
 package_only={'example','example_ohos','test','integration_test','pigeons'}

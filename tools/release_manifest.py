@@ -14,6 +14,9 @@ current_artifacts={
  'windows':f"clients/web-desktop/release/OpenIM38-Enterprise-{windows['version']}-win-x64.exe",
  'android':f'artifacts/android/OpenIM38-{android.group(1)}+{android.group(2)}-development-arm64.apk',
 }
+development_candidates=[]
+for path in sorted((ROOT/'artifacts/android-candidates').glob(f'OpenIM38-{android.group(1)}+{android.group(2)}-development-*-candidate.apk')):
+ if path.is_file():development_candidates.append({'path':path.relative_to(ROOT).as_posix(),'bytes':path.stat().st_size,'sha256':sha(path),'accepted':False,'published':False})
 patterns=['artifacts/linux-amd64/*/*','artifacts/native/*.aar',*current_artifacts.values(),current_artifacts['windows']+'.blockmap','artifacts/OpenIM38-Development-CA.zip','artifacts/server-binaries.tar.gz','artifacts/admin-web-final.tar.gz','artifacts/web-client-final.tar.gz','services/enterprise-service/dist/linux-amd64/*','artifacts/dev-cert/*.crt','clients/web-desktop/public/*.wasm','clients/admin/dist/index.html','clients/web-desktop/dist-web/index.html','sdks/ios-core/Framework/**/OpenIMCore']
 for pattern in patterns:
  for path in sorted(ROOT.glob(pattern)):
@@ -25,6 +28,7 @@ lockpaths.extend([
  'tools/finalize_windows386_delivery.py',
  'tools/prepare_client_delivery.py',
  'tools/deploy_client_delivery.py',
+ 'tools/deploy_download_status.py',
  'tools/finalize_windows387_delivery.py',
  'clients/web-desktop/scripts/ensure-screenshot-preload.mjs',
  'clients/web-desktop/scripts/build-electron.mjs',
@@ -102,6 +106,11 @@ evidence_patterns=[
  'tests/flutter/android-111-*.json',
  'tests/flutter/android-112-*.json',
  'tests/flutter/android-113-*.json',
+ 'tests/flutter/android-114-*.json',
+ 'tests/flutter/*114.py',
+ 'tests/flutter/*114_x64.ps1',
+ 'clients/web-desktop/tests/*114*.mjs',
+ 'tests/delivery/android-114-*.json',
  'tests/flutter/nonmedia-*-113.json',
  'tests/flutter/nonmedia-113-*.json',
  'tests/flutter/nonmedia-113-part*.log',
@@ -218,9 +227,9 @@ licensefiles=[]
 for folder in ['services/openim-server','services/chat','services/enterprise-service','services/livekit','clients/web-desktop','clients/admin','clients/flutter','sdks/wasm','sdks/android-java','sdks/ios-core','sdks/flutter']:
  for path in (ROOT/folder).glob('*'):
   if path.is_file() and (path.name.lower().startswith(('license','notice','copying'))):licensefiles.append({'path':path.relative_to(ROOT).as_posix(),'sha256':sha(path)})
-result={'generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'identity':'OpenIM original-enterprise merged development build','upgradeAccepted':False,'iosXcodeBuilt':False,'windowsCodeSigned':False,'originalDataMigrated':False,'currentApplicationArtifacts':{platform:{'path':name,'present':(ROOT/name).is_file()} for platform,name in current_artifacts.items()},'withdrawnArtifactNames':sorted(retired),'files':files,'locks':locks,'licenses':licensefiles}
+result={'generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'identity':'OpenIM original-enterprise merged development build','upgradeAccepted':False,'iosXcodeBuilt':False,'windowsCodeSigned':False,'originalDataMigrated':False,'currentApplicationArtifacts':{platform:{'path':name,'present':(ROOT/name).is_file()} for platform,name in current_artifacts.items()},'developmentCandidates':development_candidates,'withdrawnArtifactNames':sorted(retired),'files':files,'locks':locks,'licenses':licensefiles}
 (ROOT/'artifacts').mkdir(exist_ok=True)
 (ROOT/'artifacts/release-manifest.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-(ROOT/'artifacts/SHA256SUMS.txt').write_text(''.join(x['sha256']+'  '+x['path']+'\n' for x in files),encoding='utf-8')
+(ROOT/'artifacts/SHA256SUMS.txt').write_text(''.join(x['sha256']+'  '+x['path']+'\n' for x in files+development_candidates),encoding='utf-8')
 (ROOT/'docs/licenses.json').write_text(json.dumps(licensefiles,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'artifactsHashed':len(files),'dependencyLocks':len(locks),'licenseFiles':len(licensefiles),'upgradeAccepted':False}))
+print(json.dumps({'artifactsHashed':len(files),'developmentCandidatesHashed':len(development_candidates),'dependencyLocks':len(locks),'licenseFiles':len(licensefiles),'upgradeAccepted':False}))

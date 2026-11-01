@@ -2,7 +2,7 @@
 
 本说明用于原 3.5 企业即时通讯项目合并升级后的 OpenIM38 开发版本，面向系统管理员和测试使用者。沿用原版账号登录、好友、群组及企业功能界面，管理后台沿用原 3.4 界面并适配新版接口。本文仅介绍这套升级项目的实际入口、安装包、账号管理及运行方法。
 
-更新日期：2026年11月2日。当前使用独立内网测试实例和合成账号；基础通讯、Web/Windows及部分Android功能已有证据，完整升级验收尚未全部结束。语音、视频、通话及会议已恢复开发与验证；Android 3.8.14+114 正在构建和媒体联调，尚未作为已验收安装包交付。Android113旧非媒体候选及先前暂停归档继续保留。
+更新日期：2026年11月2日。当前使用独立内网测试实例和合成账号；Windows 3.8.7 已发布到独立内网下载页，完整升级验收尚未结束。语音、视频、通话及会议已恢复开发与验证；Android 3.8.14+114 仅提供本地开发候选，媒体状态为 NOT_ACCEPTED（未通过验收），不发布 Android 下载或更新。Android113旧非媒体候选及先前暂停归档继续保留。
 
 ## 一 项目位置和版本
 
@@ -20,7 +20,7 @@ E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5
 | Flutter SDK | 3.8.3+hotfix.15 |
 | Flutter Android 核心 | SDK 配套 3.8.3-patch15 AAR |
 | Windows 应用 | 3.8.7，构建号 380701 |
-| Android 应用候选 | 3.8.14+114 正在构建/媒体联调；3.8.13+113 保留为历史非媒体候选 |
+| Android 应用候选 | 3.8.14+114 本地开发候选，媒体未通过验收；3.8.13+113 保留为历史非媒体候选 |
 | iOS Core | 3.8.3-hotfix.15；提供源码和 Mac/Xcode 构建说明 |
 
 Android Java SDK v3.8.3.5 仅作独立参考源码，没有替换 Flutter 配套 AAR。运行版本和依赖以 upstream-sources.lock.json、runtimes.lock.json、各模块锁文件及包旁元数据为准。
@@ -134,7 +134,33 @@ Get-FileHash -Algorithm SHA256 -LiteralPath '安装包所在目录\OpenIM38-Ente
 
 ## 六 Android APK 路径和安装范围
 
-Android 3.8.14+114 正在构建及媒体联调，尚未提供本轮已验收APK或在线下载。下表是保留的113历史非媒体候选及其真实校验值，不能当作114安装来源。
+Android 3.8.14+114 正常 lib/main.dart 入口的本地开发候选不等于已验收安装包；媒体状态为 NOT_ACCEPTED，尚无 Android 在线下载或更新记录。候选只存放于 artifacts/android-candidates/，正式 current 包仍标记 present:false，正式路径文件不存在。
+
+### 114 当前本地开发候选
+
+| 项目 | ARM64 手机候选（未经真机验收） |
+|---|---|
+| 本地相对路径 | artifacts/android-candidates/OpenIM38-3.8.14+114-development-arm64-candidate.apk |
+| 版本 | 3.8.14+114 |
+| 包名 | io.openim.upgrade38.test.dev |
+| 最低系统 | Android API 24；target SDK 35 |
+| 文件大小 | 76743141 字节 |
+| SHA-256 | f6f946be8ffdf8a00d92c031cfa70e4a7b24bfa1108d838e1446d219e5745312 |
+
+| 项目 | x86_64 模拟器候选 |
+|---|---|
+| 本地相对路径 | artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.apk |
+| 版本 | 3.8.14+114 |
+| 包名 | io.openim.upgrade38.test.dev |
+| 最低系统 | Android API 24；target SDK 35 |
+| 文件大小 | 82520892 字节 |
+| SHA-256 | fed978e3e414121ce3afa5f789fee20a2a062c93f39cd87b13a664acc424993c |
+
+两份114候选均为项目开发签名的正常main程序；包旁同名JSON记录构建输入、ABI、签名及验收限制。仅x64在专用AVD运行过，ARM64没有真机结果；媒体失败状态对两者均未解除。
+
+### 113 历史非媒体候选
+
+下表保留113历史候选及其真实校验值，不能当作114安装来源或本轮媒体验收证明。
 
 | 项目 | ARM64 手机候选 |
 | --- | --- |
@@ -161,7 +187,7 @@ Android 3.8.14+114 正在构建及媒体联调，尚未提供本轮已验收APK�
 3. 运行前先解决该手机的服务端证书信任条件；不要通过关闭 TLS 校验绕过。
 4. 使用原版手机号或邮箱登录页及普通通讯账号。由于尚无 ARM64 真机，不能将 APK 构建成功视为真机登录或长期运行通过。
 
-Android 当前没有在线下载链接，也没有推送应用更新记录。不存在的正式路径 artifacts/android/OpenIM38-3.8.13+113-development-arm64.apk 不能作为安装或发布来源。已完成的 x64 保数据覆盖安装、缓存首页、关于页版本和无更新提示，只是对应模拟器上的局部验证；系统下载安装升级流程仍未验收。
+Android 当前没有在线下载链接，也没有推送应用更新记录。正式路径 artifacts/android/OpenIM38-3.8.14+114-development-arm64.apk 仍不存在，current 标记为 present:false；113历史正式路径同样不能作为安装或发布来源。已完成的 x64 保数据覆盖安装、缓存首页、关于页版本和无更新提示，只是对应模拟器上的局部验证；系统下载安装升级流程仍未验收。
 
 ## 七 Web 登录和日常通讯
 
@@ -201,7 +227,7 @@ Android 当前没有在线下载链接，也没有推送应用更新记录。不
 4. 按测试或正式发布策略选择强制更新；可选更新允许稍后，强更会阻止进入业务直至完成有效更新。
 5. 在旧版和当前版分别验证检查、下载失败重试、错误包拒绝及安装后的实际版本，保存结果。
 
-Chat 保存版本主记录，企业服务补充构建号、大小和哈希。Windows采用完整EXE更新，旧ASAR热替换停用。无版本记录或查询失败允许当前版本继续运行；校验失败不得安装。当前 Windows 3.8.7 为内网测试包；Android114正在构建及媒体验证，113旧候选仅保留历史，均不可登记为已完成验收的发布版本。
+Chat 保存版本主记录，企业服务补充构建号、大小和哈希。Windows采用完整EXE更新，旧ASAR热替换停用。无版本记录或查询失败允许当前版本继续运行；校验失败不得安装。当前 Windows 3.8.7 为已发布的内网测试包；Android114媒体未通过验收，113旧候选仅保留历史，两者均不可登记为已完成验收的 Android 发布版本。
 
 ## 十 服务端位置和日常启停
 
@@ -262,8 +288,10 @@ restore-check 仅在独立临时资源中演练数据库及附件恢复，不能
 | 本使用手册 | artifacts/manual/OpenIM38-原版升级使用说明.html |
 | 管理员登录附页 | .private/manual/管理员登录信息.txt |
 | Windows EXE | clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe |
-| Android ARM64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-arm64-candidate.apk |
-| Android x64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-x64-candidate.apk |
+| Android114 ARM64候选 | artifacts/android-candidates/OpenIM38-3.8.14+114-development-arm64-candidate.apk |
+| Android114 x64候选 | artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.apk |
+| Android113历史ARM64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-arm64-candidate.apk |
+| Android113历史x64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-x64-candidate.apk |
 | Android校验表 | artifacts/android-candidates/SHA256SUMS.txt |
 | Windows证书与检测包 | artifacts/OpenIM38-Development-CA.zip |
 | 程序与依赖版本清单 | artifacts/release-manifest.json |
@@ -295,12 +323,14 @@ restore-check 仅在独立临时资源中演练数据库及附件恢复，不能
 
 - 保留3.8.6已读、工作圈和截图修复，以及原57项适配和对应界面/打包证据；历史记录未改成3.8.7。
 - 历史100个真实SDK持续至少30分钟、5700条发送和5700条接收的结果保留；本轮没有重新执行这一压力测试。
-- Android114已恢复会议状态和原生媒体生命周期开发，159项Dart及108项Java源码边界测试通过；完整APK、AVD媒体和真实释放链验证仍在进行，源码或编译通过不等于通话验收通过。
+- Android114完整163项Dart、108项Java边界测试及62个Java文件的实际Android编译通过；正常main候选已构建。源码测试和编译结果不等于通话验收通过。
+- Android114单端快速会议的普通Leave、重新进入，以及End后Ended状态和再次进入拒绝通过限定原界面验证；三人通话退出的Room清理耗时121023毫秒并失败。后续17项物理清理任务最终全部完成，最终摄像头为空，不能据此把退出超时改判通过。媒体状态为NOT_ACCEPTED。
+- 定向原生诊断只用于分析失败，不是第二轮正常媒体验收；未符号化偏移不能确定具体根因。预约会议、纯语音通话、完整跨端矩阵和连续正常通话退出仍未完成。
 - Android113旧候选的42项非媒体结果仅归属于113；旧群退出超时等失败及暂停归档继续保留，不能用114源码测试覆盖原失败结论。
 - 没有ARM64真机运行结论；普通手机证书信任、Android系统安装升级及物理设备媒体效果仍待验收。
 - iOS提供源码和Mac/Xcode说明，本机没有完成Xcode构建；Windows测试包未做代码签名。
 - 当前成果仍为原企业项目与固定官方版本合并的开发版本，全部约定功能通过前，不标记整体升级完成。
 
-本轮Windows证据见 tests/delivery/windows-387-quote-facade-review.json、windows-387-search-review.json、windows-387-video-download-review.json及最终聚合报告；媒体恢复记录见 tests/delivery/media-resume-20261102/。历史暂停记录仍见 tests/delivery/deferred-media-work-20261101.json，仅表示当时状态，不代表本轮继续暂停。
+本轮Windows证据见 tests/delivery/windows-387-quote-facade-review.json、windows-387-search-review.json、windows-387-video-download-review.json及最终聚合报告；Android114媒体汇总见 tests/delivery/android-114-media-resume-review.json，详细记录见 tests/delivery/media-resume-20261102/。历史暂停记录仍见 tests/delivery/deferred-media-work-20261101.json，仅表示当时状态，不代表本轮继续暂停。
 
 公开HTML使用说明的校验表位于 artifacts/manual/SHA256SUMS.txt；管理员登录附页不进入公开校验清单。

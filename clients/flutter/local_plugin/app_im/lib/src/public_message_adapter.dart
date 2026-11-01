@@ -62,7 +62,13 @@ class PublicMessageAdapter extends MessageManager {
     String? operationID,
   }) async {
     await registerMeetingInvitation(message, userID: userID, groupID: groupID);
-    final result = await super.sendMessage(
+    // Quote carries its own referenced-message snapshot. Patch15's normal
+    // send path dereferences a missing destination-DB lookup; the official
+    // NotOss path serializes that snapshot while retaining SDK send/persistence.
+    final send = message.contentType == MessageType.quote
+        ? super.sendMessageNotOss
+        : super.sendMessage;
+    final result = await send(
       message: _mutableMessage(message),
       offlinePushInfo: offlinePushInfo,
       userID: userID,

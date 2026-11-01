@@ -1,0 +1,385 @@
+{
+  "schema": 1,
+  "createdAt": "2026-11-01T19:30:19.523822+00:00",
+  "status": "DEVELOPMENT_SOURCE_VALIDATED_MEDIA_NOT_ACCEPTED",
+  "applicationVersion": "3.8.14+114",
+  "sdkVersion": "3.8.3+hotfix.15",
+  "coreAAR": "3.8.3-patch15",
+  "scope": "Actual normal-main signed x86_64 candidate on one owned API30 AVD plus two real browser peers with synthetic media. Signed build artifacts have separate immutable metadata. This report is not physicalARM64/iOS or full release acceptance.",
+  "source": {
+    "sourceSHA256": "30aab3d32ed75e91e797e15f848c7da41b54bdd75bd4b8c5b502b1ab40198631",
+    "applicationInputs": 3232,
+    "officialSDKInputs": 194,
+    "DartTestAndConfigInputs": 1045,
+    "nativeInputs": 132,
+    "pathPackageRoots": 62,
+    "pathEdges": 64,
+    "sourceGate": {
+      "path": "tests/delivery/media-resume-20261102/source-freeze-114.json",
+      "sha256": "55ef4a2daefbc9d1834cc97676e35761bc125f3d5bcb2671553987577654f7f9",
+      "bytes": 5484
+    },
+    "x64BuildAllNamedSourceBytesUnchanged": true
+  },
+  "sourceValidation": {
+    "FlutterTestsPassed": 163,
+    "JavaBoundaryTestsPassed": 108,
+    "actualAndroidPluginJavaSourcesCompiled": 62,
+    "actualAndroidGradleCompilePassed": true,
+    "analysisTargets": 23,
+    "analysisErrors": 0,
+    "analysisWarnings": 106,
+    "analysisInfo": 615,
+    "analysisExit": 2,
+    "cleanLint": false,
+    "hostAndControlledTestsDoNotProveJNIOrGPUAcceptance": true,
+    "Flutter": {
+      "path": "tests/delivery/media-resume-20261102/full-114-quote-final.json",
+      "sha256": "2e23b297ffeb47390ed31eb45a0a1e59b4e1f1bb2e31028f453ff22b5485eaf2",
+      "bytes": 336844
+    },
+    "Java": {
+      "path": "tests/delivery/media-resume-20261102/native-formal-final.json",
+      "sha256": "63be00ba6623592fada105e4237cb46aad7893dc4c3bbfbb82a6328b37bb981d",
+      "bytes": 62434
+    },
+    "Gradle": {
+      "path": "tests/delivery/media-resume-20261102/native-android-gradle.json",
+      "sha256": "bac5ed84926a3cbe778570e57028e0cac2af400747a2176ab40a40053b852760",
+      "bytes": 35486
+    },
+    "analysis": {
+      "path": "tests/delivery/media-resume-20261102/analyze-final.json",
+      "sha256": "e97a2d687544a5ada29d52609e2852c00394f7639651203b0468fe96d8aec5a7",
+      "bytes": 1652
+    }
+  },
+  "implementedChanges": [
+    "Meeting details use authoritative room state, monotonic confirmed-ended state and visible load/failure/retry instead of inferring authority from starttime.",
+    "Meeting HTTP/connect/overlay/wakelock work is bound to immutable captured authentication and individual connection attempts; old event polls cannot publish into a replacement login.",
+    "Native frame handoff integrates a bounded2-worker/8-queue/10-retained process pool and separate epoch ownership, preserving actual detach/drain/EGL/producer barriers and caller12s budget.",
+    "Seven renderer mutation entries assert the real main-thread contract before changing epoch/owner/admission state.",
+    "Only Quote main-type114 uses the existing official sendMessageNotOss API with original arguments, meeting registration and receipt hydration preserved; no official SDK/AAR byte changed.",
+    "Runtime-source fingerprinting supports Windows extended paths and includes all6 previously missed long-path files."
+  ],
+  "x64Artifact": {
+    "path": "artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.apk",
+    "sha256": "fed978e3e414121ce3afa5f789fee20a2a062c93f39cd87b13a664acc424993c",
+    "bytes": 82520892,
+    "normalEntrypoint": "lib/main.dart",
+    "validationWrapper": false,
+    "signed": true,
+    "immutableCandidateOnly": true,
+    "published": false,
+    "installedBaseAPKEntireBytesMatched": true,
+    "metadata": {
+      "path": "tests/flutter/android-main-x64-114.json",
+      "sha256": "2af38c5ed09c6d10ea6a04d0b37ef5762fd07546ba17ae1f089c9cb449fc0128",
+      "bytes": 6751
+    }
+  },
+  "basicOriginalUI": {
+    "cachedHome104": true,
+    "mineSelfID": "upgrade38_u104",
+    "About": "IM-FCER3.8.14+114 SDK3.8.3+hotfix.15",
+    "sameProcessPID": 5016,
+    "newFormLoginRetested": false,
+    "credentialsEnteredThis114Run": false,
+    "tokenInjected": false,
+    "trust": "DedicatedAVD runtime system-CA bind mounts; normal TLS checks preserved. This is not ordinary-phone CA acceptance.",
+    "refs": [
+      {
+        "path": "tests/flutter/android-114-initial-ui.json",
+        "sha256": "59c491b44725cdbed084d4e5dc9792b23d4bed2ee58831e21c0f0ae99a46a5e1",
+        "bytes": 2654
+      },
+      {
+        "path": "tests/flutter/android-114-mine.json",
+        "sha256": "f1addc3ca6e98bfc75f7fe66a91c477be23046bdb9d4a00a80b5a68e1e6724a1",
+        "bytes": 1479
+      },
+      {
+        "path": "tests/flutter/android-114-about.json",
+        "sha256": "1c4377354b8e4053c7aac57015e7467cbc4ce13a7912ef099eff297b4ef9257a",
+        "bytes": 961
+      },
+      {
+        "path": "tests/flutter/android-114-x64-main-install.json",
+        "sha256": "609947a5ddd858456aa96b7e8d1c97fc61483397664fa4f775d007b688eb011e",
+        "bytes": 922
+      },
+      {
+        "path": "tests/flutter/avd-ca-setup-114.json",
+        "sha256": "fecaec46641dfe811b845c5172e78dac40135349baebc57127e809527074cf5c",
+        "bytes": 402
+      }
+    ]
+  },
+  "singleQuickMeeting": {
+    "status": "SCOPED_ORIGINAL_UI_BUSINESS_STATE_PASSED",
+    "roomID": "bf61e098337e8c56c51cd4c2008a4464",
+    "onlyUser": "upgrade38_u104",
+    "originalQuickCreate": true,
+    "originalLocalMicCameraControlsObserved": true,
+    "originalOrdinaryLeaveFinalOK": true,
+    "ordinaryLeaveOwnedResourcesMilliseconds": 1267,
+    "ordinaryLeaveCameraEmpty": true,
+    "ordinaryLeaveCleanupFailedStages": 0,
+    "ordinaryLeaveDoesNotEndMeeting": true,
+    "reopenedListAndDetailStillStarted": true,
+    "originalDetailEnterRejoinedSamePID": true,
+    "originalHostEndMeetingFinalOK": true,
+    "hostEndOwnedResourcesMilliseconds": 1622,
+    "hostEndCameraEmpty": true,
+    "hostEndCleanupFailedStages": 0,
+    "originalDetailAutomaticallyEndedAndEndtimeUpdated": true,
+    "tapDisabledEnterLeftSameEndedScreenshotBytes": true,
+    "notOldJWTReplayOrThreePartyGPUProof": true,
+    "refs": [
+      {
+        "path": "tests/delivery/media-resume-20261102/android-114-single-quick-leave-confirm-leave.json",
+        "sha256": "2ed1ab9e4087f390e56de7f00edd11bf3973bdf6877b9d879b13574a0eadd2a1",
+        "bytes": 43396
+      },
+      {
+        "path": "tests/flutter/android-114-single-quick-still-active-list.json",
+        "sha256": "d22d5cc87102c32b11f8463ecf4d2a06d45736057d8beff1d1af1071d13b619e",
+        "bytes": 1127
+      },
+      {
+        "path": "tests/flutter/android-114-single-quick-active-detail.json",
+        "sha256": "9f22e773e08e4dadb851a8aabc402efc47c1f3995693d14a4048bf6ab7345374",
+        "bytes": 1581
+      },
+      {
+        "path": "tests/flutter/android-114-single-quick-reentered.json",
+        "sha256": "7741e398b826515da08c6de7c2cd1461ade2196608f703c4048491dcda7b4635",
+        "bytes": 2259
+      },
+      {
+        "path": "tests/delivery/media-resume-20261102/android-114-single-quick-end-confirm-leave.json",
+        "sha256": "aa6c8e23c2cac9c34f19d4db88a36f01af4016a6c2d422c17a7f5af8877aa706",
+        "bytes": 43202
+      },
+      {
+        "path": "tests/flutter/android-114-single-quick-ended-detail.json",
+        "sha256": "70f8eddb2e2b756f0aa233e6ccfda93f4d867aec9beed9439507b9887048506a",
+        "bytes": 1577
+      },
+      {
+        "path": "tests/flutter/android-114-single-quick-ended-reentry-refused.json",
+        "sha256": "4e6e465341961f3d3eaf1ea07442e27faa019ae9b6cc61b8f1d24d7907b5b051",
+        "bytes": 1586
+      }
+    ]
+  },
+  "firstThreePartyVideo": {
+    "status": "FAILED_ANDROID_COMPLETE_TEARDOWN_AND_NOT_STABLE_RECEIVE_ACCEPTED",
+    "syntheticGroup": "1739269662",
+    "actors": [
+      "upgrade38_u104",
+      "upgrade38_u106",
+      "upgrade38_u107"
+    ],
+    "allOriginalUIInviteAndAccept": true,
+    "WebOriginalAcceptUTC": {
+      "106": "2026-11-01T18:58:17.474Z",
+      "107": "2026-11-01T18:58:17.559Z"
+    },
+    "WebObserved": "Each peer3 ready video streams, actual Android-upstream frame/RTP increments and other-Web media increments. Track attribution independently matched intersecting native inbound trackIdentifier; not guessed from resolution. Two synthetic audio streams had increasing packets/sample energy. This is not physical audibility.",
+    "AndroidObserved": "At18:58:25 one receive counter had7 decoded frames/91703B. Later two monitors stopped withTIMEOUT/UNAVAILABLE; signalIO SocketException at19:00:05. One guarded raw read-only image shows self and two synthetic remote pictures; no continuous AndroidFPS claim.",
+    "nativeFixedFrameWorkersObserved": 2,
+    "androidContinuousReceiveCountersAccepted": false,
+    "HomeResumeMatrixTested": false,
+    "actualHangup": {
+      "originalCircleClicked": true,
+      "clickGuard": "Exact ownPID/version/focus/group/originalHangUp; one empty non-password underlying composer allowed; actual62.w image circle was source/PNG inspected rather than tapping non-action text.",
+      "RoomOwnedResourcesStartedDeviceEpoch": 1793559944.519,
+      "initialObservationSeconds": 40.904,
+      "initialCleanupFailedStageCount": 6,
+      "initialCameraReleased": false,
+      "callerBudgetMilliseconds": 12000,
+      "ownedResourcesFinalFailedMilliseconds": 121023,
+      "allThreeActualRemoveSinkWrapperMilliseconds": [
+        111418,
+        111439,
+        29979
+      ],
+      "globalLastANRHashUnchangedDoesNotEraseCleanupFailure": true
+    },
+    "eventualPhysicalState": {
+      "observedQueuedJobs": 17,
+      "observedPhysicalTerminals": 17,
+      "queuedWithoutObservedTerminal": [],
+      "allObservedPhysicalWorkEventuallyReturned": true,
+      "cameraWaitForClosedUTC": "2026-11-01T19:08:17.216Z",
+      "lateLocalTrackPhysicalCompleteUTC": "2026-11-01T19:08:17.332Z",
+      "cameraEmptyFinallyConfirmed": true,
+      "noPermanentLeakProved": true,
+      "eventualReleaseDoesNotConvertDeadlineFailureToPass": true
+    },
+    "normalSecondCallAcceptancePerformed": false,
+    "refs": [
+      {
+        "path": "tests/delivery/media-resume-20261102/android-114-group-first-confirmed-leave.json",
+        "sha256": "657ae4cbee9bf25dcda425ff4eb9ac73a89471bb7de49b9eeaa6f56a8f6f0b8d",
+        "bytes": 26787
+      },
+      {
+        "path": "tests/delivery/media-resume-20261102/android-114-group-first-physical-composition-review.json",
+        "sha256": "174cfd721fca2e05e0bf0469c2cf8bafb8cb390b44ed9d000d9cbb9f16408384",
+        "bytes": 37605
+      },
+      {
+        "path": "tests/delivery/media-resume-20261102/android-114-group-first-final-state.json",
+        "sha256": "0ccde7add549bf3158579d02ca6a2ff631205b2278d8bb5d678773470d2b9437",
+        "bytes": 3983
+      },
+      {
+        "path": "tests/flutter/android-114-group-first-active-fallback.json",
+        "sha256": "cc1ddffdd7dc55a1aeaf6e8826bdffcacb3848b3e36635530945562cd8b22b90",
+        "bytes": 902
+      },
+      {
+        "path": "tests/delivery/media-resume-20261102/web-runtime/20261101T185241337Z/first-group-web-run-review.json",
+        "sha256": "7820f147bf371cdf2c2ab2532e3d96f3911e71435feb4b35f8bda33e758e5ff9",
+        "bytes": 6395
+      },
+      {
+        "path": "tests/delivery/media-resume-20261102/web-runtime/20261101T185241337Z/group-first-android-upstream-attribution.json",
+        "sha256": "5990d9d1af91b5a58884deb795061eb83d0142705d13feb5d479ffb3314dea6e",
+        "bytes": 1580
+      }
+    ]
+  },
+  "boundedNativeDiagnosis": {
+    "notAcceptanceOrNormalSecondCall": true,
+    "sourceOrAppVersionOrProductTimeoutChanged": false,
+    "appRestartedBetweenCalls": false,
+    "samePIDDoesNotProveSameNativePeer": true,
+    "lateManualSIGQUIT": {
+      "count": 1,
+      "atUTC": "2026-11-01T19:09:22.022Z",
+      "observed": "Mainpoll andStats2/Frame2/Media2 queue.take after physical release; no earlier blocked instant captured. Manual diagnostic not system ANR.",
+      "ref": {
+        "path": "tests/flutter/android-114-group-first-manual-sigquit.json",
+        "sha256": "db605eb8c29bcdf8e6f3c5124d3a628e9a196f223d3436c2db12e31ff9c2ebfc",
+        "bytes": 565
+      }
+    },
+    "idleDebuggerdFeasibility": {
+      "elapsedSeconds": 1.215,
+      "threads": 80,
+      "nativeFrames": 753,
+      "libjingleFrames": 15,
+      "ref": {
+        "path": "tests/delivery/media-resume-20261102/idle-native-debuggerd-feasibility.json",
+        "sha256": "8c40cc7756dac494393912404cdf6a37ef755c48e91407bbe6c57e257e1ad3f3",
+        "bytes": 1016
+      }
+    },
+    "oneDirectedDiagnosticRound": {
+      "firstStatsStopTriggerUTC": "2026-11-01T19:22:33.062294+00:00",
+      "deviceTriggerEpoch": 1793560952.962,
+      "triggerState": "STOP_RTC_STATS_UNAVAILABLE",
+      "triggerTrack": "TR_VCPmcBm277kfG8",
+      "observerWindowSeconds": 120,
+      "totalBudgetSeconds": 150,
+      "actualTotalSeconds": 5.465,
+      "actualNativeCaptureSeconds": 3.099,
+      "nativeThreads": 99,
+      "nativeFrames": 979,
+      "captures": 1,
+      "nativeExit": 0,
+      "observationOnlyNoMediaCreatedByObserver": true,
+      "classification": "At trigger theStats2/Frame2/Media2 workers were queue.take, main/camera/threeEGL threads were polling. Worker_thread had clock_gettime plus stripped libjingle offsets; signaling_thread was waiting. No identifiable active getStats/removeSink/retain/release JNI stack. A single clock frame is not proof of spin/lock/task.",
+      "triggerMeaning": "UNAVAILABLE means the individual peer was closing/quarantined and may be rejected before any newJNI request; it does not prove a fresh native blockage or global process budget exhaustion. PriorTIMEOUT can quarantine a peer; matchingPID alone cannot establish peer reuse.",
+      "noRootCauseOrSafeNarrowSourceFixEstablished": true,
+      "cleanupOwnedResourcesFailedMilliseconds": 16280,
+      "cleanupFailureStages": 18,
+      "cleanupCameraEmptyObserved": true,
+      "diagnosticPauseMeansNoUnperturbedPerformanceClaim": true,
+      "ref": {
+        "path": "tests/delivery/media-resume-20261102/android-114-directed-group-native-result.json",
+        "sha256": "5ae8d69a2fd7d8ce8a642b1e659cfb72899af9e0aebb6e02156d8134aa58756f",
+        "bytes": 2010
+      },
+      "cleanup": {
+        "path": "tests/delivery/media-resume-20261102/android-114-directed-diagnostic-cleanup-leave.json",
+        "sha256": "1ee0de04222e02f2b67873917caccb58b1fff6a37459f1088b66eed6b1fe315d",
+        "bytes": 71713
+      },
+      "publicTrace": {
+        "path": "tests/flutter/android-114-directed-group-native-backtrace.txt",
+        "sha256": "266da69e0d9b567dee6da34cc832d709625e9e512fcc6aeda0a4c934cb27549c",
+        "bytes": 169157
+      }
+    },
+    "symbolBoundary": {
+      "exact114JingleSHA256": "9f8c9a4303274ccfa1b6d068d1598e8b9500174e4e3e05718f4d9e901494928b",
+      "ELFBuildID": "947d191334d21615",
+      "exportedWebRTCJNIEntries": 224,
+      "fullCppSymbols": false,
+      "debugInfo": false,
+      "noInventedCppFunctionOrLockOwner": true,
+      "ref": {
+        "path": "tests/delivery/media-resume-20261102/native-symbol-feasibility.json",
+        "sha256": "e741d9f28750330b51a798b70a715dcc69feafbd4206e6230cfb1713887e1ee6",
+        "bytes": 2777
+      }
+    },
+    "noFurtherRoundsOrSamples": true
+  },
+  "harnessFindingsNotProductPasses": [
+    "AVD coldboot155.307s: first120s observation expired, next initial sample completed; no restart/datareset was used to disguise it.",
+    "DevVite7777 twice stalled pre-login on a37MBWASM response; deployed29880 initialized normally in2.03s. One ownedVite restart restored source initialization. Failed pre-login attempts did not fill credentials or create calls.",
+    "UiAutomator null roots refused screenshots/actions and were retained. One parent-approved read-only fallback image used fixedAVD/PID/version/focus/synthetic-group/actualWebaccept guards; original password-entry guard was not weakened.",
+    "First ordinaryLeave40s stayed on its second confirmation dialog, with no Roomcleanup start. Actual finalOK has its own timing; dialog wait is not a teardown failure.",
+    "First group hangup helper refused before input because an empty underlying chat composer existed. A narrowly fixed guard and source-inspected circle were used in a new labeled actual-hangup attempt.",
+    "Historical905 meeting-card taps stayed in chat; transient response/detail handling was not proved and was excluded from passedEnded-detail evidence."
+  ],
+  "notCompleted": [
+    "Three-partyAndroid teardown within12s and stable Android receive/long-call/Home-resume/full cross-device matrix.",
+    "A normal successful same-process second group call following a successful first teardown; the one later call was a bounded diagnostic only.",
+    "New original booked-meeting/appointment UI acceptance, pure-voice-call matrix, full meeting camera/mic/host/share/end-token replay matrix.",
+    "ActualAndroidUI Quote multi-forward native runtime acceptance;4 realSDKMethodChannel route tests and AAR native-API availability proof passed, not an observedAndroidpanic reproduction or device runtime pass.",
+    "PhysicalARM64 phone, ordinary-phone GoAAR developmentCA trust and physical microphone/speaker audibility.",
+    "iOS Xcode/CocoaPods build and device runtime."
+  ],
+  "privacyAndShutdown": {
+    "rawEvidence": "Private byte-exact originals under current-user/SYSTEM ACL; finite exported diagnostics redacted with hashes. No raw credential values are in this summary.",
+    "rawLogExportManifest": {
+      "path": "tests/flutter/raw-log-redaction-114.json",
+      "sha256": "3e02ae8905fd1db0a38054b577b6a07ed25089d6a0e6ee8082e19730ad45940d",
+      "bytes": 5961
+    },
+    "WindowsRealUserPC44508Untouched": true,
+    "twoOwnedWebHelpersClosedNormally": true,
+    "ownedAVDStoppedNormallyAfterCameraEmpty": true,
+    "userdataPreserved": true,
+    "noLogoutOrRevocation": true,
+    "AVDStop": {
+      "path": "tests/flutter/android-114-own-avd-stop.json",
+      "sha256": "56f650bf8ce9d049d874e30e1a1414a49d1b1d309b98d56917b9597ba0c7f7f4",
+      "bytes": 837
+    },
+    "finalWebClosure": {
+      "path": "tests/delivery/media-resume-20261102/web-runtime/20261101T192017708Z/directed-web-run-review.json",
+      "sha256": "d455d105e937beed5553bbe6e65a82c8c4d363abddd1284988994e6ad67baa38",
+      "bytes": 4619
+    },
+    "Android104CredentialsNotChangedOrReentered": true,
+    "Web106107OriginalFormLoginPerformed": true
+  },
+  "deliveryBoundary": {
+    "mediaAccepted": false,
+    "overallUpgradeAccepted": false,
+    "releaseAccepted": false,
+    "Android114Published": false,
+    "formalAndroid114CurrentPathMustRemainAbsent": "artifacts/android/OpenIM38-3.8.14+114-development-arm64.apk",
+    "ARM64IfBuiltIsUnacceptedImmutableCandidateOnly": true,
+    "noAndroidPublisherOrForceUpdateInvoked": true,
+    "original113CandidatesPreserved": true,
+    "doesNotProveSourceCorrectBecauseHardwareIsMissing": true
+  }
+}

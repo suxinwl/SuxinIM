@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "status": "FROZEN_ANDROID114_MEDIA_STATUS_DOCUMENTATION",
+  "createdUtc": "2026-11-01T19:38:49.882339+00:00",
+  "scope": [
+    "README.md",
+    "REPOSITORY.md",
+    "docs/web-desktop.md",
+    "docs/acceptance.md",
+    "docs/feature-matrix.md",
+    "artifacts/manual/OpenIM38-原版升级使用说明.html",
+    "artifacts/manual/SHA256SUMS.txt",
+    "artifacts/downloads/index.html"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 25782,
+      "sha256": "cb39791b6b32c0a4dfd3d8170d98cee5d0db54c4784832c63b95167085f9e09e"
+    },
+    {
+      "path": "REPOSITORY.md",
+      "bytes": 3849,
+      "sha256": "a7265f4f9723fa4b51052d2e141462580dbc86bf616b4eef0e2725f8e85ad54e"
+    },
+    {
+      "path": "docs/web-desktop.md",
+      "bytes": 16423,
+      "sha256": "59d7670e19400e582aff29b6e3d03f056de4a89ee39047de968ea1deced1e79d"
+    },
+    {
+      "path": "docs/acceptance.md",
+      "bytes": 51153,
+      "sha256": "f4594cecbb8ad94bac155efd43dcfbefcbb2d7690917b2b3be1cc6ed894bfba5"
+    },
+    {
+      "path": "docs/feature-matrix.md",
+      "bytes": 9253,
+      "sha256": "bde1366891537edb0570de4584a523a80b0f110865c1983b9b11fe2de5e95c8e"
+    },
+    {
+      "path": "artifacts/manual/OpenIM38-原版升级使用说明.html",
+      "bytes": 32077,
+      "sha256": "3ba133f54fe539900596026e3e6f8f41f5eae56f2a237e6adee1773e5fd044d1"
+    },
+    {
+      "path": "artifacts/manual/SHA256SUMS.txt",
+      "bytes": 105,
+      "sha256": "ad5068ecc53ed03ffe8d24df822e9a5918c20a54f3df35f917b1cd73664408e7"
+    },
+    {
+      "path": "artifacts/downloads/index.html",
+      "bytes": 2510,
+      "sha256": "7c1e498836dd14eee01af2da8bf6660414cbabcf44e86a6864c5f386b8320600"
+    }
+  ],
+  "beforeArchive": {
+    "path": "tests/delivery/windows-387-before/media-status-final/manifest.json",
+    "bytes": 2234,
+    "sha256": "9ca12ab669819935f7a6c29383d8e1a384498c999eb98131f97fe511eb8903bf",
+    "files": 8,
+    "allExactOriginalBytesVerified": true,
+    "matchesPrior387Freeze": true
+  },
+  "priorDocumentationReview": {
+    "path": "tests/delivery/windows-387-documentation-review.json",
+    "bytes": 4234,
+    "sha256": "3e7dd551e59d90d4956780a0d32a11f94c71049acbe5463a9b4b1d2705e39501",
+    "unchanged": true
+  },
+  "windowsInstaller": {
+    "path": "clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe",
+    "bytes": 160966886,
+    "sha256": "422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873",
+    "version": "3.8.7",
+    "build": 380701,
+    "windowsCodeSigned": false,
+    "independentlyRehashed": true,
+    "alreadyPublishedByRoot": true,
+    "republishedByThisOwner": false
+  },
+  "androidCandidates": [
+    {
+      "path": "artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.apk",
+      "bytes": 82520892,
+      "sha256": "fed978e3e414121ce3afa5f789fee20a2a062c93f39cd87b13a664acc424993c",
+      "abi": "x64",
+      "sidecar": {
+        "path": "artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.json",
+        "bytes": 6522,
+        "sha256": "935041f3a24a8a04ed0ce4f933f744c13107bcdc1a42ff6fc10c82d773f00fc6"
+      },
+      "independentlyRehashed": true,
+      "metadataEntrypoint": "lib/main.dart",
+      "runtimeAccepted": false,
+      "uploadedByThisOwner": false
+    },
+    {
+      "path": "artifacts/android-candidates/OpenIM38-3.8.14+114-development-arm64-candidate.apk",
+      "bytes": 76743141,
+      "sha256": "f6f946be8ffdf8a00d92c031cfa70e4a7b24bfa1108d838e1446d219e5745312",
+      "abi": "arm64",
+      "sidecar": {
+        "path": "artifacts/android-candidates/OpenIM38-3.8.14+114-development-arm64-candidate.json",
+        "bytes": 8029,
+        "sha256": "57e339c88db65e7b02ca309bcf4d3f085e2dec3bd0b758c8500e717e46a855fa"
+      },
+      "independentlyRehashed": true,
+      "metadataEntrypoint": "lib/main.dart",
+      "runtimeAccepted": false,
+      "uploadedByThisOwner": false
+    }
+  ],
+  "androidCurrent": {
+    "path": "artifacts/android/OpenIM38-3.8.14+114-development-arm64.apk",
+    "present": false,
+    "actualFileExists": false,
+    "androidOnlineDownloadLinks": 0,
+    "publishedByThisOwner": false
+  },
+  "mediaState": {
+    "acceptance": "NOT_ACCEPTED",
+    "dartTests": 163,
+    "javaBoundaryTests": 108,
+    "actualJavaCompilationFiles": 62,
+    "singleQuickLeaveRejoinAndEndedDenial": "LIMITED_ORIGINAL_UI_PASSED",
+    "groupRoomFailureMilliseconds": 121023,
+    "latePhysicalCompleted": 17,
+    "lateCameraEmpty": true,
+    "permanentLeakProven": false,
+    "directedDiagnosticIsSecondNormalAcceptance": false,
+    "rootCauseLocated": false,
+    "remaining": [
+      "scheduled_meeting",
+      "audio_only",
+      "full_cross_client_matrix",
+      "normal_continuous_call_cleanup",
+      "physical_arm64",
+      "ordinary_phone_certificate_trust",
+      "android_system_installer_update"
+    ],
+    "runtimeSummary": {
+      "path": "tests/delivery/android-114-media-resume-review.json",
+      "bytes": 19295,
+      "sha256": "d9a2466b2b60e0c5bbe307b78389214ec1691152629e5b1e47e7b5a9e93ea1ac"
+    }
+  },
+  "checks": {
+    "noMetadataPlaceholders": true,
+    "manualChecksumMatches": true,
+    "windowsMetadataUnchanged": true,
+    "both114CandidateFilesAndSidecarsRehashed": true,
+    "historical386And113EvidenceTextRetained": true,
+    "oldProjectNamesAndLegacyPortsAbsent": true,
+    "jwtShapeHitsInSevenFinitePublicDocuments": 0,
+    "privatePasswordValuesReread": false,
+    "publicPasswordsAdded": false,
+    "docsFlutterOrPrivateAppendixWrittenByThisOwner": false,
+    "sourceCodeOrArtifactMetadataWrittenByThisOwner": false
+  },
+  "htmlUI": {
+    "path": "tests/delivery/android-114-media-documentation-ui/report.json",
+    "bytes": 1772,
+    "sha256": "03d6661543e09575644ef172ec6ae732e936a7b5ee68c16ac59c3e55476fe880",
+    "pass": true,
+    "scope": "One local desktop/390px render per HTML, no application/media rerun",
+    "screenshotsInspected": [
+      {
+        "path": "tests/delivery/android-114-media-documentation-ui/manual-1200.png",
+        "bytes": 73184,
+        "sha256": "bae6fedb5a991816a7c5008890b198408dd6eb75b1bebac8445a2a357a69e1ef"
+      },
+      {
+        "path": "tests/delivery/android-114-media-documentation-ui/manual-390.png",
+        "bytes": 52129,
+        "sha256": "bf32c389bc27a98a70b2a70d224b43f4d6f1a45686d8f0e497aeb2523f1115ba"
+      },
+      {
+        "path": "tests/delivery/android-114-media-documentation-ui/downloads-1200.png",
+        "bytes": 108501,
+        "sha256": "a926b7200681cee415bcf4055e8fb2ef4a9958b0979e107ad694be30f90a60ae"
+      },
+      {
+        "path": "tests/delivery/android-114-media-documentation-ui/downloads-390.png",
+        "bytes": 63708,
+        "sha256": "6ccb1fc7098429b94c79f9b61f145c08142b96e9e5ce6e64ccdfdfb7fae3cbf3"
+      }
+    ],
+    "horizontalOverflow": false,
+    "pageErrors": 0,
+    "manualAnchors": 14
+  },
+  "downloadIndexChange": {
+    "before": {
+      "path": "artifacts/downloads/index.html",
+      "bytes": 2091,
+      "sha256": "74adbf27ef6af00fa3d7f531f1cf016249adc624491020b55853dd03d42e5996",
+      "archiveSha256": "74adbf27ef6af00fa3d7f531f1cf016249adc624491020b55853dd03d42e5996"
+    },
+    "after": {
+      "path": "artifacts/downloads/index.html",
+      "bytes": 2510,
+      "sha256": "7c1e498836dd14eee01af2da8bf6660414cbabcf44e86a6864c5f386b8320600"
+    },
+    "scope": "Media status paragraph only; Windows package/version/link and certificate link retained",
+    "serverChangedByThisOwner": false
+  }
+}

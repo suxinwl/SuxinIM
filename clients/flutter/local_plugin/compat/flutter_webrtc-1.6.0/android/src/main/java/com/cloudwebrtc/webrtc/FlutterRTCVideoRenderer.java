@@ -6,7 +6,10 @@ import android.view.Surface;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.cloudwebrtc.webrtc.utils.AnyThreadSink;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import com.cloudwebrtc.webrtc.utils.ConstraintsMap;
 import com.cloudwebrtc.webrtc.utils.EglUtils;
 
@@ -16,6 +19,7 @@ import org.webrtc.EglBase;
 import org.webrtc.MediaStream;
 import org.webrtc.RendererCommon.RendererEvents;
 import org.webrtc.VideoTrack;
+import org.webrtc.ThreadUtils;
 
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.view.TextureRegistry;
@@ -41,62 +45,245 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
     }
 
     void Dispose(Result result, Runnable onDisposed) {
-        surfaceTextureRenderer.beginFinalRelease();
+        ThreadUtils.checkIsOnMainThread();
+        disposing = true;
+        sinkGeneration++;
+        RendererEpoch epoch = desiredEpoch;
+        if (epoch != null) epoch.stopFrameAdmission();
         report(binding.dispose(), result, onDisposed, "renderer.dispose");
     }
 
-    /**
-     * The {@code RendererEvents} which listens to rendering events reported by
-     * {@link #surfaceTextureRenderer}.
-     */
-    private RendererEvents rendererEvents;
+    private final java.util.Set<RendererEpoch> epochs = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private volatile RendererEpoch desiredEpoch;
+    private volatile boolean disposing;
+    private volatile long sinkGeneration;
+    private final AtomicReference<Throwable> sourceCallbackFailure = new AtomicReference<>();
 
-    private void listenRendererEvents() {
-        rendererEvents = new RendererEvents() {
-            private int _rotation = -1;
-            private int _width = 0, _height = 0;
-
-            @Override
-            public void onFirstFrameRendered() {
-                ConstraintsMap params = new ConstraintsMap();
-                params.putString("event", "didFirstFrameRendered");
-                params.putInt("id", id);
-                if (eventSink != null) {
-                    eventSink.success(params.toMap());
-                }
+    // No AnyThreadSink here: the epoch AND raw subscription guard run at the
+    // final main delivery, not before a second adapter queues an unguarded task.
+    private void postEvent(RendererEpoch epoch, Object event) {
+        final EventChannel.EventSink raw = eventSink;
+        final long subscription = sinkGeneration;
+        if (raw == null) return;
+        if (!platform.post(() -> {
+            if (epoch.isCurrent() && raw == eventSink && subscription == sinkGeneration) {
+                try { raw.success(event); }
+                catch (Throwable error) { safeFailure("event.delivery", error); }
             }
+        })) safeFailure("event.post", new java.util.concurrent.RejectedExecutionException("Renderer event rejected"));
+    }
 
-            @Override
-            public void onFrameResolutionChanged(
-                    int videoWidth, int videoHeight,
-                    int rotation) {
-
-                if (eventSink != null) {
-                    if (_width != videoWidth || _height != videoHeight) {
-                        ConstraintsMap params = new ConstraintsMap();
-                        params.putString("event", "didTextureChangeVideoSize");
-                        params.putInt("id", id);
-                        params.putDouble("width", (double) videoWidth);
-                        params.putDouble("height", (double) videoHeight);
-                        _width = videoWidth;
-                        _height = videoHeight;
-                        eventSink.success(params.toMap());
-                    }
-
-                    if (_rotation != rotation) {
-                        ConstraintsMap params2 = new ConstraintsMap();
-                        params2.putString("event", "didTextureChangeRotation");
-                        params2.putInt("id", id);
-                        params2.putInt("rotation", rotation);
-                        _rotation = rotation;
-                        eventSink.success(params2.toMap());
-                    }
+    private RendererEvents eventsFor(RendererEpoch epoch) {
+        return new RendererEvents() {
+            private int rotation = -1, width, height;
+            public void onFirstFrameRendered() {
+                ConstraintsMap event = new ConstraintsMap();
+                event.putString("event", "didFirstFrameRendered"); event.putInt("id", id);
+                postEvent(epoch, event.toMap());
+            }
+            public void onFrameResolutionChanged(int w, int h, int angle) {
+                if (width != w || height != h) {
+                    ConstraintsMap event = new ConstraintsMap();
+                    event.putString("event", "didTextureChangeVideoSize"); event.putInt("id", id);
+                    event.putDouble("width", (double) w); event.putDouble("height", (double) h);
+                    width = w; height = h; postEvent(epoch, event.toMap());
+                }
+                if (rotation != angle) {
+                    ConstraintsMap event = new ConstraintsMap();
+                    event.putString("event", "didTextureChangeRotation"); event.putInt("id", id); event.putInt("rotation", angle);
+                    rotation = angle; postEvent(epoch, event.toMap());
                 }
             }
         };
     }
 
-    private final SurfaceTextureRenderer surfaceTextureRenderer;
+    private CompletableFuture<Void> onMain(Runnable action) {
+        CompletableFuture<Void> done = new CompletableFuture<>();
+        if (!platform.post(() -> {
+            try { action.run(); done.complete(null); } catch (Throwable failure) { done.completeExceptionally(failure); }
+        })) done.completeExceptionally(new java.util.concurrent.RejectedExecutionException("Renderer main operation rejected"));
+        return done;
+    }
+    private CompletableFuture<Void> onMainFuture(Supplier<CompletableFuture<Void>> action) {
+        CompletableFuture<Void> done = new CompletableFuture<>();
+        if (!platform.post(() -> {
+            try { action.get().whenComplete((unused, failure) -> {
+                if (failure == null) done.complete(null); else done.completeExceptionally(NativeMediaLifecycle.unwrap(failure));
+            }); } catch (Throwable failure) { done.completeExceptionally(failure); }
+        })) done.completeExceptionally(new java.util.concurrent.RejectedExecutionException("Renderer main operation rejected"));
+        return done;
+    }
+    private void safeFailure(String phase, Throwable failure) {
+        try { Log.w(TAG, "[OpenIMRtcNative] phase=" + phase + " failure=" + failure.getClass().getSimpleName()); }
+        catch (Throwable ignored) { /* Observations do not own physical cleanup. */ }
+    }
+
+    /** One immutable native source/proxy/mailbox/EGL lifetime. No renderer reuse after retirement. */
+    private final class RendererEpoch implements NativeRendererBinding.Track {
+        final VideoTrack track;
+        final NativeMediaLifecycle.Owner owner;
+        final NativeFrameHandoff handoff;
+        final AtomicReference<Throwable> firstFailure = new AtomicReference<>();
+        private final Object surfaceState = new Object();
+        private volatile SurfaceTextureRenderer renderer;
+        private volatile boolean initialized, retired;
+        private boolean sinkRegistered;
+        private boolean surfaceAvailable = true;
+        private int surfacePending;
+        private NativeFrameHandoff.Pause pause;
+        private CompletableFuture<Void> surfaceTail = CompletableFuture.completedFuture(null);
+        private CompletableFuture<Void> preparation, retirement;
+
+        RendererEpoch(VideoTrack track, NativeMediaLifecycle.Owner owner) {
+            this.track = track; this.owner = owner;
+            handoff = new NativeFrameHandoff(frame -> {
+                SurfaceTextureRenderer output = renderer;
+                if (output == null) throw new NativeMediaLifecycle.Failure("RTC_RENDERER_UNAVAILABLE", "Renderer epoch has no initialized output");
+                output.onFrame(frame);
+            }, this::recordFrameFailure, action -> platform.post(action));
+            pause = handoff.pause();
+        }
+        public Object key() { return track; }
+        boolean isCurrent() { return desiredEpoch == this && !disposing && !retired && firstFailure.get() == null; }
+
+        public CompletableFuture<Void> prepare(BooleanSupplier current) {
+            final CompletableFuture<Void> done;
+            synchronized (this) {
+                if (preparation != null) return preparation;
+                done = new CompletableFuture<>(); preparation = done;
+            }
+            onMain(() -> {
+                if (!current.getAsBoolean() || disposing || retired) return;
+                SurfaceTextureRenderer next = new SurfaceTextureRenderer("");
+                // Publish ownership before any init/callback can fail or re-enter.
+                renderer = next;
+                next.setCleanupOwner(outputOwner);
+                next.setCleanupFailureHandler(() -> fail("surface.physical", new NativeMediaLifecycle.Failure("RTC_MEDIA_FAILED", "Surface cleanup failed")));
+                next.setSurfaceLifecycle(new SurfaceTextureRenderer.SurfaceLifecycle() {
+                    public void available() { surfaceAvailable(); }
+                    public void cleanup() { surfaceCleanup(); }
+                });
+                Throwable prior = firstFailure.get();
+                if (prior != null) throw new java.util.concurrent.CompletionException(prior);
+                if (!current.getAsBoolean() || disposing || retired) return;
+                next.init(EglUtils.getRootEglBaseContext(), eventsFor(this));
+                // A reentrant or concurrent replacement can retire a fully initialized
+                // but never-attached EGL epoch. Its lease still owns actual release.
+                if (!current.getAsBoolean() || disposing || retired) return;
+                next.surfaceCreated(producer);
+                initialized = true;
+            }).whenComplete((unused, error) -> {
+                if (error == null) done.complete(null);
+                else { fail("epoch.prepare", NativeMediaLifecycle.unwrap(error)); done.completeExceptionally(NativeMediaLifecycle.unwrap(error)); }
+            });
+            return done;
+        }
+        public void attach() {
+            if (!isCurrent()) return;
+            if (!initialized) throw new NativeMediaLifecycle.Failure("RTC_RENDERER_UNAVAILABLE", "Renderer output was not prepared");
+            track.addSink(handoff);
+            sinkRegistered = true;
+            NativeFrameHandoff.Pause token;
+            boolean available;
+            synchronized (surfaceState) { token = pause; available = surfaceAvailable; }
+            if (isCurrent() && available && !handoff.resume(token)) {
+                throw new NativeMediaLifecycle.Failure("RTC_RENDERER_UNAVAILABLE", "Current frame mailbox could not start");
+            }
+        }
+        public void detach() {
+            if (!sinkRegistered) return;
+            final long started = System.nanoTime(); boolean returned = false;
+            traceRemoveSink("javaRemoveSinkBegin", track, this, owner, handoff, started, false);
+            try { track.removeSink(handoff); sinkRegistered = false; returned = true; }
+            finally { traceRemoveSink("javaRemoveSinkEnd", track, this, owner, handoff, started, returned); }
+        }
+        public void stopFrameAdmission() {
+            retired = true;
+            handoff.seal();
+            SurfaceTextureRenderer output = renderer;
+            if (output != null) output.beginFinalRelease();
+        }
+        public CompletableFuture<Void> retireAfterNativeDetach() {
+            final CompletableFuture<Void> done, surface;
+            synchronized (this) {
+                if (retirement != null) return retirement;
+                done = new CompletableFuture<>(); retirement = done;
+            }
+            stopFrameAdmission();
+            synchronized (surfaceState) { surface = surfaceTail; }
+            CompletableFuture.allOf(handoff.seal(), surface).thenCompose(unused -> {
+                final SurfaceTextureRenderer output = renderer;
+                if (output == null) return CompletableFuture.completedFuture(null);
+                return outputOwner.submit("renderer.epoch.release", () -> {
+                    output.throwIfCleanupFailed(); output.release();
+                }, true);
+            }).whenComplete((unused, error) -> {
+                if (error == null) { epochs.remove(this); done.complete(null); }
+                else { Throwable cause = NativeMediaLifecycle.unwrap(error); fail("epoch.retire", cause); done.completeExceptionally(cause); }
+            });
+            return done;
+        }
+        private void recordFrameFailure(Throwable error) {
+            // Source callback path: only bounded metadata and post, never owner/log.
+            if (!firstFailure.compareAndSet(null, error)) return;
+            sourceCallbackFailure.compareAndSet(null, error);
+            platform.post(() -> fail("frame.delivery", error));
+        }
+        private void fail(String phase, Throwable error) {
+            firstFailure.compareAndSet(null, error);
+            safeFailure(phase, error);
+            owner.quarantine(); binding.quarantine();
+        }
+        private void surfaceCleanup() {
+            if (!isCurrent()) return;
+            final SurfaceTextureRenderer output = renderer;
+            output.markSurfaceUnavailable();
+            final NativeFrameHandoff.Pause token = handoff.pause();
+            final CompletableFuture<Void> before, done = new CompletableFuture<>();
+            boolean overflow;
+            synchronized (surfaceState) {
+                overflow = surfacePending >= 8;
+                if (overflow) before = surfaceTail;
+                else { surfacePending++; surfaceAvailable = false; pause = token; before = surfaceTail; surfaceTail = done; }
+            }
+            if (overflow) {
+                fail("surface.capacity", new NativeMediaLifecycle.Failure("RTC_RENDERER_BUSY", "Bounded surface transition queue is occupied"));
+                return;
+            }
+            // Normal manual lifecycle does not enter this path in the fixed embedding.
+            // This composition is not an acknowledgement to Flutter's void callback.
+            before.thenCompose(unused -> token.physicalDrain).thenCompose(unused -> onMainFuture(() -> {
+                if (retired) return CompletableFuture.completedFuture(null);
+                return output.releaseSurfacePhysical();
+            })).whenComplete((unused, error) -> {
+                synchronized (surfaceState) { surfacePending--; }
+                if (error == null) done.complete(null);
+                else { Throwable cause = NativeMediaLifecycle.unwrap(error); fail("surface.cleanup", cause); done.completeExceptionally(cause); }
+            });
+            NativeMediaLifecycle.report(done, new NativeMediaLifecycle.Response() {
+                public void success() {}
+                public void error(String code, String message) { Log.w(TAG, "[OpenIMRtcNative] operation=surface.cleanup phase=callerError code=" + code); }
+            }, () -> outputOwner.callerTimedOut(done, "surface.cleanup"));
+        }
+        private void surfaceAvailable() {
+            if (!isCurrent()) return;
+            final CompletableFuture<Void> before;
+            final NativeFrameHandoff.Pause token;
+            synchronized (surfaceState) { surfaceAvailable = true; before = surfaceTail; token = pause; }
+            before.whenComplete((unused, error) -> {
+                if (error != null) return;
+                onMain(() -> {
+                    synchronized (surfaceState) {
+                        if (!isCurrent() || !surfaceAvailable || token != pause) return;
+                    }
+                    renderer.markSurfaceAvailable();
+                    if (sinkRegistered && !handoff.resume(token) && isCurrent()) {
+                        fail("surface.resume", new NativeMediaLifecycle.Failure("RTC_RENDERER_UNAVAILABLE", "Mailbox resume failed"));
+                    }
+                }).whenComplete((ignored, mainError) -> { if (mainError != null) fail("surface.available", NativeMediaLifecycle.unwrap(mainError)); });
+            });
+        }
+    }
 
     /**
      * The {@code VideoTrack}, if any, rendered by this {@code FlutterRTCVideoRenderer}.
@@ -108,45 +295,46 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
     volatile EventChannel.EventSink eventSink;
 
     public FlutterRTCVideoRenderer(TextureRegistry.SurfaceProducer producer, OwnerResolver owners) {
+        ThreadUtils.checkIsOnMainThread();
         this.owners = owners;
-        this.surfaceTextureRenderer = new SurfaceTextureRenderer("");
-        surfaceTextureRenderer.setCleanupOwner(outputOwner);
-        listenRendererEvents();
-        surfaceTextureRenderer.init(EglUtils.getRootEglBaseContext(), rendererEvents);
-        surfaceTextureRenderer.surfaceCreated(producer);
-
         this.eventSink = null;
         this.producer = producer;
         this.ownerTag = null;
         binding = new NativeRendererBinding(action -> {
             if (!platform.post(action)) throw new java.util.concurrent.RejectedExecutionException("Platform looper rejected renderer finalization");
         }, new NativeRendererBinding.Output() {
-            public void releaseEgl() { surfaceTextureRenderer.throwIfCleanupFailed(); surfaceTextureRenderer.release(); }
+            public void releaseEgl() {
+                // Each source already retired its own EGL exactly once through its lease.
+                if (!epochs.isEmpty()) throw new NativeMediaLifecycle.Failure("RTC_RENDERER_UNAVAILABLE", "Renderer epochs remain physically owned");
+            }
             public void releaseProducerOnMain() {
                 if (eventChannel != null) eventChannel.setStreamHandler(null);
-                eventSink = null;
+                sinkGeneration++; eventSink = null; desiredEpoch = null;
                 producer.release();
             }
         }, outputOwner, event -> Log.d(TAG, "[OpenIMRtcNative] renderer#" + Integer.toHexString(System.identityHashCode(this)) + " " + event));
-        surfaceTextureRenderer.setCleanupFailureHandler(binding::quarantine);
     }
 
     public void setEventChannel(EventChannel eventChannel) {
+        ThreadUtils.checkIsOnMainThread();
         this.eventChannel = eventChannel;
     }
 
     public void setId(int id) {
+        ThreadUtils.checkIsOnMainThread();
         this.id = id;
     }
 
     @Override
     public void onListen(Object o, EventChannel.EventSink sink) {
-        eventSink = new AnyThreadSink(sink);
+        ThreadUtils.checkIsOnMainThread();
+        sinkGeneration++; eventSink = sink;
     }
 
     @Override
     public void onCancel(Object o) {
-        eventSink = null;
+        ThreadUtils.checkIsOnMainThread();
+        sinkGeneration++; eventSink = null;
     }
 
     /**
@@ -242,42 +430,36 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
         setVideoTrack(next, mediaStreamId, ownerTag, result);
     }
     private void setVideoTrack(VideoTrack next, String requestedStream, String requestedOwner, Result result) {
+        ThreadUtils.checkIsOnMainThread();
+        if (next != null && sourceCallbackFailure.get() != null) {
+            if (result != null) result.error("RTC_MEDIA_UNAVAILABLE", "Renderer source callback has a retained failure", null);
+            return;
+        }
         NativeMediaLifecycle.Owner owner = next == null ? null : owners.resolve(next, requestedOwner);
         if (next != null && owner == null) {
             if (result != null) result.error("RTC_MEDIA_UNAVAILABLE", "Track owner is closing or unavailable", null);
             return;
         }
-        NativeRendererBinding.Track track = next == null ? null : new NativeRendererBinding.Track() {
-            public Object key() { return next; }
-            public void attach() {
-                surfaceTextureRenderer.resetFrameState();
-                next.addSink(surfaceTextureRenderer);
-            }
-            public void detach() {
-                final long started = System.nanoTime();
-                boolean returned = false;
-                traceRemoveSink("javaRemoveSinkBegin", next, this, owner, started, false);
-                try { next.removeSink(surfaceTextureRenderer); returned = true; }
-                finally { traceRemoveSink("javaRemoveSinkEnd", next, this, owner, started, returned); }
-            }
-        };
-        NativeRendererBinding.SetRequest request = binding.requestSet(owner, track);
+        RendererEpoch epoch = next == null ? null : new RendererEpoch(next, owner);
+        if (epoch != null) epochs.add(epoch);
+        NativeRendererBinding.SetRequest request = binding.requestSet(owner, epoch);
         if (request.accepted) {
+            desiredEpoch = epoch;
             this.mediaStreamId = requestedStream; this.ownerTag = requestedOwner;
             this.videoTrack = next; this.videoTrackId = next == null ? null : next.id();
-        }
+        } else if (epoch != null) epochs.remove(epoch); // rejected before allocation/admission
         report(request.physical, result, () -> {}, "renderer.set");
     }
 
     // Identity hashes are correlation hints, not unique IDs or native pointers.
     private void traceRemoveSink(String phase, VideoTrack track, Object bindingTrack,
-            NativeMediaLifecycle.Owner owner, long started, boolean returned) {
+            NativeMediaLifecycle.Owner owner, Object sink, long started, boolean returned) {
         try {
             Log.d(TAG, "[OpenIMRtcNative] operation=renderer.detach phase=" + phase
                 + " rendererJava#" + Integer.toHexString(System.identityHashCode(this))
                 + " bindingTrackJava#" + Integer.toHexString(System.identityHashCode(bindingTrack))
                 + " trackJava#" + Integer.toHexString(System.identityHashCode(track))
-                + " sinkJava#" + Integer.toHexString(System.identityHashCode(surfaceTextureRenderer))
+                + " sinkJava#" + Integer.toHexString(System.identityHashCode(sink))
                 + " ownerJava#" + Integer.toHexString(System.identityHashCode(owner))
                 + " returned=" + returned + " elapsedMs="
                 + java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started));
@@ -310,6 +492,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
     java.util.concurrent.CompletableFuture<Void> detachStream(String streamId) {
         if (!checkMediaStream(streamId, "local")) return java.util.concurrent.CompletableFuture.completedFuture(null);
+        desiredEpoch = null;
         mediaStreamId = null; videoTrack = null; videoTrackId = null; ownerTag = null;
         return binding.set(null, null);
     }

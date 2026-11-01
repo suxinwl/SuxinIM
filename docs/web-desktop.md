@@ -10,7 +10,7 @@
 
 当前构建号380701。最终NSIS构建及对应打包程序的正常TLS、SDK初始化、受管文件Range巡检通过，见tests/delivery/windows-387-native-smoke.json。94项适配测试和TypeScript检查通过；真实Electron合成引用消息转发5人后SDK会话/历史有效，搜索5项原UI及10项Store回归通过；视频9项行为及原生MP4/Range/解码、正常TLS下载通过。证据见根tests/delivery下的windows-387-quote-facade-review.json、windows-387-search-review.json、windows-387-video-download-review.json、windows-387-final-adapter-tests.log和windows-387-final-typecheck.log。视频原生测试运行在独立隐藏窗口，未声称所有原聊天UI、历史附件或硬件组合均通过。
 
-媒体已恢复开发和联调；Android114尚未作为已验收包交付。先前归档和以下3.8.6结果按原版本保留。
+Windows3.8.7已发布到独立内网下载页。媒体已恢复开发和联调；Android114的163项Dart、108项Java边界测试及62个Java文件实际Android编译通过，仅保留本地正常main候选，不提供Android下载或更新。单端快速会议普通Leave/重入、End后Ended禁入通过限定验证；三人通话退出121023毫秒超时失败，后续17项物理任务最终完成且摄像头为空。媒体仍为NOT_ACCEPTED；预约会议、纯语音及完整跨端矩阵尚未完成，定向原生诊断不能替代正常验收。先前归档和以下3.8.6结果按原版本保留。
 
 ## 2026-11-02 Windows 3.8.6 历史修复范围
 

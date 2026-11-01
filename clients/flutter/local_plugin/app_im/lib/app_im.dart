@@ -2,6 +2,7 @@ library app_im;
 
 export 'package:flutter_openim_sdk/flutter_openim_sdk.dart';
 export 'src/meeting_info.dart';
+export 'src/meeting_room_snapshot.dart';
 export 'src/signaling_info.dart';
 export 'src/signaling_listener.dart';
 export 'src/enterprise_manager.dart';

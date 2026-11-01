@@ -30,110 +30,122 @@ class MeetingDetailPage extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            10.verticalSpace,
-            Container(
-              color: Styles.c_FFFFFF,
-              padding: EdgeInsets.only(
-                left: 16.w,
-                right: 16.w,
-                top: 16.h,
-                bottom: 20.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  (logic.meetingInfo.meetingName ?? '').toText
-                    ..style = Styles.ts_0C1C33_17sp_medium,
-                  14.verticalSpace,
-                  Row(
+      body: Obx(() => SingleChildScrollView(
+            child: Column(
+              children: [
+                10.verticalSpace,
+                Container(
+                  color: Styles.c_FFFFFF,
+                  padding: EdgeInsets.only(
+                    left: 16.w,
+                    right: 16.w,
+                    top: 16.h,
+                    bottom: 20.h,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      22.horizontalSpace,
-                      logic.meetingStartTime.toText
-                        ..style = Styles.ts_0C1C33_20sp_medium,
-                      const Spacer(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: logic.isStartedMeeting()
-                              ? Styles.c_FFB300
-                              : Styles.c_0089FF,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 2.h,
-                        ),
-                        child: Text(
-                          logic.isStartedMeeting()
-                              ? StrRes.started
-                              : StrRes.didNotStart,
-                          style: Styles.ts_FFFFFF_12sp,
-                        ),
+                      (logic.meetingInfo.meetingName ?? '').toText
+                        ..style = Styles.ts_0C1C33_17sp_medium,
+                      14.verticalSpace,
+                      Row(
+                        children: [
+                          22.horizontalSpace,
+                          logic.meetingStartTime.toText
+                            ..style = Styles.ts_0C1C33_20sp_medium,
+                          const Spacer(),
+                          Container(
+                            decoration: BoxDecoration(
+                              color:
+                                  logic.phase.value == MeetingDetailPhase.active
+                                      ? Styles.c_FFB300
+                                      : Styles.c_0089FF,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 2.h,
+                            ),
+                            child: Text(
+                              logic.statusText,
+                              style: Styles.ts_FFFFFF_12sp,
+                            ),
+                          ),
+                          const Spacer(),
+                          logic.meetingEndTime.toText
+                            ..style = Styles.ts_0C1C33_20sp_medium,
+                          22.horizontalSpace,
+                        ],
                       ),
-                      const Spacer(),
-                      logic.meetingEndTime.toText
-                        ..style = Styles.ts_0C1C33_20sp_medium,
-                      22.horizontalSpace,
+                      Row(
+                        children: [
+                          logic.meetingStartDate.toText
+                            ..style = Styles.ts_8E9AB0_14sp,
+                          const Spacer(),
+                          Container(
+                            height: 1.h,
+                            width: 28.w,
+                            margin: EdgeInsets.only(right: 5.w),
+                            color: Styles.c_E8EAEF,
+                          ),
+                          logic.meetingDuration.toText
+                            ..style = Styles.ts_8E9AB0_14sp,
+                          Container(
+                            height: 1.h,
+                            width: 28.w,
+                            margin: EdgeInsets.only(left: 5.w),
+                            color: Styles.c_E8EAEF,
+                          ),
+                          const Spacer(),
+                          logic.meetingEndDate.toText
+                            ..style = Styles.ts_8E9AB0_14sp,
+                        ],
+                      ),
                     ],
                   ),
-                  Row(
+                ),
+                Container(
+                  color: Styles.c_FFFFFF,
+                  margin: EdgeInsets.only(top: 12.h),
+                  padding: EdgeInsets.only(left: 15.w, right: 15.w),
+                  child: Column(
                     children: [
-                      logic.meetingStartDate.toText
-                        ..style = Styles.ts_8E9AB0_14sp,
-                      const Spacer(),
-                      Container(
-                        height: 1.h,
-                        width: 28.w,
-                        margin: EdgeInsets.only(right: 5.w),
-                        color: Styles.c_E8EAEF,
+                      _buildItemView(
+                        value: sprintf(StrRes.meetingNoIs, [logic.meetingNo]),
+                        showCopy: true,
+                        onTap: logic.copy,
                       ),
-                      logic.meetingDuration.toText
-                        ..style = Styles.ts_8E9AB0_14sp,
-                      Container(
-                        height: 1.h,
-                        width: 28.w,
-                        margin: EdgeInsets.only(left: 5.w),
-                        color: Styles.c_E8EAEF,
+                      _buildItemView(
+                        value: sprintf(
+                            StrRes.meetingOrganizerIs, [logic.meetingCreator]),
                       ),
-                      const Spacer(),
-                      logic.meetingEndDate.toText
-                        ..style = Styles.ts_8E9AB0_14sp,
                     ],
                   ),
+                ),
+                if (logic.loading.value)
+                  const LinearProgressIndicator(
+                      key: ValueKey('meeting-state-loading')),
+                if (logic.errorType.value != null) ...[
+                  Text(StrRes.meetingStateUnavailable,
+                      key: const ValueKey('meeting-state-error')),
+                  TextButton(
+                      key: const ValueKey('meeting-state-retry'),
+                      onPressed: logic.retry,
+                      child: Text(StrRes.meetingStateRetry)),
                 ],
-              ),
-            ),
-            Container(
-              color: Styles.c_FFFFFF,
-              margin: EdgeInsets.only(top: 12.h),
-              padding: EdgeInsets.only(left: 15.w, right: 15.w),
-              child: Column(
-                children: [
-                  _buildItemView(
-                    value: sprintf(StrRes.meetingNoIs, [logic.meetingNo]),
-                    showCopy: true,
-                    onTap: logic.copy,
+                Button(
+                  key: const ValueKey('meeting-enter'),
+                  enabled: logic.canEnter,
+                  text: StrRes.enterMeeting,
+                  onTap: logic.enterMeeting,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 72.w,
+                    vertical: 90.h,
                   ),
-                  _buildItemView(
-                    value: sprintf(
-                        StrRes.meetingOrganizerIs, [logic.meetingCreator]),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Button(
-              text: StrRes.enterMeeting,
-              onTap: logic.enterMeeting,
-              margin: EdgeInsets.symmetric(
-                horizontal: 72.w,
-                vertical: 90.h,
-              ),
-            ),
-          ],
-        ),
-      ),
+          )),
     );
   }
 

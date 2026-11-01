@@ -7,6 +7,7 @@ import org.webrtc.RendererCommon.RendererEvents;
 import io.flutter.view.TextureRegistry.SurfaceProducer;
 /** Fake EGL/native output boundary. No production lifecycle logic is copied. */
 public final class SurfaceTextureRenderer {
+  interface SurfaceLifecycle { void available(); void cleanup(); }
   public static final List<SurfaceTextureRenderer> instances = new CopyOnWriteArrayList<>();
   public final AtomicInteger releases = new AtomicInteger(), resets = new AtomicInteger();
   public volatile boolean finalRelease;
@@ -20,6 +21,13 @@ public final class SurfaceTextureRenderer {
   public void setCleanupFailureHandler(Runnable handler) { cleanupFailureHandler = handler; }
   public void init(EglBase.Context context, RendererEvents events) {}
   public void surfaceCreated(SurfaceProducer producer) {}
+  public void setSurfaceLifecycle(SurfaceLifecycle lifecycle) {}
+  public void markSurfaceUnavailable() {}
+  public void markSurfaceAvailable() {}
+  public void onFrame(org.webrtc.VideoFrame frame) {}
+  public java.util.concurrent.CompletableFuture<Void> releaseSurfacePhysical() {
+    return java.util.concurrent.CompletableFuture.completedFuture(null);
+  }
   public void resetFrameState() { resets.incrementAndGet(); }
   public void beginFinalRelease() { finalRelease = true; }
   public void release() { releaseThread = Thread.currentThread(); releases.incrementAndGet(); onRelease.run(); }

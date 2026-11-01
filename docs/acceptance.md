@@ -2,7 +2,7 @@
 
 本目录为基于固定官方版本与原企业源码合并的开发版本。只有全部约定用例通过，才能标记升级完成。当前尚未作此标记。
 
-2026-11-02已恢复语音、视频、通话和会议开发与测试。Windows当前版本3.8.7/380701；Android114正在构建和媒体联调，尚未交付已验收包。159项Dart、108项Java源码边界测试及编译证据单列，不能替代真实JNI、AVD媒体或ARM64设备验收。以下暂停和113旧候选记录保留其历史范围。
+2026-11-02已恢复语音、视频、通话和会议开发与测试。Windows3.8.7/380701已发布到独立内网下载页；Android114仅提供本地正常main候选，媒体状态NOT_ACCEPTED（未通过验收），不发布Android下载或更新，正式current包仍标记present:false且文件不存在。163项Dart、108项Java边界测试及62个Java文件的实际Android编译通过，不能替代真实JNI、AVD媒体或ARM64设备验收。以下暂停和113旧候选记录保留其历史范围。
 
 历史安排（2026-11-01）：按用户当时指示，暂时跳过视频、语音、通话与会议测试，继续其余回归和构建。未完成112改造、测试失败和原生实验已归档，见 `tests/delivery/deferred-media-work-20261101.json`；root实际核69份112副本、271份外置原生实验文件及28份入会测试证据。8个活动源文件恢复111原字节、新model和2个未完成测试移入可恢复归档，3229项运行源、SDK194、native99及62/64依赖覆盖复核通过，见 `tests/flutter/112-restored-111-verification.json`。113以该基线仅更新pubspec和iOS版本元数据，42项非媒体回归通过，x64、ARM64正常main候选已构建并完成签名、版本、ABI及原生依赖核验；两包仅保存在本地候选目录，不发布到更新服务。跳过不等于通过，相关功能仍保留在源码中，以下历史失败不抹除。
 
@@ -10,7 +10,7 @@
 |---|---|---|
 | Linux 服务端与企业服务 | 固定版本构建、隔离运行、100个真实SDK共同在线30分钟 | 不含真实业务数据库迁移 |
 | Web、Windows 3.8.7 | 94项适配及TypeScript通过；真实合成引用转发5人后会话/历史可用；搜索5原UI+10Store、视频9行为+原生MP4和正常TLS通过 | 最终NSIS及对应打包程序TLS/SDK/受管Range巡检通过；Windows未代码签名，真实覆盖安装和实际硬件效果按本轮报告逐项记录 |
-| Android 3.8.14+114 开发中 | 159项Dart、108项Java源码边界通过，会议状态和原生帧生命周期改造恢复 | APK/AVD媒体完整验证仍在进行；未发布、未提供真机结论 |
+| Android 3.8.14+114 本地开发候选 | 163项Dart、108项Java边界及62个Java文件实际Android编译通过；正常main候选；单端快速会议普通Leave/重入、End后Ended禁入通过限定原界面验证 | 媒体NOT_ACCEPTED：三人通话退出121023毫秒失败，后续17项物理任务最终完成且摄像头为空；预约、纯语音、完整跨端矩阵及真机未验收；不发布 |
 | 历史Web、Windows 3.8.6 | 原界面运行；本轮57/57适配测试、真实托盘已读/工作圈、合成截图GUI与ASAR、最终打包启动巡检通过；此前安装升级证据按原版本保留 | Windows包未代码签名；物理媒体效果另验 |
 | Android 3.8.9+109 | 123项Dart测试、完整输入冻结下ARM64正常主程序构建、签名及原生载荷来源核验；x64正常main原登录、跨端群已读0/2→1/1→2/0、真实断网及两tab恢复重试 | ARM转译启动触发SIGILL；连续通话及清理、群通话/会议/共享、系统安装升级及物理ARM运行仍未通过；尚未发布 |
 | Android 3.8.10+110 | 134项Dart/88项Java及Android类路径编译；私有x64正常main缓存、API撤销及失效冷启；两轮单聊视频、预约会议、三方原邀请/主持权限/双向共享和最后结束有实际证据 | 同进程重登按钮缺陷、群退出72.313秒失败、首次会议中断、详情结束状态缺口仍保留；未发布，物理ARM与安装更新未验收 |
@@ -31,7 +31,17 @@
 - 原3.8.6真实Electron引用转发在固定WASM中复现退出；新适配保留引用目标，经5名合成接收者转发后历史及自信息查询有效。普通文字/媒体保留原SDK路径；批次有序等待，失败接收者可重试，见windows-387-quote-facade-review.json及本轮原生报告。
 - 综合搜索和聊天记录页5项原UI结果、10项真实Store行为回归通过，覆盖结果列表、消息上下文定位、失败重试及过期响应，见windows-387-search-review.json。
 - 视频下载9项行为测试通过；真实生产下载函数/主进程在隐藏Electron窗口中用合成MP4完成200下载、SHA一致、受管Range206和真实视频解码；正常证书校验下载隔离服务器文件通过，见windows-387-video-download-review.json。该证据不等于所有旧附件、硬件或原聊天窗口操作均已逐项验收。
-- 媒体恢复进度见tests/delivery/media-resume-20261102/；尚未用新Android114完成AVD媒体验收，原失败及113候选证据不覆盖写。
+- Android114实际原界面媒体状态为NOT_ACCEPTED，具体失败及有限通过范围见下一节；原失败及113候选证据不覆盖写。
+
+## 2026-11-02 Android114 媒体恢复结果：NOT_ACCEPTED
+
+- 源码与构建：完整163项Dart、108项Java边界测试通过；62个Java文件的实际Android编译通过。正常lib/main.dart的x64候选已构建、验签并在专用AVD运行；ARM64候选与真实校验值见README和使用说明中的候选表。两者仅用于本地开发，正式current包仍标记present:false且文件不存在，不进入下载页或更新发布记录。
+- 已通过的限定原界面操作：单端快速会议普通Leave后可重入；主持End后详情状态为Ended，再次进入被拒绝。这些结果不能扩展为多人媒体、预约会议或物理设备通过。
+- 实际三人通话退出失败：Room ownedResources清理121023毫秒后报FAILED；后续观察确认17个已排队物理任务全部完成，最终摄像头为空。晚完成说明本轮没有证据证明永久资源泄漏，不会把已发生的退出超时判为通过。
+- 唯一早期定向诊断在新track收到STOP_RTC_STATS_UNAVAILABLE后、挂断前捕获，不是第二轮正常验收。Stats、FrameMailbox、Media工作线程当时等待队列；存在未符号化native调用，发布库缺少完整C++符号，不能据偏移给具体函数或断定根因。UNAVAILABLE也可由已有peer关闭/隔离状态直接拒绝，不能当作此刻新增阻塞证明。
+- 未完成：预约会议、纯语音通话、完整Web/Windows/Android交叉矩阵、连续正常通话与退出、ARM64真机媒体、普通手机证书信任及系统安装升级。iOS仍仅交付源码和Mac/Xcode说明。
+
+本轮汇总见tests/delivery/android-114-media-resume-review.json。详细证据位于tests/delivery/media-resume-20261102/：source-freeze-114.json、android-114-single-quick-first-leave.json、android-114-single-quick-leave-confirm-leave.json、android-114-single-quick-end-confirm-leave.json、android-114-group-first-confirmed-leave.json、android-114-group-first-physical-composition-review.json、android-114-directed-group-native-result.json。早期公开栈为tests/flutter/android-114-directed-group-native-backtrace.txt。历史失败及暂停归档保持原字节。
 
 ## 2026-11-02 Windows 3.8.6 历史验收
 

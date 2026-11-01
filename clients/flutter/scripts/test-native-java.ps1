@@ -36,6 +36,8 @@ $stubs = @(Get-ChildItem -LiteralPath (Join-Path $tests 'native-renderer-stubs')
   (Join-Path $native 'NativeMediaLifecycle.java') `
   (Join-Path $native 'NativeRendererBinding.java') `
   (Join-Path $native 'FlutterRTCVideoRenderer.java') `
+  (Join-Path $native 'NativeFrameHandoff.java') `
+  (Join-Path $native 'NativeFrameMailbox.java') `
   (Join-Path $tests 'NativeRendererWiringTest.java') `
   (Join-Path $tests 'NativeDeadlineRendererTest.java')
 if ($LASTEXITCODE) { throw 'Actual renderer boundary wiring tests did not compile.' }
@@ -66,3 +68,20 @@ $cameraStubs = @(Get-ChildItem -LiteralPath (Join-Path $tests 'native-camera-sta
 if ($LASTEXITCODE) { throw 'Actual camera-state behavior tests did not compile.' }
 & (Join-Path $Jdk 'bin/java.exe') -cp $cameraClasses 'com.cloudwebrtc.webrtc.CameraStateBehaviorTest'
 if ($LASTEXITCODE) { throw 'Actual camera-state behavior test failed.' }
+
+# Actual integrated Renderer/Surface/Binding/Owner/frame mailbox, with only
+# Android, borrowed-frame/JNI, EGL and platform boundaries controlled.
+$frameClasses = Join-Path $classes 'frame-integration'
+New-Item -ItemType Directory -Force -Path $frameClasses | Out-Null
+$frameStubs = @(Get-ChildItem -LiteralPath (Join-Path $tests 'native-frame-stubs') -Filter '*.java' -File -Recurse | ForEach-Object { $_.FullName })
+& (Join-Path $Jdk 'bin/javac.exe') --release 8 -d $frameClasses @frameStubs `
+  (Join-Path $native 'NativeMediaLifecycle.java') `
+  (Join-Path $native 'NativeRendererBinding.java') `
+  (Join-Path $native 'FlutterRTCVideoRenderer.java') `
+  (Join-Path $native 'SurfaceTextureRenderer.java') `
+  (Join-Path $native 'NativeFrameHandoff.java') `
+  (Join-Path $native 'NativeFrameMailbox.java') `
+  (Join-Path $tests 'NativeFrameIntegrationTest.java')
+if ($LASTEXITCODE) { throw 'Actual integrated frame lifecycle tests did not compile.' }
+& (Join-Path $Jdk 'bin/java.exe') -cp $frameClasses 'com.cloudwebrtc.webrtc.NativeFrameIntegrationTest'
+if ($LASTEXITCODE) { throw 'Actual integrated frame lifecycle test failed.' }

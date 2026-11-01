@@ -366,7 +366,7 @@
         },
         {
           "path": "android/src/main/java/com/cloudwebrtc/webrtc/FlutterRTCVideoRenderer.java",
-          "sha256": "ebb7ade4ed9496fd359101c5e605ed0f0c1a5412af4d2ef36183eaa490adbb12",
+          "sha256": "bd8c77548b2c1d9afe30b94cdb907691d731738dacb3544a0df28658faf0eb59",
           "upstreamSHA256": "4d704e44908f60d37dbe38605032cab7a82b37e32238dc73daa32a996813b667"
         },
         {
@@ -382,6 +382,16 @@
         {
           "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeCleanupSequence.java",
           "sha256": "1fa3e0541d23405a3977593fc03d703e525bbec40d55d2271d67cf3d79ac4719",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeFrameHandoff.java",
+          "sha256": "19f08f827fcf2396d7a48e838c59d0e262af13b3ecc09879da91bb7126c9609a",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeFrameMailbox.java",
+          "sha256": "c01c41f251e1ac29a5973fc520b09a5a450eced2a6acb23f598a7c85cf55baeb",
           "upstreamSHA256": null
         },
         {
@@ -401,7 +411,7 @@
         },
         {
           "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeRendererBinding.java",
-          "sha256": "dbc22ebba32d36ab8d644f73866f71f59427bf18b41dea53caccb62a8989de36",
+          "sha256": "098653b434430272e9f678684456fc129f3cb316acfcdc4b7863e13acfa101c1",
           "upstreamSHA256": null
         },
         {
@@ -421,7 +431,7 @@
         },
         {
           "path": "android/src/main/java/com/cloudwebrtc/webrtc/SurfaceTextureRenderer.java",
-          "sha256": "f155cc7121a19e855d7529965ddc4ee66aded0b451a68a6f6d3616d39d35e952",
+          "sha256": "bcd28415a49ced444e3497a05f93acaebda5554cbb2f7c25fe3897abde10d506",
           "upstreamSHA256": "654644bef6cad4e22b64d16a25772a5d772f662736a29d1c8f7c7d84b5524de7"
         },
         {
@@ -454,7 +464,8 @@
           "sha256": "515f30441659bc336c0b76e4026289b250beb8bf06ace1c6b5c8348c59215219",
           "upstreamSHA256": "4d6a83898ac65e0c750a55fef466a9918b96499d2c0b1c687a8694045f8af263"
         }
-      ]
+      ],
+      "frameHandoffScope": "Manual SurfaceProducer only; immutable renderer epochs; native detach -> bounded retained-frame drain -> real EGL release -> lease unregister -> final producer release. Main-thread state mutation. Original Media2/Stats2 and12s budget retained; new Frame2 pool with8queue/10retained bound. Runtime media acceptance separate."
     },
     {
       "package": "getuiflut-0.2.21",

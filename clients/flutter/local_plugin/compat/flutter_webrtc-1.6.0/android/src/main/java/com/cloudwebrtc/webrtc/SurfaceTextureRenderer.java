@@ -25,6 +25,11 @@ import io.flutter.view.TextureRegistry;
 public class SurfaceTextureRenderer extends EglRenderer {
   // Callback for reporting renderer events. Read-only after initilization so no lock required.
   private RendererCommon.RendererEvents rendererEvents;
+  interface SurfaceLifecycle { void available(); void cleanup(); }
+  private SurfaceLifecycle surfaceLifecycle;
+  void setSurfaceLifecycle(SurfaceLifecycle value) { surfaceLifecycle = value; }
+  void markSurfaceUnavailable() { surfaceAvailable = false; }
+  void markSurfaceAvailable() { if (!finalRelease) surfaceAvailable = true; }
   private final Object layoutLock = new Object();
   private boolean isRenderingPaused;
   private boolean isFirstFrameRendered;
@@ -169,24 +174,34 @@ public class SurfaceTextureRenderer extends EglRenderer {
             new TextureRegistry.SurfaceProducer.Callback() {
               @Override
               public void onSurfaceAvailable() {
-                surfaceAvailable = true;
+                if (surfaceLifecycle == null) surfaceAvailable = true; else surfaceLifecycle.available();
               }
 
               @Override
               public void onSurfaceCleanup() {
-                surfaceDestroyed();
+                if (surfaceLifecycle == null) surfaceDestroyed(); else surfaceLifecycle.cleanup();
               }
             }
     );
   }
 
+  // The externally selected manual lifecycle cannot normally trigger this callback
+  // in the fixed embedding. Keep a conservative, explicitly composed callback path.
   public void surfaceDestroyed() {
+    java.util.concurrent.CompletableFuture<Void> physical = releaseSurfacePhysical();
+    NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
+      public void success() {}
+      public void error(String code, String message) {
+        android.util.Log.w("FlutterWebRTCPlugin", "[OpenIMRtcNative] operation=surface.cleanup phase=callerError code=" + code);
+      }
+    }, () -> cleanupOwner.callerTimedOut(physical, "surface.cleanup"));
+  }
+
+  java.util.concurrent.CompletableFuture<Void> releaseSurfacePhysical() {
     ThreadUtils.checkIsOnMainThread();
-    if (finalRelease) return;
+    if (finalRelease) return java.util.concurrent.CompletableFuture.completedFuture(null);
     surfaceAvailable = false;
     pendingSurfaceCleanup.incrementAndGet();
-    // The platform callback returns immediately. EGL waits happen only on the
-    // same bounded output owner used by final renderer release.
     java.util.concurrent.CompletableFuture<Void> physical = cleanupOwner.submit("surface.cleanup", () -> {
       synchronized (surfaceLock) {
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -203,14 +218,7 @@ public class SurfaceTextureRenderer extends EglRenderer {
         cleanupOwner.quarantine(); cleanupFailureHandler.run();
       }
     });
-    NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
-      public void success() {}
-      public void error(String code, String message) {
-        // Only physical.whenComplete may report an actual native failure.
-        // A caller deadline keeps this exact output barrier temporarily held.
-        android.util.Log.w("FlutterWebRTCPlugin", "[OpenIMRtcNative] operation=surface.cleanup phase=callerError code=" + code);
-      }
-    }, () -> cleanupOwner.callerTimedOut(physical, "surface.cleanup"));
+    return physical;
   }
 
   // Update frame dimensions and report any changes to |rendererEvents|.

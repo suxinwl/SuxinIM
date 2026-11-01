@@ -1012,6 +1012,11 @@ class StrRes {
   static String get meetingClosedHint => 'meetingClosedHint'.tr;
 
   static String get meetingIsOver => 'meetingIsOver'.tr;
+  static String get meetingEnded => 'meetingEnded'.tr;
+  static String get meetingStateLoading => 'meetingStateLoading'.tr;
+  static String get meetingStateUnavailable => 'meetingStateUnavailable'.tr;
+  static String get meetingStateRetry => 'meetingStateRetry'.tr;
+
 
   static String get networkError => 'networkError'.tr;
 

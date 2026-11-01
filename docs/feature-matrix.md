@@ -4,7 +4,7 @@
 
 历史安排（2026-11-01）曾暂缓视频、语音、语音/视频通话和会议测试；以下媒体记录仅保留原运行范围，不是113通过证明。112未完成会议改造及原生实验已归档并从活动源撤出，主线恢复已验证111后，113已通过42项非媒体回归并构建x64/ARM64正常主程序本地候选；安装包存在不等于媒体或真机通过。未完成标记和可恢复文件入口见 `tests/delivery/deferred-media-work-20261101.json`，不得将跳过项记为验收通过。
 
-2026-11-02当前Windows为3.8.7 / 380701，94项适配与TypeScript检查通过，多人引用转发、搜索定位和视频下载有本轮定向证据。3.8.6的57项及工作圈/托盘已读/截图证据保留为历史；一次Object异常的原记录仍保留。媒体已恢复开发与联调，Android114正在构建和运行验证，159项Dart、108项Java源码结果不能代替AVD或真机媒体验收；113保留旧候选。本轮Windows包未代码签名。
+2026-11-02当前Windows为已发布的3.8.7 / 380701内网测试包，94项适配与TypeScript检查通过，多人引用转发、搜索定位和视频下载有本轮定向证据。3.8.6的57项及工作圈/托盘已读/截图证据保留为历史；一次Object异常的原记录仍保留。媒体已恢复开发与联调，Android114完整163项Dart、108项Java边界及62个Java文件实际Android编译通过，仅保留本地正常main候选；媒体NOT_ACCEPTED，不发布Android下载/更新；正式current包仍标记present:false且文件不存在。113保留旧候选。本轮Windows包未代码签名。
 
 | 功能 | 原入口 / 新适配路径 | 当前证据 |
 |---|---|---|
@@ -22,8 +22,8 @@
 | 朋友圈、可见范围、评论、点赞 | 原工作圈UI → /office/work_moment/* | Windows3.8.6本人互动即时同步列表/详情、失败保留草稿、紧凑顶部、他人事件更新及缺失事件约5秒轮询通过；实测5062ms，不承诺严格≤5秒，见windows-386-moments-review.json。 服务端可见范围/幂等/owner验证；真实Web页面运行通过。Android108原UI四种范围发布：公开102/103均可见、仅自己两人均不可见、指定102仅102可见、排除102仅103可见；102原UI评论点赞后Android刷新显示。见android-collaboration-social-ready-108.json及android108-circle-scope-review.json；不作为109/ARM64实物或音视频通过证据 |
 | 标签群发 | 原标签发送UI → /office/tag/* | 服务端owner/持久化/去重/重试单测；真实客户端去重发送通过 |
 | OA通知 | 原OA专页；官方notification account + content1400/session4 | oa-api-report.json发送7个合成目标；真实Web与Android原main专页渲染通过，Android为API30/x86_64验证包 |
-| 单聊/群通话、呼叫记录 | 原音视频弹窗 → 持久企业信令 + LiveKit | Web/Windows原视频呼叫、断网恢复、旧令牌及三种TURN中继有实际证据。Android110正常main同进程两通视频采样、文字送达及挂断资源释放通过限定范围验证；三人群前台媒体可用，但Home后曾短暂采样空白，退出时removeSink约58秒、Room72.313秒失败，不能标记群通话验收完成。原生统计缺失、模拟器及历史失败分别记录，见acceptance.md |
-| 即时/预约会议、主持/静音/摄像头/共享 | 原会议入口 → 企业会议状态/受邀媒体权限，客户端读取权威meetingInfo | meeting-client.json六组Web/Windows原界面链路含结束旧令牌拒绝。Android110原预约创建、修改30→60分钟、取消并退出重入核对通过；原即时会三方加入、主持三项限制及恢复、双向screen_share有实证，最终确认结束资源1651ms且Web媒体关闭。首次Android协商/重连失败仍保留，最终详情仍显示Started；本轮未留真实旧RTC JWT用于重放。见android-110-meeting-runtime-report.json及tests/delivery/android-110-meeting-root-runtime-review.json；使用合成Web媒体，物理设备效果另验 |
+| 单聊/群通话、呼叫记录 | 原音视频弹窗 → 持久企业信令 + LiveKit | 媒体NOT_ACCEPTED。Android114实际三人通话退出Room清理121023毫秒失败；后续17项物理任务最终全部完成且摄像头为空，不能改判退出通过。定向诊断不等于第二轮正常验收，具体native根因未确定。Web/Windows及Android110历史单聊、群通话与失败范围保留，见acceptance.md；本轮纯语音和完整跨端矩阵未完成 |
+| 即时/预约会议、主持/静音/摄像头/共享 | 原会议入口 → 企业会议状态/受邀媒体权限，客户端读取权威meetingInfo | Android114单端快速会议普通Leave/重入、End后Ended状态及禁入通过限定原界面验证；不含多人媒体通过。本轮预约、主持/共享完整跨端回归和真机仍未完成。meeting-client.json的6组Web/Windows及Android110预约/三方主持/双向共享历史证据与首次协商、详情状态失败继续保留，不倒用于114；见acceptance.md |
 | 更新检查/强更 | Chat版本主记录 + 企业安装包元数据 | 服务端可选/强更/不可降级及校验；Windows真实NSIS 3.8.4→最终3.8.5安装及安装后native回归通过，原更新hook六种策略另有隔离UI证据；Android门禁10项测试通过，实际安装更新尚待验收 |
 | 多端策略 | 固定官方 policy4 | PC3/Web5/Android2并存与同类互踢真实API通过；最终已安装Windows精确Chat/IM撤销、旧WebSocket关闭、重新登录、被踢回登录且保留新会话通过；企业/媒体拒绝通过 |
 | Seq、撤回与群权限 | 固定官方SDK/服务端，保留原消息UI | seq-client.json：未读5→0、离线补3条、8条历史ID一致、撤回UI、禁言成员转群主/1507通知及非法JoinSource拒绝通过 |

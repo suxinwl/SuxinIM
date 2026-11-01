@@ -1,6 +1,28 @@
 # Flutter 升级与构建说明
 
-本应用以原始 3.5.1+39 企业 Flutter 源码为基础，保留原界面和已完成的企业功能。升级成果用于独立 OpenIM38 实例。当前源码修订为 **3.8.13+113（从已验证111恢复后仅递增版本；42项非媒体回归通过，两份正常main本地候选已构建验签；x64缓存首页、About及无更新提示局部验证通过；按用户要求跳过音视频、会议及通话验证）**。111保留138项完整Flutter、94项Java及真实Android类路径编译历史，以及缓存撤销后同进程表单重登和About局部通过证据；这些不改写为113全套重跑。110群媒体清理及会议中断失败仍保留，未发布。固定 OpenIM SDK 仍为 **3.8.3+hotfix.15**；应用版本与 SDK 标签分别记录。
+2026-11-02 用户已恢复音视频与会议开发。当前工作区修订为 **3.8.14+114**，已合入会议权威结束态、不可变登录会话与连接尝试归属、受控原生帧转交，以及仅 Quote 消息选择官方 `sendMessageNotOss` 的保护。完整 Flutter 回归 **163 项通过**，23 目标静态分析 0 错误、106 警告、615 提示，仍非 clean lint；正式 Java 108 项通过，真实 Android Gradle 插件编译通过。帧转交增加固定 2 个 Frame worker、8 队列和 10 retained 许可，原 Media2、Stats2、12 秒调用预算和真实物理释放屏障保持。证据在 `tests/delivery/media-resume-20261102/`。114 正常 `lib/main.dart` 的签名 x64、ARM64 本地候选均已构建，v2 验签通过，包名 `io.openim.upgrade38.test.dev`，min API24 / target35。两次构建各自复核 3232 应用源码、194 固定 SDK 源码、1045 Dart/测试输入及132原生输入逐 SHA 不变；x64 的10项非 libapp 原生依赖与111逐字相同，ARM64 的12项与109逐字相同。自有原生 x64 AVD 已覆盖安装并读取全安装 APK 核对相同哈希，缓存 Home104、Mine自我ID和About114已在同进程观察；这不是新表单登录、系统安装器更新、ARM手机或媒体验收。110 的慢 removeSink、群媒体清理和真实跨端媒体仍须以新包运行结果验收，不能据边界测试推断已经修复。114 未发布。下述 113 包及此前暂停记录按其原验证范围保留，不改写历史失败。
+
+114 候选仅供本地开发检查，均未发布、未通过媒体验收；ARM64 未在物理设备运行。每个 APK 的同名 `.json` 保存源码、签名、依赖载荷及未完成状态，不以构建成功代替运行验收。
+
+| 本地候选 | 字节数 | SHA-256 |
+|---|---:|---|
+| `artifacts/android-candidates/OpenIM38-3.8.14+114-development-x64-candidate.apk` | 82,520,892 | `fed978e3e414121ce3afa5f789fee20a2a062c93f39cd87b13a664acc424993c` |
+| `artifacts/android-candidates/OpenIM38-3.8.14+114-development-arm64-candidate.apk` | 76,743,141 | `f6f946be8ffdf8a00d92c031cfa70e4a7b24bfa1108d838e1446d219e5745312` |
+
+114 的实际媒体状态为 **NOT_ACCEPTED**，公开脱敏摘要为 `tests/delivery/android-114-media-resume-review.json`。单端与三人结果分别记录：
+
+| 项目 | 本轮实际结果 |
+|---|---|
+| 单端原 Quick Meeting | 104 原界面创建，普通 Leave 最终确认后完整资源清理 1267ms；重开列表仍 Started，详情正常二次进入。真正 End Meeting 最终确认后清理 1622ms，详情自动变 Ended 并更新结束时间；点击禁用的 Enter 后画面保持相同。仅该单端业务态通过。 |
+| 三人视频与下行监测 | 104 原 Android 邀请 106/107，两 Web 原界面接听。Web 收到 Android 及另一 Web 的实际帧/RTP、合成音频包和能量增加；Android 单次画面可见两远端，一份早期接收统计为 7 帧，后续统计 TIMEOUT/UNAVAILABLE、信令 IO 出现 SocketException，不能称持续稳定或物理可听声通过。 |
+| 三人原挂断 | 完整 Room 清理 **121023ms 后失败**；3 次实际 removeSink 包装耗时 111418、111439、29979ms。调用预算仍为原 12 秒，超时明确报告失败。晚期实际观察到 17 个 queued 任务均有 physicalComplete、相机最终为空；最终释放不能抵消先前失败。没有执行正常第二次群通话验收或 Home/resume 矩阵。 |
+| 一次定向诊断 | 前次晚期 SIGQUIT 已在资源释放后，不能代表阻塞现场。另经批准只复现一次诊断，未重启 PID5016，首次新轨道 STOP_RTC_STATS_UNAVAILABLE 即取一次 debuggerd；5.465 秒内完成观察和捕获，99 线程/979 原生帧。该时刻 Stats2/Frame2/Media2 均队列等待，未识别到活跃 getStats/removeSink JNI。UNAVAILABLE 可表示该 peer closing/quarantined 而在 JNI 前拒绝，不等同新阻塞。该诊断轮退出仍失败 16280ms；不计正常第二次调用或无扰动性能验收。 |
+| 根因与符号边界 | 固定 release WebRTC `.so` 有 JNI 导出，无完整 C++ 符号/调试信息。现有样本未定位可证的安全窄修，不以无符号 offset 虚构 C++ 函数、锁拥有者或自旋；没有继续追加轮次、延长产品超时或丢弃物理屏障。 |
+| 尚未完成 | 预约会议原 UI、纯语音通话与完整跨端矩阵、主持/共享/结束后旧令牌重放、Android 原 UI 引用消息多人转发、物理 ARM64、普通手机的 Go AAR 开发 CA 信任、物理麦克风/扬声器、iOS 构建与真机。真实 MethodChannel 引用路由 4 项及 AAR API 签名检查已通过，不能冒称 Android 原机运行通过。 |
+
+两组 Web 协作进程均原界面退出、记录 track ended/本轮 PC closed 后正常关闭；自有 AVD 在相机为空后正常关闭并保留数据，没有用重启假装恢复通过。114 只允许本地不可变未验收候选；正式 `artifacts/android/OpenIM38-3.8.14+114-development-arm64.apk` 保持不存在，发布清单的 Android 条目为 `present:false`，不提供 current 下载入口，不调用 Android 发布器或强更。硬件缺失不构成源码必然正确的证明。
+
+本应用以原始 3.5.1+39 企业 Flutter 源码为基础，保留原界面和已完成的企业功能。升级成果用于独立 OpenIM38 实例。上一修订为 **3.8.13+113（从已验证111恢复后仅递增版本；42项非媒体回归通过，两份正常main本地候选已构建验签；x64缓存首页、About及无更新提示局部验证通过；当时按用户要求跳过音视频、会议及通话验证）**。111保留138项完整Flutter、94项Java及真实Android类路径编译历史，以及缓存撤销后同进程表单重登和About局部通过证据；这些不改写为113全套重跑。110群媒体清理及会议中断失败仍保留，未发布。固定 OpenIM SDK 仍为 **3.8.3+hotfix.15**；应用版本与 SDK 标签分别记录。
 
 112未完成的会议结束态和会话归属改造已完整保存在`tests/flutter/source-history/111-d4420474/112-unfinished-at-user-skip-20261101T144042Z/`，含原字节、测试失败/未完成记录及恢复说明。8个已有产品文件已恢复111字节，新模型和两份测试已移出活动路径；111的3229源码、194 SDK、99原生输入和62本地包/64路径边均实际复核一致，再只修改pubspec与iOS版本号形成113。113不含112未验收功能。
 

@@ -5,7 +5,12 @@ import java.util.concurrent.Executor;
 
 /** Track sink ownership and renderer output lifetime; independent of Android. */
 final class NativeRendererBinding {
-  interface Track { void attach(); void detach(); default Object key() { return this; } }
+  interface Track {
+    void attach(); void detach(); default Object key() { return this; }
+    default CompletableFuture<Void> prepare(java.util.function.BooleanSupplier current) { return CompletableFuture.completedFuture(null); }
+    default void stopFrameAdmission() {}
+    default CompletableFuture<Void> retireAfterNativeDetach() { return CompletableFuture.completedFuture(null); }
+  }
   interface Output { void releaseEgl(); void releaseProducerOnMain(); }
   static final class SetRequest {
     final boolean accepted;
@@ -121,26 +126,30 @@ final class NativeRendererBinding {
       leases.add(this); owner.register(this);
     }
     void skipAttach() { attachedBarrier.complete(null); }
+    boolean stillCurrent() { return !closing && !failed && requested == generation.get(); }
     void attach() {
-      owner.submit("renderer.attach", () -> {
-        // Temporary deadlines reject new admissions. This job was already
-        // accepted and is physically serialized after its predecessor; a new
-        // soft deadline must not turn its actual attach into a fake success.
-        if (closing || failed || requested != generation.get()) return;
+      final CompletableFuture<Void> prepared;
+      try { prepared = track.prepare(() -> stillCurrent() && !owner.isClosing() && !owner.isPermanentlyQuarantined()); }
+      catch (Throwable error) { attachedBarrier.completeExceptionally(error); return; }
+      prepared.whenComplete((unused, preparationError) -> {
+        if (preparationError != null) { attachedBarrier.completeExceptionally(NativeMediaLifecycle.unwrap(preparationError)); return; }
+        if (!stillCurrent()) { attachedBarrier.complete(null); return; }
         if (owner.isPermanentlyQuarantined()) {
-          emit("operation=renderer.attach phase=attachRejected reason=owner_hard_failure");
-          throw new NativeMediaLifecycle.Failure("RTC_MEDIA_UNAVAILABLE", "Track owner has a permanent physical failure");
+          attachedBarrier.completeExceptionally(new NativeMediaLifecycle.Failure("RTC_MEDIA_UNAVAILABLE", "Track owner has a permanent physical failure")); return;
         }
-        if (owner.isClosing()) {
-          // Normal owner shutdown retires an accepted-but-not-started attach.
-          // Completing its no-JNI barrier lets detachAll release this lease.
-          emit("operation=renderer.attach phase=attachRetired reason=owner_closing");
-          return;
-        }
-        track.attach(); attached = true;
-      }, false).whenComplete((v, error) -> {
-        if (error == null) attachedBarrier.complete(null);
-        else attachedBarrier.completeExceptionally(NativeMediaLifecycle.unwrap(error));
+        if (owner.isClosing()) { attachedBarrier.complete(null); return; }
+        owner.submit("renderer.attach", () -> {
+          if (!stillCurrent()) return;
+          if (owner.isPermanentlyQuarantined()) {
+            emit("operation=renderer.attach phase=attachRejected reason=owner_hard_failure");
+            throw new NativeMediaLifecycle.Failure("RTC_MEDIA_UNAVAILABLE", "Track owner has a permanent physical failure");
+          }
+          if (owner.isClosing()) { emit("operation=renderer.attach phase=attachRetired reason=owner_closing"); return; }
+          track.attach(); attached = true;
+        }, false).whenComplete((v, error) -> {
+          if (error == null) attachedBarrier.complete(null);
+          else attachedBarrier.completeExceptionally(NativeMediaLifecycle.unwrap(error));
+        });
       });
     }
     public Object key() { return track.key(); }
@@ -159,13 +168,16 @@ final class NativeRendererBinding {
           + " ownerJava#" + Integer.toHexString(System.identityHashCode(owner))
           + " trackJava#" + Integer.toHexString(System.identityHashCode(track.key())));
       } catch (Throwable ignored) { /* Current key() is only return-next/default-this. */ }
+      try { track.stopFrameAdmission(); }
+      catch (Throwable error) { done.completeExceptionally(error); return done; }
       attachedBarrier.whenComplete((v, attachError) -> {
+        // An unknown addSink/init failure keeps this lease and its epoch quarantined.
         if (attachError != null) { done.completeExceptionally(NativeMediaLifecycle.unwrap(attachError)); return; }
         owner.submit("renderer.detach", () -> {
           if (attached) { track.detach(); attached = false; }
-          owner.unregister(this); leases.remove(this);
-        }, true).whenComplete((unused, error) -> {
-          if (error == null) done.complete(null); else done.completeExceptionally(NativeMediaLifecycle.unwrap(error));
+        }, true).thenCompose(unused -> track.retireAfterNativeDetach()).whenComplete((unused, error) -> {
+          if (error == null) { owner.unregister(this); leases.remove(this); done.complete(null); }
+          else done.completeExceptionally(NativeMediaLifecycle.unwrap(error));
         });
       });
       return done;

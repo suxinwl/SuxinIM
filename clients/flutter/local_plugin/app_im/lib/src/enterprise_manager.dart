@@ -23,6 +23,7 @@ class EnterpriseManager {
   String? Function()? _userID;
   OnSignalingListener? listener;
   final meetingInfoChanges = StreamController<MeetingInfo>.broadcast();
+  final meetingStateHints = StreamController<String?>.broadcast();
   void Function(GroupMessageReceipt)? onGroupReadReceipt;
   void Function(Map<String, dynamic>)? onMeetingInfoChanged;
   Timer? _timer;
@@ -46,7 +47,95 @@ class EnterpriseManager {
 
   void invalidateCallTerminations() {
     _terminationGeneration++;
+    meetingStateHints.add(null);
     _terminations.invalidate();
+  }
+
+  /// Capture once for a detail page. Never log/render this private pair.
+  CallTerminationSession captureMeetingStateSession() {
+    final base = _baseUrl?.call();
+    final user = _userID?.call();
+    final im = _imToken?.call();
+    final chat = _chatToken?.call();
+    final platform = _platform?.call();
+    if (base == null ||
+        user == null ||
+        user.isEmpty ||
+        im == null ||
+        im.isEmpty ||
+        chat == null ||
+        chat.isEmpty ||
+        platform == null ||
+        !(_ready?.call() ?? true)) {
+      throw StateError('Meeting session is unavailable');
+    }
+    return CallTerminationSession(
+      base,
+      user,
+      im,
+      chat,
+      platform,
+      _terminationGeneration,
+    );
+  }
+
+  bool isMeetingStateSessionCurrent(CallTerminationSession session) =>
+      session.generation == _terminationGeneration &&
+      (_ready?.call() ?? true) &&
+      session.userID == _userID?.call() &&
+      session.imToken == _imToken?.call() &&
+      session.chatToken == _chatToken?.call() &&
+      session.platformID == _platform?.call() &&
+      session.baseUrl == _baseUrl?.call();
+
+  Future<MeetingRoomSnapshot> queryMeetingRoomState(
+    String roomID,
+    CallTerminationSession session,
+  ) async {
+    final data = await _meetingSessionRequest(
+      session,
+      '/signaling/get_signal_invitation_info',
+      {'roomID': roomID},
+    );
+    return MeetingRoomSnapshot.fromEnvelope(roomID, data);
+  }
+
+  Future<Map<String, dynamic>> _meetingSessionRequest(
+    CallTerminationSession session,
+    String path,
+    Map<String, dynamic> data,
+  ) async {
+    if (!isMeetingStateSessionCurrent(session)) {
+      throw StateError('Meeting session changed');
+    }
+    // All authentication and routing belong to the captured attempt, including
+    // when a caller has awaited LoadingView or another UI operation first.
+    final response = await _dio.post<Map<String, dynamic>>(
+      '${session.baseUrl}$path',
+      data: data,
+      options: Options(
+        headers: {
+          'token': session.imToken,
+          'chatToken': session.chatToken,
+          'platformID': session.platformID,
+          'operationID': DateTime.now().microsecondsSinceEpoch.toString(),
+        },
+      ),
+    );
+    if (!isMeetingStateSessionCurrent(session)) {
+      throw StateError('Meeting session changed');
+    }
+    if (response.data?['errCode'] != 0) {
+      throw StateError('Meeting request was rejected');
+    }
+    final result = response.data?['data'];
+    return result is Map ? Map<String, dynamic>.from(result) : {};
+  }
+
+  /// A hint only requests a fresh query. Null refreshes all current details;
+  /// after session invalidation their captured session check rejects it instead.
+  void notifyMeetingRoomChange(String? roomID) {
+    if (roomID == null || roomID.isNotEmpty) meetingStateHints.add(roomID);
   }
 
   Future<List<CallTerminationResult>> retryPendingCallTerminations() =>
@@ -224,6 +313,19 @@ class EnterpriseManager {
 
   Future<void> pullEvents() async {
     final token = _imToken?.call();
+    final chat = _chatToken?.call();
+    final platform = _platform?.call();
+    final user = _userID?.call();
+    final base = _baseUrl?.call();
+    final generation = _terminationGeneration;
+    bool currentPoll() =>
+        token == _imToken?.call() &&
+        chat == _chatToken?.call() &&
+        platform == _platform?.call() &&
+        user == _userID?.call() &&
+        base == _baseUrl?.call() &&
+        generation == _terminationGeneration &&
+        (_ready?.call() ?? true);
     if ((_ready != null && !_ready!()) ||
         _pulling ||
         token == null ||
@@ -244,17 +346,20 @@ class EnterpriseManager {
       );
       final body = response.data!;
       if (body['errCode'] != 0) return;
-      if (_imToken?.call() != token) return;
+      if (!currentPoll()) return;
       final data = Map<String, dynamic>.from(body['data'] ?? {});
       if (_cursor < 0 || data['resyncRequired'] == true) {
         _cursor = (data['cursor'] as num?)?.toInt() ?? 0;
         final active = await getSignalingInvitationInfoStartApp();
+        if (!currentPoll()) return;
         if (active.invitation != null) listener?.receiveNewInvitation(active);
         _meetingsNeedRefresh = true;
-        await _refreshMeetings();
+        await _refreshMeetings(currentPoll);
+        if (currentPoll()) notifyMeetingRoomChange(null);
         return;
       }
       for (final raw in (data['events'] as List? ?? [])) {
+        if (!currentPoll()) return;
         final event = Map<String, dynamic>.from(raw);
         final sequence = (event['id'] ?? event['sequence'] ?? 0) as int;
         if (sequence <= _cursor) continue;
@@ -265,6 +370,7 @@ class EnterpriseManager {
             '/signaling/get_signal_invitation_info',
             {'roomID': roomID},
           );
+          if (!currentPoll()) return;
           if (current['ended'] == true ||
               current['activeInvitationForActor'] == false ||
               !['invited', 'active'].contains(current['state'])) {
@@ -272,10 +378,11 @@ class EnterpriseManager {
             continue;
           }
         }
-        await _dispatch(event);
+        await _dispatch(event, currentPoll);
+        if (!currentPoll()) return;
         _cursor = sequence;
       }
-      await _refreshMeetings();
+      await _refreshMeetings(currentPoll);
     } catch (_) {
       /* Network/auth errors retain the cursor for reconnect. */
     } finally {
@@ -283,19 +390,39 @@ class EnterpriseManager {
     }
   }
 
-  Future<void> _refreshMeetings() async {
-    if (!_meetingsNeedRefresh) return;
+  Future<void> _refreshMeetings(bool Function() current) async {
+    if (!_meetingsNeedRefresh || !current()) return;
     final meetings = await signalingGetMeetings();
+    if (!current()) return;
     for (final info in meetings.meetingInfoList ?? <MeetingInfo>[]) {
       meetingInfoChanges.add(info);
     }
     _meetingsNeedRefresh = false;
   }
 
-  Future<void> _dispatch(Map<String, dynamic> event) async {
+  Future<void> _dispatch(Map<String, dynamic> event, bool Function() current) async {
+    if (!current()) return;
     final type = event['type'] ?? event['event'];
     final payload = Map<String, dynamic>.from(event['data'] ?? {});
     final info = SignalingInfo.fromJson(payload);
+    // Keep raw room identity; SignalingInfo intentionally does not carry state.
+    if (const {
+      'OnHangUp',
+      'onHangup',
+      'hungUp',
+      'hangup',
+      'OnMeetingInfoChanged',
+      'OnRoomParticipantDisconnected',
+      'onRoomParticipantDisconnected',
+    }.contains(type)) {
+      final roomID =
+          payload['roomID'] ??
+          (payload['meetingInfo'] is Map
+              ? payload['meetingInfo']['roomID']
+              : null) ??
+          info.invitation?.roomID;
+      if (roomID is String) notifyMeetingRoomChange(roomID);
+    }
     switch (type) {
       case 'OnGroupReadReceipt':
         onGroupReadReceipt?.call(GroupMessageReceipt.fromJson(payload));
@@ -363,11 +490,13 @@ class EnterpriseManager {
         break;
       case 'onRoomParticipantConnected':
       case 'OnRoomParticipantConnected':
-        listener?.roomParticipantConnected(await _roomInfo(payload));
+        final connectedRoom = await _roomInfo(payload);
+        if (current()) listener?.roomParticipantConnected(connectedRoom);
         break;
       case 'onRoomParticipantDisconnected':
       case 'OnRoomParticipantDisconnected':
-        listener?.roomParticipantDisconnected(await _roomInfo(payload));
+        final disconnectedRoom = await _roomInfo(payload);
+        if (current()) listener?.roomParticipantDisconnected(disconnectedRoom);
         break;
       case 'onMeetingStreamChanged':
       case 'OnMeetingStreamChanged':
@@ -482,28 +611,48 @@ class EnterpriseManager {
     List<String> inviteeUserIDList = const [],
     String? ex,
     String? operationID,
-  }) async => SignalingCertificate.fromJson(
-    await request('/signaling/signal_create_meeting', {
+    CallTerminationSession? expectedSession,
+  }) async {
+    final payload = <String, dynamic>{
       'meetingName': meetingName,
       'meetingHostUserID': meetingHostUserID,
       'startTime': startTime,
       'meetingDuration': meetingDuration,
       'inviteeUserIDList': inviteeUserIDList,
       'ex': ex,
-    }),
-  );
+    };
+    final data = expectedSession == null
+        ? await request('/signaling/signal_create_meeting', payload)
+        : await _meetingSessionRequest(
+            expectedSession,
+            '/signaling/signal_create_meeting',
+            payload,
+          );
+    return SignalingCertificate.fromJson(data);
+  }
+
   Future<SignalingCertificate> signalingJoinMeeting({
     required String roomID,
     String? meetingName,
     String? participantNickname,
     String? operationID,
-  }) async => SignalingCertificate.fromJson(
-    await request('/signaling/signal_join_meeting', {
+    CallTerminationSession? expectedSession,
+  }) async {
+    final payload = <String, dynamic>{
       'roomID': roomID,
       'meetingName': meetingName,
       'participantNickname': participantNickname,
-    }),
-  );
+    };
+    final data = expectedSession == null
+        ? await request('/signaling/signal_join_meeting', payload)
+        : await _meetingSessionRequest(
+            expectedSession,
+            '/signaling/signal_join_meeting',
+            payload,
+          );
+    return SignalingCertificate.fromJson(data);
+  }
+
   Future<dynamic> signalingOperateStream({
     required String roomID,
     String? streamType,

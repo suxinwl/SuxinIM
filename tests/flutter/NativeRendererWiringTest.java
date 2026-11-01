@@ -41,6 +41,11 @@ public final class NativeRendererWiringTest {
   static SurfaceTextureRenderer outputOfNewRenderer() {
     return SurfaceTextureRenderer.instances.get(SurfaceTextureRenderer.instances.size() - 1);
   }
+  static void awaitPhysical(CompletableFuture<Void> physical) throws Exception {
+    long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+    while (!physical.isDone() && System.nanoTime() < until) { Handler.drainMainLoop(); Thread.sleep(1); }
+    physical.get(1, TimeUnit.SECONDS);
+  }
   static void blockRemove(VideoTrack track, CountDownLatch entered, CountDownLatch release) {
     track.onRemove = () -> {
       check(Thread.currentThread() != MAIN, "real renderer called removeSink on main"); entered.countDown();
@@ -62,8 +67,8 @@ public final class NativeRendererWiringTest {
     NativeMediaLifecycle.Owner owner = new NativeMediaLifecycle.Owner();
     Producer producer = new Producer();
     FlutterRTCVideoRenderer renderer = new FlutterRTCVideoRenderer(producer, (track, tag) -> owner);
-    SurfaceTextureRenderer surface = outputOfNewRenderer();
     VideoTrack track = new VideoTrack("first"); attach(renderer, track);
+    SurfaceTextureRenderer surface = outputOfNewRenderer();
     CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
     List<String> sequence = Collections.synchronizedList(new ArrayList<>());
     blockRemove(track, entered, release);
@@ -117,7 +122,7 @@ public final class NativeRendererWiringTest {
   static void actualNativeDetachFailureDoesNotReportSuccessOrDeleteProducer() throws Exception {
     NativeMediaLifecycle.Owner owner = new NativeMediaLifecycle.Owner(); Producer producer = new Producer();
     FlutterRTCVideoRenderer renderer = new FlutterRTCVideoRenderer(producer, (track, tag) -> owner);
-    SurfaceTextureRenderer surface = outputOfNewRenderer(); VideoTrack track = new VideoTrack("throwing"); attach(renderer, track);
+    VideoTrack track = new VideoTrack("throwing"); attach(renderer, track); SurfaceTextureRenderer surface = outputOfNewRenderer();
     track.onRemove = () -> { throw new IllegalStateException("synthetic JNI remove failure"); };
     Reply cleared = new Reply(); renderer.setStream((MediaStream) null, "owner", cleared); cleared.awaitResult();
     Reply disposed = new Reply(); AtomicInteger callback = new AtomicInteger(); renderer.Dispose(disposed, callback::incrementAndGet); disposed.awaitResult();
@@ -144,6 +149,7 @@ public final class NativeRendererWiringTest {
   static void actualEglFailurePreventsProducerSuccess() throws Exception {
     Producer producer = new Producer();
     FlutterRTCVideoRenderer renderer = new FlutterRTCVideoRenderer(producer, (track, tag) -> new NativeMediaLifecycle.Owner());
+    attach(renderer, new VideoTrack("known-egl-failure"));
     SurfaceTextureRenderer surface = outputOfNewRenderer();
     surface.cleanupFailure = new IllegalStateException("synthetic observed EGL release failure");
     Reply reply = new Reply(); AtomicInteger callback = new AtomicInteger(); renderer.Dispose(reply, callback::incrementAndGet); reply.awaitResult();
@@ -151,6 +157,7 @@ public final class NativeRendererWiringTest {
     check(surface.releases.get() == 0 && producer.released.get() == 0 && callback.get() == 0, "actual renderer retried known failed EGL or released producer");
     Producer failingProducer = new Producer();
     FlutterRTCVideoRenderer fresh = new FlutterRTCVideoRenderer(failingProducer, (track, tag) -> new NativeMediaLifecycle.Owner());
+    attach(fresh, new VideoTrack("first-egl-failure"));
     SurfaceTextureRenderer freshSurface = outputOfNewRenderer();
     freshSurface.onRelease = () -> { throw new IllegalStateException("synthetic first EGL release failure"); };
     Reply freshReply = new Reply(); fresh.Dispose(freshReply, () -> {}); freshReply.awaitResult();
@@ -162,7 +169,7 @@ public final class NativeRendererWiringTest {
   static void realDeadlineStillRemovesTombstoneAfterLatePhysicalRelease() throws Exception {
     NativeMediaLifecycle.Owner owner = new NativeMediaLifecycle.Owner(); Producer producer = new Producer();
     FlutterRTCVideoRenderer renderer = new FlutterRTCVideoRenderer(producer, (track, tag) -> owner);
-    SurfaceTextureRenderer surface = outputOfNewRenderer(); VideoTrack track = new VideoTrack("deadline"); attach(renderer, track);
+    VideoTrack track = new VideoTrack("deadline"); attach(renderer, track); SurfaceTextureRenderer surface = outputOfNewRenderer();
     CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
     track.onRemove = () -> {
       entered.countDown();
@@ -192,23 +199,25 @@ public final class NativeRendererWiringTest {
     NativeMediaLifecycle.Owner owner = new NativeMediaLifecycle.Owner();
     Producer aProducer = new Producer(), bProducer = new Producer();
     FlutterRTCVideoRenderer a = new FlutterRTCVideoRenderer(aProducer, (track, tag) -> owner);
-    SurfaceTextureRenderer aSurface = outputOfNewRenderer();
     FlutterRTCVideoRenderer b = new FlutterRTCVideoRenderer(bProducer, (track, tag) -> owner);
-    SurfaceTextureRenderer bSurface = outputOfNewRenderer();
     VideoTrack shared = new VideoTrack("same-native-wrapper");
     Reply aSet = new Reply(), bSet = new Reply();
     a.setTrack(shared, "stream-A", "local", aSet); aSet.awaitResult();
+    SurfaceTextureRenderer aSurface = outputOfNewRenderer();
+    Object aSink = shared.sinks.iterator().next();
     b.setTrack(shared, "stream-B", "local", bSet); bSet.awaitResult();
+    SurfaceTextureRenderer bSurface = outputOfNewRenderer();
+    Object bSink = shared.sinks.stream().filter(sink -> sink != aSink).findFirst().get();
     check(shared.sinks.size() == 2, "two real renderer bindings did not attach to shared native track");
-    a.detachStream("unrelated-stream").get(3, TimeUnit.SECONDS);
+    awaitPhysical(a.detachStream("unrelated-stream"));
     check(shared.sinks.size() == 2, "unrelated stream cleanup detached live renderer");
     int beforeDetachIdCalls = shared.idCalls.get();
-    a.detachStream("stream-A").get(3, TimeUnit.SECONDS);
+    awaitPhysical(a.detachStream("stream-A"));
     check(shared.idCalls.get() == beforeDetachIdCalls, "diagnostics introduced a track.id JNI query");
     String trackHash = "trackJava#" + Integer.toHexString(System.identityHashCode(shared));
     String ownerHash = "ownerJava#" + Integer.toHexString(System.identityHashCode(owner));
     String aHash = "rendererJava#" + Integer.toHexString(System.identityHashCode(a));
-    String aSinkHash = "sinkJava#" + Integer.toHexString(System.identityHashCode(aSurface));
+    String aSinkHash = "sinkJava#" + Integer.toHexString(System.identityHashCode(aSink));
     check(android.util.Log.messages.stream().anyMatch(line -> line.contains("phase=javaRemoveSinkBegin")
         && line.contains(trackHash) && line.contains(ownerHash) && line.contains(aHash) && line.contains(aSinkHash)),
         "actual renderer begin diagnostic missing known Java-object correlation hints");
@@ -227,7 +236,7 @@ public final class NativeRendererWiringTest {
     dispose(b);
     check(shared.idCalls.get() == beforeFinalIdCalls, "final diagnostic release introduced track.id JNI");
     String bHash = "rendererJava#" + Integer.toHexString(System.identityHashCode(b));
-    String bSinkHash = "sinkJava#" + Integer.toHexString(System.identityHashCode(bSurface));
+    String bSinkHash = "sinkJava#" + Integer.toHexString(System.identityHashCode(bSink));
     check(android.util.Log.messages.stream().anyMatch(line -> line.contains("phase=javaRemoveSinkBegin")
         && line.contains(trackHash) && line.contains(bHash) && line.contains(bSinkHash)),
         "second actual sink diagnostic missing known fixture objects");
