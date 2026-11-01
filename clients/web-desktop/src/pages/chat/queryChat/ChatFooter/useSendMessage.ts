@@ -10,6 +10,7 @@ export type SendMessageParams = Partial<Omit<SendMsgParams, "message">> & {
   message: ExMessageItem;
   needPush?: boolean;
   isResend?: boolean;
+  throwOnError?: boolean;
 };
 
 export function useSendMessage() {
@@ -21,7 +22,7 @@ export function useSendMessage() {
   );
 
   const sendMessage = useCallback(
-    async ({ recvID, groupID, message, needPush, isResend }: SendMessageParams) => {
+    async ({ recvID, groupID, message, needPush, isResend, throwOnError }: SendMessageParams) => {
       const currentConversation = useConversationStore.getState().currentConversation;
       const sourceID = recvID || groupID;
       const inCurrentConversation =
@@ -54,6 +55,7 @@ export function useSendMessage() {
           ...message,
           status: MessageStatus.Failed,
         });
+        if (throwOnError) throw error;
       }
     },
     [],

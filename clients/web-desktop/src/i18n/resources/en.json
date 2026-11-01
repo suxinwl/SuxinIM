@@ -78,6 +78,7 @@
     "selectLeastOne": "Please select at least one option!",
     "inputGroupName": "Please enter a group name",
     "sendSuccess": "Sent successfully!",
+    "forwardFailed": "Sent to {{succeeded}}, failed for {{failed}}. Failed recipients remain selected; check and retry.",
     "beyondSelectionLimit": "Selection limit exceeded!",
     "sendJoinGroupRequestSuccess": "Sent group join request successfully!",
     "inputNickName": "Please enter a nickname",

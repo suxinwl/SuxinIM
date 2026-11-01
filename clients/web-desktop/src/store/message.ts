@@ -1,6 +1,6 @@
 import { toLocalFileURL } from "@/im/local-files";
 import { t } from "i18next";
-import { MessageType, SessionType } from "@openim/wasm-client-sdk";
+import { MessageType, MessageViewType, SessionType } from "@openim/wasm-client-sdk";
 import { MessageItem, SearchMessageResult } from "@/im/types";
 import { create } from "zustand";
 
@@ -10,8 +10,10 @@ import { feedbackToast } from "@/utils/common";
 import { useConversationStore } from "./conversation";
 import { DownloadData, MessageStore, UpdateMessaggeBaseInfoParams } from "./type";
 import { useUserStore } from "./user";
+import { loadMessageContext } from "@/im/message-history";
 
 const GET_HISTORY_MESSAGE_COUNT = 20;
+let historyJumpRequest = 0;
 
 export interface ExType {
   checked?: boolean;
@@ -40,6 +42,7 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
   isCheckMode: false,
   downloadMap: {},
   getHistoryMessageListByReq: async (loadMore = false) => {
+    const jumpRequest = historyJumpRequest;
     const conversationID =
       useConversationStore.getState().currentConversation?.conversationID;
     if (!conversationID) return;
@@ -52,10 +55,11 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
         lastMinSeq: loadMore ? get().lastMinSeq : 0,
         startClientMsgID: loadMore ? prevList[prevList.length - 1]?.clientMsgID : "",
         conversationID,
+        viewType: get().jumpClientMsgID ? MessageViewType.Search : MessageViewType.History,
       });
 
       if (
-        conversationID !==
+        jumpRequest !== historyJumpRequest || conversationID !==
         useConversationStore.getState().currentConversation?.conversationID
       )
         return;
@@ -79,6 +83,7 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
       }));
       console.info(get().historyMessageList);
     } catch (error) {
+      if (jumpRequest !== historyJumpRequest || conversationID !== useConversationStore.getState().currentConversation?.conversationID) return;
       feedbackToast({ error, msg: t("toast.getHistoryMessageFailed") });
       set(() => ({
         lastMinSeq: 0,
@@ -88,6 +93,7 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
     }
   },
   getHistoryMessageListReverseByReq: async () => {
+    const jumpRequest = historyJumpRequest;
     const conversationID =
       useConversationStore.getState().currentConversation?.conversationID;
     if (!conversationID) return;
@@ -101,10 +107,11 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
         lastMinSeq,
         startClientMsgID: prevList[0]?.clientMsgID ?? "",
         conversationID,
+        viewType: get().jumpClientMsgID ? MessageViewType.Search : MessageViewType.History,
       });
 
       if (
-        conversationID !==
+        jumpRequest !== historyJumpRequest || conversationID !==
         useConversationStore.getState().currentConversation?.conversationID
       )
         return;
@@ -127,6 +134,7 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
       }));
       console.info(get().historyMessageList);
     } catch (error) {
+      if (jumpRequest !== historyJumpRequest || conversationID !== useConversationStore.getState().currentConversation?.conversationID) return;
       feedbackToast({ error, msg: t("toast.getHistoryMessageFailed") });
       set(() => ({
         laterHasMore: false,
@@ -135,42 +143,22 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
     }
   },
   getTwoWayHistoryMessage: async ({ message, conversationID }) => {
+    const request = ++historyJumpRequest;
+    const previousConversationID = useConversationStore.getState().currentConversation?.conversationID;
     set(() => ({ jumpLoading: true }));
-    const loadOptions = {
-      userID: "",
-      groupID: "",
-      count: GET_HISTORY_MESSAGE_COUNT,
-      lastMinSeq: message.seq,
-      startClientMsgID: message.clientMsgID,
-      conversationID,
-    };
-    const [{ data: earlierData }, { data: laterData }] = await Promise.all([
-      IMSDK.getAdvancedHistoryMessageList(loadOptions),
-      IMSDK.getAdvancedHistoryMessageListReverse(loadOptions),
-    ]);
-    const totalList = [
-      ...earlierData.messageList,
-      message,
-      ...laterData.messageList,
-    ].reverse();
-    totalList.map((message, idx) => {
-      if (!idx) return;
-      const prevTime = totalList[idx - 1]?.sendTime;
-      (totalList[idx - 1] as ExMessageItem).gapTime =
-        message.sendTime - prevTime > 300000;
-    });
-    console.log(earlierData.messageList);
-    console.log(laterData.messageList);
-    console.log(totalList);
-
-    set(() => ({
-      lastMinSeq: earlierData.messageList.reduce((min,m) => m.seq > 0 && (!min || m.seq < min) ? m.seq : min, 0),
-      jumpLoading: false,
-      jumpClientMsgID: message.clientMsgID,
-      hasMore: earlierData.messageList.length !== 0,
-      laterHasMore: laterData.messageList.length !== 0,
-      historyMessageList: totalList,
-    }));
+    try {
+      const { messageList, ...pagination } = await loadMessageContext(IMSDK, { message, conversationID, count: GET_HISTORY_MESSAGE_COUNT });
+      const currentConversationID = useConversationStore.getState().currentConversation?.conversationID;
+      if (request !== historyJumpRequest || (currentConversationID !== previousConversationID && currentConversationID !== conversationID)) return false;
+      const historyMessageList: ExMessageItem[] = messageList.map((item, index, items) => ({ ...item, gapTime: index === items.length - 1 || item.sendTime - items[index + 1].sendTime > 300000 }));
+      set(() => ({ ...pagination, historyMessageList, jumpClientMsgID: message.clientMsgID }));
+      return true;
+    } catch (error) {
+      if (request === historyJumpRequest) feedbackToast({ error, msg: t("toast.getHistoryMessageFailed") });
+      return false;
+    } finally {
+      if (request === historyJumpRequest) set(() => ({ jumpLoading: false }));
+    }
   },
   clearAppendState: () => {
     set((state) => ({
@@ -242,7 +230,8 @@ export const useMessageStore = create<MessageStore>()((set, get) => ({
     set(() => ({ historyMessageList: tmpList }));
   },
   clearHistoryMessage: () => {
-    set(() => ({ historyMessageList: [], previewImgList: [], hasMore: false }));
+    historyJumpRequest++;
+    set(() => ({ historyMessageList: [], previewImgList: [], hasMore: false, jumpLoading: false }));
   },
   updateCheckMode: (isCheckMode: boolean) => {
     if (!isCheckMode) {

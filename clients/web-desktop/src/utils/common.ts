@@ -6,6 +6,7 @@ import { message } from "../AntdGlobalComp";
 import { FriendUserItem } from "@/im/types";
 import { useMessageStore } from "@/store";
 import { DownloadData } from "@/store/type";
+import { startAttachmentDownload } from "@/im/attachment-download";
 
 type FeedbackToastParams = {
   msg?: string | null;
@@ -203,22 +204,12 @@ export const checkIsSafari = () =>
 export const downloadFile = async (originUrl: string, data: DownloadData) => {
   if (window.electronAPI) {
     try {
-      const tmpURL = new URL(originUrl);
-      const searchParams = new URLSearchParams(tmpURL.search);
-      searchParams.set("save-type", data.saveType ?? "file");
-      if (data.randomName) {
-        searchParams.set("random-prefix", uuidv4());
-      }
-      tmpURL.search = searchParams.toString();
-      const downloadUrl = tmpURL.toString();
-      const hasTask = !!useMessageStore.getState().downloadMap[downloadUrl];
-      if (hasTask) return;
-      window.electronAPI.ipcInvoke("startDownload", downloadUrl);
-      useMessageStore.getState().addDownloadTask(downloadUrl, {
-        ...data,
-        originUrl,
-        downloadUrl,
-        downloadState: "downloading",
+      await startAttachmentDownload(originUrl, data, {
+        getTask: (url) => useMessageStore.getState().downloadMap[url],
+        addTask: (url, task) => useMessageStore.getState().addDownloadTask(url, task),
+        removeTask: (url) => useMessageStore.getState().removeDownloadTask(url),
+        start: (request) => window.electronAPI!.ipcInvoke("startDownload", request),
+        randomPrefix: uuidv4,
       });
     } catch (error) {
       if (data.showError) message.error(t("toast.downloadFailed"));

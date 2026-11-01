@@ -1,0 +1,158 @@
+{
+  "schema": 1,
+  "component": "Windows video attachment download",
+  "createdUtc": "2026-11-01T17:51:07.756Z",
+  "sourceFrozen": true,
+  "rootCause": [
+    "3.8.6 renderer appended cache-routing parameters and reserialized the attachment URL query string. The archived original production function and native manager reproduce HTTP 403 against a strict synthetic signed endpoint.",
+    "IPC start errors were not awaited, allowing a stale downloading task to block later retries."
+  ],
+  "changes": [
+    "Preserve network URL bytes; send saveType and optional safe randomPrefix as separate IPC fields.",
+    "Register the task before IPC, await acknowledgement, and remove a rejected start for retry.",
+    "Correlate native events to the original URL; create the managed cache; constrain filenames and prefixes; remove incomplete files while preserving cache directories.",
+    "Restrict IPC to the owning window, and expire pending transfers after 30 seconds. Application updates retain their independent verifiedUpdate path."
+  ],
+  "tests": {
+    "behavior": {
+      "passed": 9,
+      "failed": 0,
+      "node": "22.23.4"
+    },
+    "typecheck": {
+      "exit": 0,
+      "log": "tests/delivery/windows-387-video-download-typecheck.log"
+    },
+    "native": {
+      "runtime": "Electron 45.2.1",
+      "before": "tests/delivery/windows-387-video-download/before.json",
+      "fixed": "tests/delivery/windows-387-video-download/fixed.json",
+      "beforeOutcome": "Expected regression reproduced: HTTP 403, downloadFailed, changed signed URL.",
+      "fixedOutcome": "HTTP 200, exact signed URL, native videoCache download 16617 bytes SHA-256 matched; local Range 206; Chromium video 160x120, 2 seconds, readyState 4.",
+      "normalTLS": "Native manager downloaded isolated-server favicon using normal system certificate validation: 16129 bytes in imageCache. No certificate-verification override.",
+      "boundaries": "Real production downloadFile and downloadManage execute, with fixture Zustand and unrelated UI ports in a hidden standalone BrowserWindow. This is not an original full conversation UI click or final installer acceptance.",
+      "failedHarnessAttempt": "Initial executeJavaScript setup returned an unclonable object before network validation. Both failed JSON/log pairs remain under attempt1-clone-*. Corrected setup returns void. Pre-format passing pairs remain under attempt2-pre-format-*."
+    }
+  },
+  "limits": [
+    "No claim that expired storage URLs are renewed.",
+    "No customer accounts, messages or attachments used.",
+    "No version, packaging, deployment or shared ImFacade/MessageItem/useGlobalEvents changes by this owner.",
+    "Root owns the separate missing-task guard in useGlobalEvents.",
+    "Known private credential values were not reread for a value-based text scan because automatic review rejected that optional scan command."
+  ],
+  "source": [
+    {
+      "path": "clients/web-desktop/src/utils/common.ts",
+      "bytes": 10058,
+      "sha256": "2391a55a4f9136c3e4c63df94fdde6884eab2d37569d619eeb43347f90ef6c5d"
+    },
+    {
+      "path": "clients/web-desktop/src/im/attachment-download.ts",
+      "bytes": 1414,
+      "sha256": "f25e373b42d5c9fe23b31fb645539754ecf453eadb9c5cb35b15642946b85dc6"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/downloadManage.ts",
+      "bytes": 5147,
+      "sha256": "e58465bea3902aed519272858e16b87bdf43e13e760c75a5d0a9271a407b61d7"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/downloadTarget.ts",
+      "bytes": 2058,
+      "sha256": "2c7399a2d95dca6a306bdbf94ca69f1671d27c0965fd2414db0b202444269605"
+    },
+    {
+      "path": "clients/web-desktop/tests/attachment-download.test.mjs",
+      "bytes": 8696,
+      "sha256": "2cd4d13f3a330506a5f06c7357d974042c41bd0b700dc3b451c34182d05ae4b0"
+    },
+    {
+      "path": "clients/web-desktop/tests/video-download-native-387.mjs",
+      "bytes": 9926,
+      "sha256": "13ac9b517ce712880a4f76a0ae6cf42ca66f1759dc5a2d3572642a2a96884fdc"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "tests/delivery/windows-387-before/video-download/manifest.json",
+      "bytes": 846,
+      "sha256": "f7ea6e8931aff1e5d564acc90b23c9e7cb3e1b272c9363f11b5fb28ca3fc5708"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download-unit.log",
+      "bytes": 2202,
+      "sha256": "e8b8bbff781887dd82fe00fb1e6073b5c0bf91320326ce98361491594bff2f5b"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download-typecheck.log",
+      "bytes": 18,
+      "sha256": "7ca10eb57cd94ec4a8334fbc39acf9e04b042c1fe79312b0f7bb0f8845c268e8"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt1-clone-before.json",
+      "bytes": 282,
+      "sha256": "6479365ac3fdb78875893866fcff6877a5cc33701c496d38d291f02e7be2409e"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt1-clone-before.log",
+      "bytes": 107,
+      "sha256": "7f33c78a7a4b8800e1f2da59276f1f9776411156d1a000521763348391f323be"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt1-clone-fixed.json",
+      "bytes": 281,
+      "sha256": "c6bff8cfa1973689bec2f23059d9182a8f62f78ccba9433957057f0e17c08029"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt1-clone-fixed.log",
+      "bytes": 106,
+      "sha256": "a4037051dde383ea6f720bd90e442a4d628dbe213779fb72bf322ed9eb6f2738"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt2-pre-format-before.json",
+      "bytes": 342,
+      "sha256": "3fd6c51295a3ca8ea9a819e435a73260fd895eb1a5a4fce12c69ab81b7ec7ebf"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt2-pre-format-before.log",
+      "bytes": 75,
+      "sha256": "56837deddccabf2635667875339fd65c8e1825398051dfaffedcb9b02eff7428"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt2-pre-format-fixed.json",
+      "bytes": 961,
+      "sha256": "fe1de1832261871eed8db058263b70577ad8429138906a77a623702e9dcb4dcd"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/attempt2-pre-format-fixed.log",
+      "bytes": 105,
+      "sha256": "c81075fc4f2ec825bf830d333e928079489eab5b400a930376800f346541cf50"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/before.json",
+      "bytes": 342,
+      "sha256": "2245ece168797672dbd5daec7c89864e810c9825da9f529a7d691e61607de9e3"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/before.log",
+      "bytes": 75,
+      "sha256": "56837deddccabf2635667875339fd65c8e1825398051dfaffedcb9b02eff7428"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/fixed.json",
+      "bytes": 961,
+      "sha256": "cd1486d18ed4f2f789c1276a2918365eb2b1cbde84bcea134d6ef4dd69a04826"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download/fixed.log",
+      "bytes": 105,
+      "sha256": "c81075fc4f2ec825bf830d333e928079489eab5b400a930376800f346541cf50"
+    }
+  ],
+  "finitePublicJWTScan": {
+    "files": 21,
+    "hits": 0,
+    "scope": "Named UTF-8 source, test and evidence files; JWT-shaped strings only. No known-password value scan or OCR claim."
+  }
+}

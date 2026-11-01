@@ -17,6 +17,7 @@ import { v4 as uuidV4 } from "uuid";
 import { message } from "@/AntdGlobalComp";
 import OIMAvatar from "@/components/OIMAvatar";
 import { OverlayVisibleHandle, useOverlayVisible } from "@/hooks/useOverlayVisible";
+import { forwardBatch, type ForwardProgress } from "@/im/forward-batch";
 import { IMSDK } from "@/layout/MainContentWrap";
 import { useSendMessage } from "@/pages/chat/queryChat/ChatFooter/useSendMessage";
 import { ExMessageItem, useConversationStore, useUserStore } from "@/store";
@@ -89,6 +90,8 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
 ) => {
   const chooseBoxRef = useRef<ChooseBoxHandle>(null);
   const [loading, setLoading] = useState(false);
+  const confirming = useRef(false);
+  const forwardProgress = useRef(new Map<string, ForwardProgress>());
   const [groupBaseInfo, setGroupBaseInfo] = useState({
     groupName: "",
     groupAvatar: "",
@@ -116,6 +119,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
   }, [isOverlayOpen]);
 
   const confirmChoose = async () => {
+    if (confirming.current) return;
     const choosedList = chooseBoxRef.current?.getCheckedList() ?? [];
     if (!choosedList?.length && type !== "SELECT_USER")
       return message.warning(t("toast.selectLeastOne"));
@@ -123,6 +127,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
     if (!groupBaseInfo.groupName && type === "CRATE_GROUP")
       return message.warning(t("toast.inputGroupName"));
 
+    confirming.current = true;
     setLoading(true);
     try {
       switch (type) {
@@ -172,27 +177,25 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
         case "FORWARD_MESSAGE":
         case "SHARE_CARD":
         case "MEETING_INVITE":
-          choosedList.map(async (item) => {
-            const message = await getBatchMessage();
-            if (item.groupID && !(await IMSDK.isJoinGroup<boolean>(item.groupID))) {
-              return;
-            }
-            const additional = chooseBoxRef.current?.getAdditional();
-            sendMessage({
+          const result = await forwardBatch({
+            targets: choosedList,
+            additional: chooseBoxRef.current?.getAdditional() ?? "",
+            progress: forwardProgress.current,
+            createMessage: getBatchMessage,
+            createAdditional: async (text) => (await IMSDK.createTextMessage(text)).data,
+            isJoinGroup: async (groupID) => (await IMSDK.isJoinGroup<boolean>(groupID)).data === true,
+            send: (message, item) => sendMessage({
               message,
               recvID: item.userID ?? "",
               groupID: item.groupID ?? "",
-            });
-            if (additional) {
-              const additionalMessage = (await IMSDK.createTextMessage(additional))
-                .data;
-              sendMessage({
-                message: additionalMessage,
-                recvID: item.userID ?? "",
-                groupID: item.groupID ?? "",
-              });
-            }
+              throwOnError: true,
+            }),
           });
+          if (result.failures.length) {
+            chooseBoxRef.current?.updatePrevCheckList(result.failures.map((failure) => failure.target));
+            feedbackToast({ error: true, msg: t("toast.forwardFailed", { succeeded: result.successful.length, failed: result.failures.length }) });
+            return;
+          }
           message.success(t("toast.sendSuccess"));
           break;
         case "SELECT_USER":
@@ -223,8 +226,11 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
       }
     } catch (error) {
       feedbackToast({ error });
+      return;
+    } finally {
+      confirming.current = false;
+      setLoading(false);
     }
-    setLoading(false);
     closeOverlay();
   };
 
@@ -262,6 +268,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
   };
 
   const resetState = () => {
+    forwardProgress.current.clear();
     chooseBoxRef.current?.resetState();
     setGroupBaseInfo({
       groupName: "",
@@ -296,7 +303,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
       open={isOverlayOpen}
       closable={false}
       width={680}
-      onCancel={closeOverlay}
+      onCancel={() => { if (!confirming.current) closeOverlay(); }}
       destroyOnClose
       styles={{
         mask: {
@@ -314,7 +321,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
           <CloseOutlined
             className="cursor-pointer text-[var(--sub-text)]"
             rev={undefined}
-            onClick={closeOverlay}
+            onClick={() => { if (!confirming.current) closeOverlay(); }}
           />
         </div>
         {type === "CRATE_GROUP" ? (
@@ -378,6 +385,7 @@ const ChooseModal: ForwardRefRenderFunction<OverlayVisibleHandle, IChooseModalPr
           <Button
             className="mr-6 border-0 bg-[var(--chat-bubble)] px-6"
             onClick={closeOverlay}
+            disabled={loading}
           >
             {t("cancel")}
           </Button>

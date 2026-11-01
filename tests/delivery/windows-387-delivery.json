@@ -1,0 +1,249 @@
+{
+  "createdUtc": "2026-11-01T18:30:17.168801+00:00",
+  "status": "PASS_WINDOWS_387_ISOLATED_DELIVERY",
+  "version": {
+    "version": "3.8.7",
+    "build": 380701
+  },
+  "installer": {
+    "name": "OpenIM38-Enterprise-3.8.7-win-x64.exe",
+    "bytes": 160966886,
+    "sha256": "422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873"
+  },
+  "fixes": {
+    "forwarding": "The existing client log confirms the Go Quote-send nil dereference. A normal Electron synthetic Quote-forward reproduced it on 3.8.6; the fixed official sendMessageNotOss route preserves quoted content and keeps subsequent SDK calls usable. Ordinary text forwarding also passed. Batches are awaited, deduplicated and retry confirmed failures only.",
+    "search": "Fix initial empty-result closures, zero-height result lists, stale anchors and explicit Search-view pagination. Actual original Web UI and SDK searches locate messages in the correct conversation.",
+    "videoDownload": "Keep the original signed URL unchanged; pass download metadata separately, await IPC errors and enable retry. Real Electron verifies MP4 bytes, SHA, managed-file range access and playback."
+  },
+  "validation": {
+    "adapterTestsPassed": 94,
+    "adapterTestsFailed": 0,
+    "typescript": "PASS",
+    "packagedNativeSmoke": "PASS",
+    "packagedSourceAudit": "PASS",
+    "normalTLSFiles": [
+      {
+        "url": "https://192.168.10.11:29880/",
+        "bytes": 615,
+        "sha256": "ca2df30d64abf2659794f3877203a299719b1d2367a8637b344b158f72f285c0"
+      },
+      {
+        "url": "https://192.168.10.11:29880/downloads/",
+        "bytes": 2091,
+        "sha256": "74adbf27ef6af00fa3d7f531f1cf016249adc624491020b55853dd03d42e5996"
+      },
+      {
+        "url": "https://192.168.10.11:29880/assets/index-8465f936.js",
+        "bytes": 2970571,
+        "sha256": "926f44e98b27203f828dfa04faddf232879e10f563bcc76be1de464f27d3c255"
+      },
+      {
+        "url": "https://192.168.10.11:29880/wasm_exec.js",
+        "bytes": 16992,
+        "sha256": "0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14"
+      }
+    ],
+    "fullInstallerHTTPSVerified": true,
+    "optionalUpdatePublished": true
+  },
+  "localExistingClient": {
+    "inspectedReadOnly": true,
+    "replacementInstallationVerified": false,
+    "stateAtInspection": "3.8.6 window alive; Go message engine exited after a send panic.",
+    "restart": "Pending the user response to the installation/restart question; no existing client or data was closed or reset."
+  },
+  "sources": [
+    {
+      "path": "clients/web-desktop/src/im/send-message.ts",
+      "bytes": 941,
+      "sha256": "f11fa8663cd2ced2cfde93e74e98d32f06a9508b79b5956746ad9733434c6c05"
+    },
+    {
+      "path": "clients/web-desktop/src/im/forward-batch.ts",
+      "bytes": 1809,
+      "sha256": "5b680bca824abc75c2b2f94b57023c27a5c546a3f2df048b46e5793e598865a9"
+    },
+    {
+      "path": "clients/web-desktop/src/im/ImFacade.ts",
+      "bytes": 16359,
+      "sha256": "1f802d65f6cdd619c34326517c5740367a368a14d995cf88bc6cb412ab790865"
+    },
+    {
+      "path": "clients/web-desktop/src/im/message-history.ts",
+      "bytes": 1995,
+      "sha256": "22760cf8287bbf501eb89e89bd5fcd3f64b8a3228000005f82cb960fec8ed81c"
+    },
+    {
+      "path": "clients/web-desktop/src/im/attachment-download.ts",
+      "bytes": 1414,
+      "sha256": "f25e373b42d5c9fe23b31fb645539754ecf453eadb9c5cb35b15642946b85dc6"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/ChooseModal/index.tsx",
+      "bytes": 14102,
+      "sha256": "c59584d83e49b3c974bebd7e730f00eb039073ba8d61336f83fe70609422d67c"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/ChatFooter/useSendMessage.ts",
+      "bytes": 2304,
+      "sha256": "43bbca45281e3e0fcd5aa7e29db219c684740e6f995b67673df5ff42011a899f"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/index.tsx",
+      "bytes": 11333,
+      "sha256": "d5bbefa7099591b644e8cce54b4bcf247fbd52af829364522027eb518c854983"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/index.module.scss",
+      "bytes": 827,
+      "sha256": "ce566fce9af5727ceda4f41e5970db673d9b18bee23cc923faac302b9bcc48d2"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/DashboardPanel.tsx",
+      "bytes": 7030,
+      "sha256": "995ff906b5ec9fc4aba35b0675987ce692a829c00fab7b9fe8ee9698d2944a2c"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/ChatLogsPanel.tsx",
+      "bytes": 4809,
+      "sha256": "05ae65012acc3b8fad34985f6ce5007302191fc688078e50d9bf7e643a99b084"
+    },
+    {
+      "path": "clients/web-desktop/src/components/JumpToMessageWrap/index.tsx",
+      "bytes": 2132,
+      "sha256": "7fc5be4b3fbeb6241c8ec44214eb7dd1bdcdb54d827524bfecee450fee9e4196"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/ChatContent.tsx",
+      "bytes": 7742,
+      "sha256": "b72d4f3e23e606d73a16c0dd2d9de734a168aafb31a760aaf07cf0362c633abc"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/index.tsx",
+      "bytes": 4178,
+      "sha256": "394de36e23b4dc0ffb3143e1428b9545e14e5f9d12f29ff2943d6d697b13cffa"
+    },
+    {
+      "path": "clients/web-desktop/src/store/message.ts",
+      "bytes": 12784,
+      "sha256": "835f7d7a016454c72a0488a5f985d4015a14fb0499e4eb497868a2ac037e7c5e"
+    },
+    {
+      "path": "clients/web-desktop/src/utils/common.ts",
+      "bytes": 10058,
+      "sha256": "2391a55a4f9136c3e4c63df94fdde6884eab2d37569d619eeb43347f90ef6c5d"
+    },
+    {
+      "path": "clients/web-desktop/src/layout/useGlobalEvents.tsx",
+      "bytes": 25641,
+      "sha256": "ac9b3164c515028d5ada84da6f47f9d0d0ed93747a6c470d8fd71c8754a401ab"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/downloadManage.ts",
+      "bytes": 5147,
+      "sha256": "e58465bea3902aed519272858e16b87bdf43e13e760c75a5d0a9271a407b61d7"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/downloadTarget.ts",
+      "bytes": 2058,
+      "sha256": "2c7399a2d95dca6a306bdbf94ca69f1671d27c0965fd2414db0b202444269605"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "tests/delivery/windows-387-actual-client-panic-review.json",
+      "bytes": 5358,
+      "sha256": "24d63431891b31205476dbc14a666ec56db9f01061c4c50641ae2e6df2431109"
+    },
+    {
+      "path": "tests/delivery/windows-387-actual-client-panic-followup.json",
+      "bytes": 5138,
+      "sha256": "8abb4f08679e62ece737364db60dd0288f23c082c966b5ad1a73425867a843b0"
+    },
+    {
+      "path": "tests/delivery/windows-387-quote-facade-review.json",
+      "bytes": 5623,
+      "sha256": "025361ca57273bb9623e537c655bf96f1588cef1c723c7b52d89be5700224a61"
+    },
+    {
+      "path": "tests/delivery/windows-387-forward-native-frozen-386-1793555657332/report.json",
+      "bytes": 3242,
+      "sha256": "99f9f4db8c0859ff0a6769945db0b6915a571dfa01e22ee5646ab1e70e545d49"
+    },
+    {
+      "path": "tests/delivery/windows-387-forward-native-386-quote-panic-1793556107285/report.json",
+      "bytes": 3211,
+      "sha256": "a3770322c29604f1f81c01e181c32c68ddd0f1c533460e6254de62a063413997"
+    },
+    {
+      "path": "tests/delivery/windows-387-forward-native-fixed-quote-1793556273854/report.json",
+      "bytes": 2344,
+      "sha256": "e8c84e32da883cb88b420b3ffb0a6cc71558613aa3c64d6aabf7bfaa5b76d4d4"
+    },
+    {
+      "path": "tests/delivery/windows-387-search-review.json",
+      "bytes": 13993,
+      "sha256": "04b8de73cc3e672a9b972a82f1b3209760cfd48cdf1760fe92cad1bdd9c657c0"
+    },
+    {
+      "path": "tests/delivery/windows-387-video-download-review.json",
+      "bytes": 7169,
+      "sha256": "1e6354833f50d63c96223796a7eed29c45ab3af6b6155da5923bdec526ba0dfa"
+    },
+    {
+      "path": "tests/delivery/windows-387-final-adapter-tests.log",
+      "bytes": 22764,
+      "sha256": "9676313ba59bc39dffb3122d5758c1cb0f39d0c8523d17623c9e13e061dfa345"
+    },
+    {
+      "path": "tests/delivery/windows-387-final-typecheck.log",
+      "bytes": 65,
+      "sha256": "6703057ff17205006015438aa53f74309882a4376010c23267639b729852dec4"
+    },
+    {
+      "path": "tests/delivery/windows-387-build.log",
+      "bytes": 119052,
+      "sha256": "332955d63fe7c741b9322a561a100ab9d700be1fe5b57b51aa00abfc20e9cbc2"
+    },
+    {
+      "path": "tests/delivery/windows-387-native-smoke.json",
+      "bytes": 710,
+      "sha256": "a04763c2385a23f6cc1d4aac80edfedb95c7ec8e9aa690bc5caf246fa0447289"
+    },
+    {
+      "path": "tests/delivery/windows-387-packaging-review.json",
+      "bytes": 9838,
+      "sha256": "5698fde687a5070020fb96db50abbed10365d7ef59c9cf174d45a0aa2f7d4533"
+    },
+    {
+      "path": "tests/delivery/windows-387-documentation-review.json",
+      "bytes": 4234,
+      "sha256": "3e7dd551e59d90d4956780a0d32a11f94c71049acbe5463a9b4b1d2705e39501"
+    },
+    {
+      "path": "tests/delivery/windows-387-web-bundle.json",
+      "bytes": 673303,
+      "sha256": "96fc9f159ad2b12610e41cb1add68a6f2f219274463b01fc229796b4a443e37c"
+    },
+    {
+      "path": "tests/delivery/windows-387-deployment.json",
+      "bytes": 6820,
+      "sha256": "2f1a7d00ddaf42de19f5f0d620adf84e7ffc99c1222fc8f3dd8466d8abc14ebe"
+    },
+    {
+      "path": "tests/release-downloads.json",
+      "bytes": 891,
+      "sha256": "24c23ce09e128f38040c037e1c364f259dffdb923f62cee92461699db3af2498"
+    }
+  ],
+  "previousMetadata": "artifacts/manifest-history/pre-windows387-20261101T182517Z",
+  "serverBackup": "/srv/openim38-upgrade/backups/client-3.8.7-20261101T182808Z",
+  "limits": [
+    "Windows installer is unsigned. No in-place replacement of the existing local user client has been verified.",
+    "Quote and ordinary-text forwarding runtime tests used synthetic accounts in normal Electron against the isolated server; no actual-user messages were sent.",
+    "The video test used a hidden native harness executing original renderer/main download modules; it is not a claimed final-installed original-chat UI click test.",
+    "Two generic Object page exceptions also occurred in the search baseline and are retained in the search report.",
+    "Audio/video/meeting work is resumed separately. Android114 source/Java tests do not prove device media teardown, ARM64 hardware acceptance or iOS Xcode build.",
+    "No production instance, public mapping, HRM integration or actual business data was changed. The full upgrade is not marked accepted."
+  ]
+}

@@ -32,16 +32,18 @@ const JumpToMessageWrap: ForwardRefRenderFunction<
   const { toSpecifiedConversation } = useConversationToggle();
 
   const jumpToHistory = async () => {
-    await getTwoWayHistoryMessage({
+    if (disabled || !conversationID || !message.clientMsgID) return;
+    const loaded = await getTwoWayHistoryMessage({
       conversationID,
       message,
     });
+    if (!loaded) return;
     const sourceID =
       message.groupID ||
       (message.sendID === useUserStore.getState().selfInfo.userID
         ? message.recvID
         : message.sendID);
-    toSpecifiedConversation(
+    await toSpecifiedConversation(
       {
         sourceID,
         sessionType: message.sessionType,
@@ -52,7 +54,7 @@ const JumpToMessageWrap: ForwardRefRenderFunction<
     afterJump?.();
   };
 
-  useImperativeHandle(ref, () => ({ jumpToHistory }), []);
+  useImperativeHandle(ref, () => ({ jumpToHistory }));
 
   return (
     <Popover

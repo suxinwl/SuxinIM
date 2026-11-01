@@ -5,6 +5,7 @@ import type { FullUserItemWithCache, MessageItem } from "./types";
 import { adaptPayload,isEnterpriseHint } from "./models";
 import { installDatabaseCloseBridge } from "./database-close";
 import { sendVisibleReadReceipt } from "./read-receipt-gate";
+import { sendSdkMessage } from "./send-message";
 const root = new URL(import.meta.env.BASE_URL, window.location.href);
 const core = getSDK({debug:false,coreWasmPath:new URL("openIM.wasm",root).href,sqlWasmPath:new URL("sql-wasm.wasm",root).href});
 const resetDatabaseClose=installDatabaseCloseBridge(window);
@@ -78,6 +79,12 @@ core.on(CbEvents.OnRecvOnlineOnlyMessage,(envelope:any)=>{
 window.addEventListener("enterprise-session-revoked",()=>{stopEnterpriseSession();dispatch(CbEvents.OnKickedOffline,{});});
 const wrapped:Record<string,any>={
  stopEnterpriseSession,
+ sendMessage:async(params:any,operationID?:string)=>{
+  await authorizeMeetingShare(params);
+  const response=adaptPayload(await sendSdkMessage(core,params,operationID));
+  await hydrateReads([response.data]);
+  return response;
+ },
  on:(event:string,cb:(event:any)=>void)=>{if(!listeners.has(event))listeners.set(event,new Set());listeners.get(event)!.add(cb);if(!sdkListeners.has(event))sdkListeners.set(event,new Map());const normalized=async(e:any)=>{let data=adaptPayload(e.data);if(event===CbEvents.OnRecvNewMessage || event===CbEvents.OnRecvNewMessages){if(Array.isArray(data)){data=data.filter(m=>!isEnterpriseHint(m));if(!data.length)return;}else if(isEnterpriseHint(data))return;await hydrateReads(Array.isArray(data)?data:[data]);}cb({...e,data});};sdkListeners.get(event)!.set(cb,normalized);core.on(event as CbEvents,normalized);},
  off:(event:string,cb:(event:any)=>void)=>{listeners.get(event)?.delete(cb);const normalized=sdkListeners.get(event)?.get(cb);if(normalized)core.off(event as CbEvents,normalized);sdkListeners.get(event)?.delete(cb);},
  login:async(params:any)=>{resetDatabaseClose?.();const result=await core.login({...params,tryParse:true});resetDatabaseClose?.();sdkLogoutPromise=undefined;active=true;generation++;cursor=-1;clearTimeout(timer);void poll();return result;},

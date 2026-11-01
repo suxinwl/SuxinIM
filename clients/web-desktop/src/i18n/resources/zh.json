@@ -78,6 +78,7 @@
     "selectLeastOne": "请至少选择一项！",
     "inputGroupName": "请输入群名称",
     "sendSuccess": "发送成功！",
+    "forwardFailed": "已发送 {{succeeded}} 个，失败 {{failed}} 个。已保留失败对象，请检查后重试。",
     "beyondSelectionLimit": "超出选择限制！",
     "sendJoinGroupRequestSuccess": "发送入群请求成功！",
     "inputNickName": "请输入昵称",

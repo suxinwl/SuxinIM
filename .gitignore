@@ -71,6 +71,9 @@ clients/flutter/android/app/proguard/unused.txt
 /tests/**/source-history/
 /tests/**/source-gate*/
 /tests/**/windows-386-before/
+/tests/delivery/windows-*-before/
+/tests/delivery/media-resume-*/before/
+/tests/delivery/media-resume-*/
 /tests/**/documentation-history/
 /tests/**/incident-before*/
 /tests/**/runtime-source*/
@@ -87,3 +90,12 @@ clients/flutter/android/app/proguard/unused.txt
 !/tests/delivery/windows-386-screenshot-packaging-review.json
 !/tests/delivery/windows-386-native-smoke.json
 !/tests/delivery/windows-386-documentation-review.json
+!/tests/delivery/windows-387-delivery.json
+!/tests/delivery/windows-387-search-review.json
+!/tests/delivery/windows-387-video-download-review.json
+!/tests/delivery/windows-387-quote-facade-review.json
+!/tests/delivery/windows-387-actual-client-panic-review.json
+!/tests/delivery/windows-387-actual-client-panic-followup.json
+!/tests/delivery/windows-387-packaging-review.json
+!/tests/delivery/windows-387-native-smoke.json
+!/tests/delivery/windows-387-documentation-review.json

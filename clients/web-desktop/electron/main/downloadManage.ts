@@ -1,141 +1,151 @@
-import fs from "fs";
-import path from "path";
-import { IpcMainToRender, IpcRenderToMain } from "../constants";
+import fs from "node:fs";
+import path from "node:path";
 import { ipcMain } from "electron";
-import { setProgressBar } from "./windowManage";
-
-interface SearchObjectType {
-  "is-update"?: string;
-  "save-type"?: string;
-  "random-prefix"?: string;
-}
-
-const customTypes = ["image", "video", "avatar"];
-const getFileType = (type?: string) => {
-  if (customTypes.includes(type)) return type;
-  return "file";
-};
-
-const getRealUrl = (item: Electron.DownloadItem) => item.getURLChain()[0];
+import { IpcMainToRender, IpcRenderToMain } from "../constants";
+import type { AttachmentDownloadRequest } from "../../src/im/attachment-download";
+import {
+  attachmentSavePath,
+  downloadRequestKey,
+  normalizeDownloadRequest,
+} from "./downloadTarget";
 
 export const initDownloadManage = (webContents: Electron.WebContents) => {
-  const downloadItems = [] as Electron.DownloadItem[];
-
-  const webContentsSend = (channel: string, ...args: any[]) => {
-    if (webContents.isDestroyed()) return;
-    webContents.send(channel, ...args);
+  const active = new Map<Electron.DownloadItem, AttachmentDownloadRequest>();
+  const pending = new Map<
+    string,
+    { request: AttachmentDownloadRequest; timer: ReturnType<typeof setTimeout> }
+  >();
+  const send = (channel: string, ...args: unknown[]) => {
+    if (!webContents.isDestroyed()) webContents.send(channel, ...args);
   };
 
-  webContents.session.on("will-download", (_, item) => {
-    downloadItems.push(item);
-    const realUrl = getRealUrl(item);
-    const searchParams = new URL(realUrl).searchParams;
-    const searchObject = {} as SearchObjectType;
-
-    for (const [key, value] of searchParams.entries()) {
-      searchObject[key] = value;
+  const onDownload = (event: Electron.Event, item: Electron.DownloadItem) => {
+    const key = downloadRequestKey(item.getURLChain()[0] || item.getURL());
+    const entry = pending.get(key);
+    if (entry) {
+      clearTimeout(entry.timer);
+      pending.delete(key);
     }
-    const isUpdate = !!searchObject["is-update"];
-
-    if (isUpdate) {
-      item.setSavePath(
-        path.join(global.pathConfig.autoUpdateCachePath, item.getFilename()),
+    // URL queries are storage-server data. Only explicit IPC metadata can
+    // select an image/video cache; do not interpret remote query parameters.
+    const request =
+      entry?.request ??
+      normalizeDownloadRequest(item.getURLChain()[0] || item.getURL());
+    try {
+      const cacheDirectory =
+        global.pathConfig[`${request.saveType ?? "file"}CachePath`];
+      const savePath = attachmentSavePath(
+        cacheDirectory,
+        item.getFilename(),
+        request.randomPrefix,
       );
-    } else {
-      const fileType = getFileType(searchObject["save-type"]);
-      const fileNamePrefix = searchObject["random-prefix"] ?? "";
-      let savePath = path.join(
-        global.pathConfig[`${fileType}CachePath`],
-        `${fileNamePrefix}${item.getFilename()}`,
-      );
+      fs.mkdirSync(path.dirname(savePath), { recursive: true });
       item.setSavePath(savePath);
+    } catch {
+      event.preventDefault();
+      item.cancel();
+      send(IpcMainToRender.downloadFailed, request.url);
+      return;
     }
-
+    active.set(item, request);
     item.on("updated", (_, state) => {
       if (state === "interrupted") {
-        webContentsSend(
-          IpcMainToRender[isUpdate ? "updateDownloadPaused" : "downloadPaused"],
-          realUrl,
-        );
-      } else if (state === "progressing") {
-        if (!item.isPaused()) {
-          const receivedBytes = item.getReceivedBytes();
-          const totalBytes = item.getTotalBytes();
-          const progress = Math.round((receivedBytes / totalBytes) * 100);
-          webContentsSend(
-            IpcMainToRender[isUpdate ? "uploadDownloadProgress" : "downloadProgress"],
-            realUrl,
-            progress,
-          );
-          if (isUpdate) setProgressBar(progress);
-        }
+        send(IpcMainToRender.downloadPaused, request.url);
+      } else if (state === "progressing" && !item.isPaused()) {
+        const total = item.getTotalBytes();
+        const progress =
+          total > 0
+            ? Math.min(100, Math.round((item.getReceivedBytes() / total) * 100))
+            : 0;
+        send(IpcMainToRender.downloadProgress, request.url, progress);
       }
     });
-
     item.once("done", (_, state) => {
-      const successEvent =
-        IpcMainToRender[isUpdate ? "updateDownloadSuccess" : "downloadSuccess"];
-      const failedEvent =
-        IpcMainToRender[isUpdate ? "updateDownloadFailed" : "downloadFailed"];
-      webContentsSend(
-        state === "completed" ? successEvent : failedEvent,
-        realUrl,
+      active.delete(item);
+      if (state !== "completed") cleanupTemporaryFile(item.getSavePath());
+      send(
+        state === "completed"
+          ? IpcMainToRender.downloadSuccess
+          : IpcMainToRender.downloadFailed,
+        request.url,
         item.getSavePath(),
       );
-      if (isUpdate) setProgressBar(-1);
-
-      const itemIndex = downloadItems.indexOf(item);
-      if (itemIndex !== -1) {
-        downloadItems.splice(itemIndex, 1);
-      }
     });
-  });
+  };
+  webContents.session.on("will-download", onDownload);
 
-  // ipcMain
-  ipcMain.handle(IpcRenderToMain.startDownload, (_, url: string) => {
-    webContents.session.downloadURL(url);
-  });
-
-  ipcMain.handle(IpcRenderToMain.pauseDownload, (_, url: string) => {
-    const item = downloadItems.find((item) => getRealUrl(item) === url);
-    if (item && !item.isPaused()) {
-      item.pause();
+  ipcMain.handle(IpcRenderToMain.startDownload, (event, input: unknown) => {
+    if (event.sender !== webContents) throw new Error("Invalid attachment window");
+    const request = normalizeDownloadRequest(input);
+    const key = downloadRequestKey(request.url);
+    if (
+      pending.has(key) ||
+      [...active.values()].some((value) => value.url === request.url)
+    )
+      return;
+    const timer = setTimeout(() => {
+      if (pending.delete(key)) send(IpcMainToRender.downloadFailed, request.url);
+    }, 30_000);
+    pending.set(key, { request, timer });
+    try {
+      // Preserve signed URL bytes; cache metadata travels separately in IPC.
+      webContents.session.downloadURL(request.url);
+    } catch (error) {
+      clearTimeout(timer);
+      pending.delete(key);
+      throw error;
     }
   });
 
-  ipcMain.handle(IpcRenderToMain.resumeDownload, (_, url: string) => {
-    const item = downloadItems.find((item) => getRealUrl(item) === url);
-    if (item && item.isPaused()) {
-      item.resume();
-    }
+  const findItem = (url: string) =>
+    [...active].find(([, request]) => request.url === url)?.[0];
+  ipcMain.handle(IpcRenderToMain.pauseDownload, (event, url: string) => {
+    if (event.sender !== webContents) return;
+    const item = findItem(url);
+    if (item && !item.isPaused()) item.pause();
   });
-
-  ipcMain.handle(IpcRenderToMain.cancelDownload, (_, url: string) => {
-    const item = downloadItems.find((item) => getRealUrl(item) === url);
-    if (item) {
-      item.cancel();
-      const itemIndex = downloadItems.indexOf(item);
-      if (itemIndex !== -1) {
-        downloadItems.splice(itemIndex, 1);
-        cleanupTemporaryFile(item.getSavePath());
-      }
+  ipcMain.handle(IpcRenderToMain.resumeDownload, (event, url: string) => {
+    if (event.sender !== webContents) return;
+    const item = findItem(url);
+    if (item?.isPaused()) item.resume();
+  });
+  ipcMain.handle(IpcRenderToMain.cancelDownload, (event, url: string) => {
+    if (event.sender !== webContents) return;
+    const key = downloadRequestKey(url);
+    const entry = pending.get(key);
+    if (entry) {
+      clearTimeout(entry.timer);
+      pending.delete(key);
     }
+    findItem(url)?.cancel();
+    send(IpcMainToRender.downloadCancel, url);
   });
 
   return () => {
-    downloadItems.forEach((item) => {
+    webContents.session.removeListener("will-download", onDownload);
+    for (const { timer } of pending.values()) clearTimeout(timer);
+    pending.clear();
+    for (const item of active.keys()) {
       item.cancel();
       cleanupTemporaryFile(item.getSavePath());
-    });
+    }
+    active.clear();
+    for (const name of [
+      "startDownload",
+      "pauseDownload",
+      "resumeDownload",
+      "cancelDownload",
+    ] as const)
+      ipcMain.removeHandler(IpcRenderToMain[name]);
   };
 };
 
 const cleanupTemporaryFile = (filePath: string) => {
-  if (fs.existsSync(filePath)) {
-    const tempFileDir = path.dirname(filePath);
-    fs.unlinkSync(filePath);
-    if (fs.readdirSync(tempFileDir).length === 0) {
-      fs.rmdirSync(tempFileDir);
-    }
+  if (!filePath) return;
+  try {
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile())
+      fs.unlinkSync(filePath);
+  } catch {
+    /* Do not interrupt download events when cleanup fails. */
   }
 };

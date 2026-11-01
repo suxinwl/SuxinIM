@@ -2,7 +2,7 @@
 
 本说明用于原 3.5 企业即时通讯项目合并升级后的 OpenIM38 开发版本，面向系统管理员和测试使用者。沿用原版账号登录、好友、群组及企业功能界面，管理后台沿用原 3.4 界面并适配新版接口。本文仅介绍这套升级项目的实际入口、安装包、账号管理及运行方法。
 
-更新日期：2026年11月2日。当前使用独立内网测试实例和合成账号；基础通讯、Web/Windows及部分Android功能已有证据，完整升级验收尚未全部结束。语音、视频、通话及会议测试按当前安排暂停；Android包仍是本地候选。
+更新日期：2026年11月2日。当前使用独立内网测试实例和合成账号；基础通讯、Web/Windows及部分Android功能已有证据，完整升级验收尚未全部结束。语音、视频、通话及会议已恢复开发与验证；Android 3.8.14+114 正在构建和媒体联调，尚未作为已验收安装包交付。Android113旧非媒体候选及先前暂停归档继续保留。
 
 ## 一 项目位置和版本
 
@@ -19,8 +19,8 @@ E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5
 | Web 和 Windows WASM SDK | 3.8.3-patch.15.1 |
 | Flutter SDK | 3.8.3+hotfix.15 |
 | Flutter Android 核心 | SDK 配套 3.8.3-patch15 AAR |
-| Windows 应用 | 3.8.6，构建号 380601 |
-| Android 应用候选 | 3.8.13+113；应用版本与 SDK 标签分别记录 |
+| Windows 应用 | 3.8.7，构建号 380701 |
+| Android 应用候选 | 3.8.14+114 正在构建/媒体联调；3.8.13+113 保留为历史非媒体候选 |
 | iOS Core | 3.8.3-hotfix.15；提供源码和 Mac/Xcode 构建说明 |
 
 Android Java SDK v3.8.3.5 仅作独立参考源码，没有替换 Flutter 配套 AAR。运行版本和依赖以 upstream-sources.lock.json、runtimes.lock.json、各模块锁文件及包旁元数据为准。
@@ -89,12 +89,12 @@ E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5\.private\manual\管理
 
 | 项目 | 内容 |
 | --- | --- |
-| 安装包 | OpenIM38-Enterprise-3.8.6-win-x64.exe |
-| 应用版本 | 3.8.6 / 380601；Windows x64 |
-| 本地相对路径 | clients/web-desktop/release/OpenIM38-Enterprise-3.8.6-win-x64.exe |
-| HTTPS 下载 | https://192.168.10.11:29880/downloads/OpenIM38-Enterprise-3.8.6-win-x64.exe |
-| 文件大小 | 160967316 字节 |
-| SHA-256 | b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3 |
+| 安装包 | OpenIM38-Enterprise-3.8.7-win-x64.exe |
+| 应用版本 | 3.8.7 / 380701；Windows x64 |
+| 本地相对路径 | clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe |
+| HTTPS 下载 | https://192.168.10.11:29880/downloads/OpenIM38-Enterprise-3.8.7-win-x64.exe |
+| 文件大小 | 160966886 字节 |
+| SHA-256 | 422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873 |
 
 1. 完成 Windows 开发 CA 安装，确认 29880、29885 可达。
 2. 从内部下载页取得 Windows 安装包，或使用项目根目录下的本地文件。
@@ -104,17 +104,23 @@ E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5\.private\manual\管理
 6. 首次登录等待 SDK 同步完成后再查看会话、好友和群组；同步期间不应把空列表直接判断为账号数据丢失。
 
 ```text
-Get-FileHash -Algorithm SHA256 -LiteralPath '安装包所在目录\OpenIM38-Enterprise-3.8.6-win-x64.exe'
+Get-FileHash -Algorithm SHA256 -LiteralPath '安装包所在目录\OpenIM38-Enterprise-3.8.7-win-x64.exe'
 ```
 
-### Windows 3.8.6 本轮修复与复测
+### Windows 3.8.7 本轮修复与复测
+
+- 多人转发按批次顺序发送，保留失败接收者供重试。引用消息转发保留原引用内容，避免固定 SDK 在缺失引用目标时退出；普通文字和媒体仍沿原 SDK 发送。
+- 顶部综合搜索和“聊天记录”结果可正常显示、选择并定位到对应会话和原消息；失败或切换搜索时保留可重试状态。搜索范围仍为当前账号已同步的本地消息。
+- 视频附件下载保持原签名地址不变，缓存参数通过客户端内部传递；启动失败可重试，下载后可从受管缓存播放。保留正常证书校验。
+
+### 保留的 3.8.6 修复（历史证据）
 
 - 聊天窗口关闭到托盘、隐藏、最小化或未获得焦点时，不再仅因会话仍被选中而自动上报新消息已读；重新打开并查看对应会话后才按可见条件上报。服务器此前已经记录的已读不会倒退，请使用升级后新发送的消息复测。
 - 工作圈本人点赞、取消点赞、评论和删除评论成功后立即更新列表与详情；发送失败保留评论草稿供重试。其他人的互动通过事件刷新，服务器缺少相应事件时由可见页面约 5 秒轮询补齐，实测取消点赞与删除合并显示为 5062 毫秒，不承诺严格 5 秒以内。
 - 工作圈不再显示原资源中固定的黑蓝色加载截图；列表采用紧凑顶部，个人页保留头像和姓名。
 - 修复截图确认后的重复进入截图框；确认或取消后结束本次截图，按原聊天工具使用截图结果。
 
-安装或覆盖升级前，必须完全退出旧客户端，包括系统托盘，再运行 3.8.6 安装包。启动后在关于页核对 3.8.6 / 380601。当前仍是未作 Windows 代码签名的内网测试包，不包含 Android 或公网发布。
+安装或覆盖升级前，必须完全退出旧客户端，包括系统托盘，再运行 3.8.7 安装包。启动后在关于页核对 3.8.7 / 380701。当前仍是未作 Windows 代码签名的内网测试包，不包含 Android 或公网发布。
 
 默认服务器已指向本内网测试实例。若之前保存过其他服务器配置，在登录页的 Config 配置中选择 HTTPS，并核对 IM API、Chat API 和 WSS 地址。界面协议前缀已单列时，输入框只填下表主机、端口和路径，避免出现重复 https://。
 
@@ -127,6 +133,8 @@ Get-FileHash -Algorithm SHA256 -LiteralPath '安装包所在目录\OpenIM38-Ente
 退出登录使用软件内原退出入口；请求失败时按页面提示重试。多端策略为 PC、移动、Web 类别并存，同一类别新登录会替换旧会话。更换账号时不要复制他人的本地数据库或令牌。
 
 ## 六 Android APK 路径和安装范围
+
+Android 3.8.14+114 正在构建及媒体联调，尚未提供本轮已验收APK或在线下载。下表是保留的113历史非媒体候选及其真实校验值，不能当作114安装来源。
 
 | 项目 | ARM64 手机候选 |
 | --- | --- |
@@ -178,7 +186,7 @@ Android 当前没有在线下载链接，也没有推送应用更新记录。不
 | IM系统 → 用户管理 | 查询IM用户、查看关系链 |
 | IM系统 → 群组管理 | 查询群组和群成员，使用页面提供的管理操作 |
 | IM系统 → 消息管理 | 查询用户/群消息，发送系统通知 |
-| RTC系统 | 保留原会议和通话管理界面；本轮相关测试暂停 |
+| RTC系统 | 保留原会议和通话管理界面；已恢复验证，完整媒体验收尚未完成 |
 | 设置 | 个人信息和管理员修改密码 |
 
 建议先在业务用户列表建立或核对普通通讯用户，再到 IM 用户、关系链和群成员页核对同步结果。不要只创建一条 IM 记录就认定该用户已具备 Chat 登录凭据。后台可见菜单与实际管理员权限有关，以当前账号页面和服务端返回结果为准。
@@ -193,7 +201,7 @@ Android 当前没有在线下载链接，也没有推送应用更新记录。不
 4. 按测试或正式发布策略选择强制更新；可选更新允许稍后，强更会阻止进入业务直至完成有效更新。
 5. 在旧版和当前版分别验证检查、下载失败重试、错误包拒绝及安装后的实际版本，保存结果。
 
-Chat 保存版本主记录，企业服务补充构建号、大小和哈希。Windows采用完整EXE更新，旧ASAR热替换停用。无版本记录或查询失败允许当前版本继续运行；校验失败不得安装。当前 Windows 3.8.6 提供内网下载；Android113候选仍不可登记为已完成验收的发布版本。
+Chat 保存版本主记录，企业服务补充构建号、大小和哈希。Windows采用完整EXE更新，旧ASAR热替换停用。无版本记录或查询失败允许当前版本继续运行；校验失败不得安装。当前 Windows 3.8.7 为内网测试包；Android114正在构建及媒体验证，113旧候选仅保留历史，均不可登记为已完成验收的发布版本。
 
 ## 十 服务端位置和日常启停
 
@@ -253,7 +261,7 @@ restore-check 仅在独立临时资源中演练数据库及附件恢复，不能
 | --- | --- |
 | 本使用手册 | artifacts/manual/OpenIM38-原版升级使用说明.html |
 | 管理员登录附页 | .private/manual/管理员登录信息.txt |
-| Windows EXE | clients/web-desktop/release/OpenIM38-Enterprise-3.8.6-win-x64.exe |
+| Windows EXE | clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe |
 | Android ARM64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-arm64-candidate.apk |
 | Android x64候选 | artifacts/android-candidates/OpenIM38-3.8.13+113-development-x64-candidate.apk |
 | Android校验表 | artifacts/android-candidates/SHA256SUMS.txt |
@@ -263,7 +271,8 @@ restore-check 仅在独立临时资源中演练数据库及附件恢复，不能
 | 上游与运行时来源 | upstream-sources.lock.json；runtimes.lock.json；deploy/images.lock.json |
 | 使用和构建补充 | docs/build-and-run.md；docs/web-desktop.md；docs/flutter.md |
 | 验收清单 | docs/acceptance.md；docs/feature-matrix.md |
-| 未完成媒体归档入口 | tests/delivery/deferred-media-work-20261101.json |
+| 媒体恢复进度 | tests/delivery/media-resume-20261102/ |
+| 先前媒体暂停归档 | tests/delivery/deferred-media-work-20261101.json |
 
 ## 十三 常见问题
 
@@ -282,15 +291,16 @@ restore-check 仅在独立临时资源中演练数据库及附件恢复，不能
 
 ## 十四 已验证范围和保留事项
 
-2026年11月2日本轮 Windows 3.8.6 修复通过57/57适配测试；真实工作圈原界面、真实Electron托盘已读闭环、合成截图GUI及打包ASAR核验、最终安装包对应的启动巡检均有通过记录。一次运行曾出现来源未确定的Object类型页面错误，原记录保留，后续同闭环重测为0错误；本轮不据此宣称全部页面错误均已修复。语音、视频、通话与会议继续暂停，Android113仍仅为本地候选。
+2026年11月2日，Windows 3.8.7 本轮94项适配测试及TypeScript检查通过。合成账号真实Electron引用消息转发给5名接收者后，SDK会话与历史查询保持可用；搜索有5项原界面和10项真实消息Store回归；视频有9项行为测试、原生合成MP4下载、Range读取、解码及正常TLS下载证据。最终Windows安装包构建及对应打包程序的正常TLS、SDK初始化、受管文件Range巡检通过。原生下载工具使用独立隐藏窗口和合成数据，不能替代所有历史附件、显卡或网络条件下的整体验收。覆盖安装后仍应核对关于页版本。
 
-- 服务端固定版本、Web和管理后台、Windows3.8.6构建与主要客户端回归已完成；100个真实SDK持续至少30分钟，5700条发送和5700条接收，未记录失败。
-- Android113通过42项非媒体测试，x64和ARM64正常主程序签名候选均完成；x64覆盖安装、缓存首页、原关于页和无更新提示有局部证据。
-- 语音、视频、单聊/群组通话、会议和共享测试暂缓，未完成源码及失败记录已归档；已知群清理超时、首次会议中断及会议结束详情状态缺口不视为修复。
-- 没有ARM64真机运行结论；Android应用内下载安装升级尚未验收。一次模拟器SystemUI无响应提示及恢复记录保留，不能声称整机无ANR。
+- 保留3.8.6已读、工作圈和截图修复，以及原57项适配和对应界面/打包证据；历史记录未改成3.8.7。
+- 历史100个真实SDK持续至少30分钟、5700条发送和5700条接收的结果保留；本轮没有重新执行这一压力测试。
+- Android114已恢复会议状态和原生媒体生命周期开发，159项Dart及108项Java源码边界测试通过；完整APK、AVD媒体和真实释放链验证仍在进行，源码或编译通过不等于通话验收通过。
+- Android113旧候选的42项非媒体结果仅归属于113；旧群退出超时等失败及暂停归档继续保留，不能用114源码测试覆盖原失败结论。
+- 没有ARM64真机运行结论；普通手机证书信任、Android系统安装升级及物理设备媒体效果仍待验收。
 - iOS提供源码和Mac/Xcode说明，本机没有完成Xcode构建；Windows测试包未做代码签名。
-- 当前成果为原企业项目与固定官方版本合并的开发版本，全部约定功能通过前，不标记整体升级完成。
+- 当前成果仍为原企业项目与固定官方版本合并的开发版本，全部约定功能通过前，不标记整体升级完成。
 
-需要核对历史测试时，以 docs/acceptance.md 和对应原始报告为准。本次仅整理使用文案与凭据附页，功能代码、安装包内容及既有历史证据不做改写。
+本轮Windows证据见 tests/delivery/windows-387-quote-facade-review.json、windows-387-search-review.json、windows-387-video-download-review.json及最终聚合报告；媒体恢复记录见 tests/delivery/media-resume-20261102/。历史暂停记录仍见 tests/delivery/deferred-media-work-20261101.json，仅表示当时状态，不代表本轮继续暂停。
 
 公开HTML使用说明的校验表位于 artifacts/manual/SHA256SUMS.txt；管理员登录附页不进入公开校验清单。

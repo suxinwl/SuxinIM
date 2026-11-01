@@ -1,0 +1,233 @@
+{
+  "createdUtc": "2026-11-01T18:16:40.248Z",
+  "status": "PASS_PACKAGED_SOURCE_AUDIT",
+  "scope": "Read-only ASAR audit while root NSIS packaging runs. No build, product mutation, process interaction, real-client access or user-data access.",
+  "archive": {
+    "path": "clients/web-desktop/release/win-unpacked/resources/app.asar",
+    "sha256": "b0ff3ca3158fb6cef44f0471bb584058acf8536b0a6694ad4c4d1cffffdcfe56",
+    "stable": true,
+    "start": {
+      "bytes": 230058273,
+      "mtimeMs": 1793556834922.2122,
+      "mtimeUtc": "2026-11-01T18:13:54.922Z"
+    },
+    "preRead": {
+      "bytes": 230058273,
+      "mtimeMs": 1793556834922.2122,
+      "mtimeUtc": "2026-11-01T18:13:54.922Z"
+    },
+    "postRead": {
+      "bytes": 230058273,
+      "mtimeMs": 1793556834922.2122,
+      "mtimeUtc": "2026-11-01T18:13:54.922Z"
+    }
+  },
+  "package": {
+    "entry": "package.json",
+    "bytes": 1708,
+    "sha256": "69f4a9cdf48e652c73ac4c962d2e6fbb0bf2608ea90c677ae66192dcc2ea598f",
+    "version": "3.8.7"
+  },
+  "main": {
+    "entry": {
+      "entry": "dist-electron/main/index.js",
+      "bytes": 51147,
+      "sha256": "2da56bbe2e3ac776215b3056319199b8d7e59e6ad3ab1202f63d9973b5c4e7d0"
+    },
+    "map": {
+      "entry": "dist-electron/main/index.js.map",
+      "bytes": 90457,
+      "sha256": "e6c178f34d9a16cfd95cd6ecd402af110491a053c66935311a4c6ecf2d063fe3"
+    },
+    "sources": [
+      {
+        "source": "electron/main/downloadManage.ts",
+        "mapEntry": "dist-electron/main/index.js.map",
+        "mapSource": "../../electron/main/downloadManage.ts",
+        "currentBytes": 5147,
+        "currentSha256": "e58465bea3902aed519272858e16b87bdf43e13e760c75a5d0a9271a407b61d7",
+        "mappedBytes": 5147,
+        "mappedSha256": "e58465bea3902aed519272858e16b87bdf43e13e760c75a5d0a9271a407b61d7",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "electron/main/downloadTarget.ts",
+        "mapEntry": "dist-electron/main/index.js.map",
+        "mapSource": "../../electron/main/downloadTarget.ts",
+        "currentBytes": 2058,
+        "currentSha256": "2c7399a2d95dca6a306bdbf94ca69f1671d27c0965fd2414db0b202444269605",
+        "mappedBytes": 2058,
+        "mappedSha256": "2c7399a2d95dca6a306bdbf94ca69f1671d27c0965fd2414db0b202444269605",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      }
+    ]
+  },
+  "renderer": {
+    "index": {
+      "entry": "dist/index.html",
+      "bytes": 618,
+      "sha256": "5a5454a0fed9e8462641ecc343352c7bbdca9e2f7afe8f2fbbbfd32590ac1a9c"
+    },
+    "referencedModule": "./assets/index-8a8074fa.js",
+    "entry": {
+      "entry": "dist/assets/index-8a8074fa.js",
+      "bytes": 2971033,
+      "sha256": "f84616fd76d43aaa8c1c44ceb9c345950d9952827ff0b59d4c02deb122e44043"
+    },
+    "map": {
+      "entry": "dist/assets/index-8a8074fa.js.map",
+      "bytes": 11150956,
+      "sha256": "60c198bc95ede6bc7b6458b54e65107b94f98e55ac685c0b3f949ed91cf089ff"
+    },
+    "sources": [
+      {
+        "source": "src/im/send-message.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/im/send-message.ts",
+        "currentBytes": 941,
+        "currentSha256": "f11fa8663cd2ced2cfde93e74e98d32f06a9508b79b5956746ad9733434c6c05",
+        "mappedBytes": 941,
+        "mappedSha256": "f11fa8663cd2ced2cfde93e74e98d32f06a9508b79b5956746ad9733434c6c05",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/im/forward-batch.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/im/forward-batch.ts",
+        "currentBytes": 1809,
+        "currentSha256": "5b680bca824abc75c2b2f94b57023c27a5c546a3f2df048b46e5793e598865a9",
+        "mappedBytes": 1809,
+        "mappedSha256": "5b680bca824abc75c2b2f94b57023c27a5c546a3f2df048b46e5793e598865a9",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/im/attachment-download.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/im/attachment-download.ts",
+        "currentBytes": 1414,
+        "currentSha256": "f25e373b42d5c9fe23b31fb645539754ecf453eadb9c5cb35b15642946b85dc6",
+        "mappedBytes": 1414,
+        "mappedSha256": "f25e373b42d5c9fe23b31fb645539754ecf453eadb9c5cb35b15642946b85dc6",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/im/ImFacade.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/im/ImFacade.ts",
+        "currentBytes": 16359,
+        "currentSha256": "1f802d65f6cdd619c34326517c5740367a368a14d995cf88bc6cb412ab790865",
+        "mappedBytes": 16359,
+        "mappedSha256": "1f802d65f6cdd619c34326517c5740367a368a14d995cf88bc6cb412ab790865",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/im/message-history.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/im/message-history.ts",
+        "currentBytes": 1995,
+        "currentSha256": "22760cf8287bbf501eb89e89bd5fcd3f64b8a3228000005f82cb960fec8ed81c",
+        "mappedBytes": 1995,
+        "mappedSha256": "22760cf8287bbf501eb89e89bd5fcd3f64b8a3228000005f82cb960fec8ed81c",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/pages/common/ChooseModal/index.tsx",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/pages/common/ChooseModal/index.tsx",
+        "currentBytes": 14102,
+        "currentSha256": "c59584d83e49b3c974bebd7e730f00eb039073ba8d61336f83fe70609422d67c",
+        "mappedBytes": 14102,
+        "mappedSha256": "c59584d83e49b3c974bebd7e730f00eb039073ba8d61336f83fe70609422d67c",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/pages/chat/queryChat/ChatFooter/useSendMessage.ts",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/pages/chat/queryChat/ChatFooter/useSendMessage.ts",
+        "currentBytes": 2304,
+        "currentSha256": "43bbca45281e3e0fcd5aa7e29db219c684740e6f995b67673df5ff42011a899f",
+        "mappedBytes": 2304,
+        "mappedSha256": "43bbca45281e3e0fcd5aa7e29db219c684740e6f995b67673df5ff42011a899f",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/pages/common/GlobalSearchModal/ChatLogsPanel.tsx",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/pages/common/GlobalSearchModal/ChatLogsPanel.tsx",
+        "currentBytes": 4809,
+        "currentSha256": "05ae65012acc3b8fad34985f6ce5007302191fc688078e50d9bf7e643a99b084",
+        "mappedBytes": 4809,
+        "mappedSha256": "05ae65012acc3b8fad34985f6ce5007302191fc688078e50d9bf7e643a99b084",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/pages/common/GlobalSearchModal/DashboardPanel.tsx",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/pages/common/GlobalSearchModal/DashboardPanel.tsx",
+        "currentBytes": 7030,
+        "currentSha256": "995ff906b5ec9fc4aba35b0675987ce692a829c00fab7b9fe8ee9698d2944a2c",
+        "mappedBytes": 7030,
+        "mappedSha256": "995ff906b5ec9fc4aba35b0675987ce692a829c00fab7b9fe8ee9698d2944a2c",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      },
+      {
+        "source": "src/pages/common/GlobalSearchModal/index.tsx",
+        "mapEntry": "dist/assets/index-8a8074fa.js.map",
+        "mapSource": "../../src/pages/common/GlobalSearchModal/index.tsx",
+        "currentBytes": 11333,
+        "currentSha256": "d5bbefa7099591b644e8cce54b4bcf247fbd52af829364522027eb518c854983",
+        "mappedBytes": 11333,
+        "mappedSha256": "d5bbefa7099591b644e8cce54b4bcf247fbd52af829364522027eb518c854983",
+        "exactBytesEqual": true,
+        "normalizedLFEqual": true
+      }
+    ],
+    "compiledMarkers": {
+      "quoteUsesOfficialNotOss": true,
+      "orderedForwardProgress": true,
+      "forwardFailurePropagates": true,
+      "attachmentSignedURLValidation": true
+    },
+    "stylesheets": [
+      {
+        "entry": "dist/assets/index-d0e5fbff.css",
+        "bytes": 100961,
+        "sha256": "d0e5fbff11642753f332a616df6528f63e36719c63c594fa754466a0247ed69b",
+        "moduleClass": "._global-search-modal_vvsup_1",
+        "checks": {
+          "modalHeight80Percent": true,
+          "directWrapperHeight100Percent": true,
+          "contentHeight100Percent": true,
+          "bodyHeight100Percent": true,
+          "spinHeight100Percent": true
+        },
+        "evidenceKind": "Compiled CSS rules in stylesheet referenced by actual packaged index.html; no SCSS sourcesContent claim."
+      }
+    ]
+  },
+  "screenshotPreload": {
+    "entry": "node_modules/electron-screenshots/lib/preload.js",
+    "bytes": 2478,
+    "sha256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb",
+    "expectedPatchedSha256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb",
+    "newUint8ArrayCount": 2,
+    "oldBufferArrayBufferCount": 0,
+    "matchesExpectedPatch": true
+  },
+  "limits": [
+    "Matching sourcesContent SHA proves the packaged source map contains the exact current selected source bytes; compiled markers and linked asset hashes are separately recorded. It is not execution or final installer acceptance.",
+    "CSS height-chain evidence is compiled-rule inspection from an index-linked stylesheet, not byte-for-byte SCSS source-map verification.",
+    "Root still performs actual packaged runtime smoke, final NSIS installer size/SHA checks and publication validation."
+  ]
+}

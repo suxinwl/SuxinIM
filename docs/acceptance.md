@@ -2,12 +2,16 @@
 
 本目录为基于固定官方版本与原企业源码合并的开发版本。只有全部约定用例通过，才能标记升级完成。当前尚未作此标记。
 
-2026-11-01按用户最新指示，暂时跳过视频、语音、通话与会议测试，继续其余回归和构建。未完成112改造、测试失败和原生实验已归档，见 `tests/delivery/deferred-media-work-20261101.json`；root实际核69份112副本、271份外置原生实验文件及28份入会测试证据。8个活动源文件恢复111原字节、新model和2个未完成测试移入可恢复归档，3229项运行源、SDK194、native99及62/64依赖覆盖复核通过，见 `tests/flutter/112-restored-111-verification.json`。113以该基线仅更新pubspec和iOS版本元数据，42项非媒体回归通过，x64、ARM64正常main候选已构建并完成签名、版本、ABI及原生依赖核验；两包仅保存在本地候选目录，不发布到更新服务。跳过不等于通过，相关功能仍保留在源码中，以下历史失败不抹除。
+2026-11-02已恢复语音、视频、通话和会议开发与测试。Windows当前版本3.8.7/380701；Android114正在构建和媒体联调，尚未交付已验收包。159项Dart、108项Java源码边界测试及编译证据单列，不能替代真实JNI、AVD媒体或ARM64设备验收。以下暂停和113旧候选记录保留其历史范围。
+
+历史安排（2026-11-01）：按用户当时指示，暂时跳过视频、语音、通话与会议测试，继续其余回归和构建。未完成112改造、测试失败和原生实验已归档，见 `tests/delivery/deferred-media-work-20261101.json`；root实际核69份112副本、271份外置原生实验文件及28份入会测试证据。8个活动源文件恢复111原字节、新model和2个未完成测试移入可恢复归档，3229项运行源、SDK194、native99及62/64依赖覆盖复核通过，见 `tests/flutter/112-restored-111-verification.json`。113以该基线仅更新pubspec和iOS版本元数据，42项非媒体回归通过，x64、ARM64正常main候选已构建并完成签名、版本、ABI及原生依赖核验；两包仅保存在本地候选目录，不发布到更新服务。跳过不等于通过，相关功能仍保留在源码中，以下历史失败不抹除。
 
 | 当前交付部分 | 已取得证据 | 尚需完成 |
 |---|---|---|
 | Linux 服务端与企业服务 | 固定版本构建、隔离运行、100个真实SDK共同在线30分钟 | 不含真实业务数据库迁移 |
-| Web、Windows 3.8.6 | 原界面运行；本轮57/57适配测试、真实托盘已读/工作圈、合成截图GUI与ASAR、最终打包启动巡检通过；此前安装升级证据按原版本保留 | Windows包未代码签名；物理媒体效果另验 |
+| Web、Windows 3.8.7 | 94项适配及TypeScript通过；真实合成引用转发5人后会话/历史可用；搜索5原UI+10Store、视频9行为+原生MP4和正常TLS通过 | 最终NSIS及对应打包程序TLS/SDK/受管Range巡检通过；Windows未代码签名，真实覆盖安装和实际硬件效果按本轮报告逐项记录 |
+| Android 3.8.14+114 开发中 | 159项Dart、108项Java源码边界通过，会议状态和原生帧生命周期改造恢复 | APK/AVD媒体完整验证仍在进行；未发布、未提供真机结论 |
+| 历史Web、Windows 3.8.6 | 原界面运行；本轮57/57适配测试、真实托盘已读/工作圈、合成截图GUI与ASAR、最终打包启动巡检通过；此前安装升级证据按原版本保留 | Windows包未代码签名；物理媒体效果另验 |
 | Android 3.8.9+109 | 123项Dart测试、完整输入冻结下ARM64正常主程序构建、签名及原生载荷来源核验；x64正常main原登录、跨端群已读0/2→1/1→2/0、真实断网及两tab恢复重试 | ARM转译启动触发SIGILL；连续通话及清理、群通话/会议/共享、系统安装升级及物理ARM运行仍未通过；尚未发布 |
 | Android 3.8.10+110 | 134项Dart/88项Java及Android类路径编译；私有x64正常main缓存、API撤销及失效冷启；两轮单聊视频、预约会议、三方原邀请/主持权限/双向共享和最后结束有实际证据 | 同进程重登按钮缺陷、群退出72.313秒失败、首次会议中断、详情结束状态缺口仍保留；未发布，物理ARM与安装更新未验收 |
 | Android 3.8.11+111 | 138项Dart、94项Java及Android类路径编译；同19目标0错误、103 warning、598 info；3229+SDK194和99 native输入独立核对，5项批准修改；私有x64正常main构建验签，原界面会话撤销后同进程重新登录成功，新会话三接口有效 | 本轮未媒体测试，未声称修复群原生等待；物理ARM及安装更新仍待验证；112未完成改造已归档；113结果单列，不倒用于111 |
@@ -18,9 +22,20 @@
 
 108首轮3224项清单另漏记5项真实`com/example` Android插件源码，原因是按任意深度的`example`目录名排除。其中1项已有构建前兼容补丁逐SHA锁，另4项在首轮构建期间才补锁，不能追溯称其全部输入在首轮构建前已冻结。已只更正元数据为3229项，原3224项零变化；独立重新清点默认源码、声明资源和字体无遗漏，见 tests/delivery/android-108-path-source-coverage-resolution-review.json。首轮包及原清单保留；更正范围下另做的同命令确认构建实际通过，3229项与SDK194项前后匹配，APK与首轮字节相同，见 android-108-confirmed-source-boundary-review.json。109另在完整更正范围下独立构建ARM64候选，具体记录如下，不将109证据倒用于旧包。
 
-## 2026-11-02 Windows 3.8.6 本轮验收
+## 2026-11-02 Windows 3.8.7 本轮验收
 
-当前包：`clients/web-desktop/release/OpenIM38-Enterprise-3.8.6-win-x64.exe`，构建号380601，160967316字节，SHA-256 `b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3`。测试包未做Windows代码签名；安装前完全退出旧客户端，包括托盘。
+当前包：`clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe`，构建号380701，160966886字节，SHA-256 `422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873`。测试包未做Windows代码签名；安装前完全退出旧客户端，包括托盘。
+
+- 最终NSIS构建通过，对应打包程序的正常TLS、SDK初始化及受管文件Range巡检通过，见tests/delivery/windows-387-native-smoke.json；不将构建巡检等同于用户电脑已完成覆盖安装。
+- 94项适配测试及TypeScript检查通过，见tests/delivery/windows-387-final-adapter-tests.log与windows-387-final-typecheck.log。
+- 原3.8.6真实Electron引用转发在固定WASM中复现退出；新适配保留引用目标，经5名合成接收者转发后历史及自信息查询有效。普通文字/媒体保留原SDK路径；批次有序等待，失败接收者可重试，见windows-387-quote-facade-review.json及本轮原生报告。
+- 综合搜索和聊天记录页5项原UI结果、10项真实Store行为回归通过，覆盖结果列表、消息上下文定位、失败重试及过期响应，见windows-387-search-review.json。
+- 视频下载9项行为测试通过；真实生产下载函数/主进程在隐藏Electron窗口中用合成MP4完成200下载、SHA一致、受管Range206和真实视频解码；正常证书校验下载隔离服务器文件通过，见windows-387-video-download-review.json。该证据不等于所有旧附件、硬件或原聊天窗口操作均已逐项验收。
+- 媒体恢复进度见tests/delivery/media-resume-20261102/；尚未用新Android114完成AVD媒体验收，原失败及113候选证据不覆盖写。
+
+## 2026-11-02 Windows 3.8.6 历史验收
+
+历史包：`clients/web-desktop/release/OpenIM38-Enterprise-3.8.6-win-x64.exe`，构建号380601，160967316字节，SHA-256 `b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3`。测试包未做Windows代码签名；安装前完全退出旧客户端，包括托盘。
 
 - 57/57适配测试通过，见 `tests/delivery/windows-386-final-adapter-tests.log`。
 - 真实Electron验证关闭到托盘、隐藏/最小化或失焦时不把后续新消息误报已读，重新查看后上报。旧服务端已读不回退，验证只针对新消息，见 `windows-386-read-runtime-review.json`。
@@ -28,7 +43,7 @@
 - 合成截图GUI、截图结束状态、打包ASAR及最终安装包对应的启动巡检通过，见 `windows-386-screenshot-fix-review-final.json`、`windows-386-screenshot-packaging-review.json`、`windows-386-native-smoke.json`；不扩大为全部硬件组合的截图实测。
 - 一次来源未确定的Object类型页面错误保留于 `windows-386-read-object-error-diagnostic-review.json`，后续相同闭环重测0错误；不宣称已定位或修复所有页面错误。
 
-以上JSON均在 `tests/delivery` 下。本轮仅Windows/Web修复，Android113继续本地候选，媒体、语音/视频通话及会议仍按用户要求暂停，没有Android或公网发布；历史3.8.5运行报告保持原字节与原版本。
+以上3.8.6历史JSON均在 `tests/delivery` 下。当时仅Windows/Web修复，Android113为本地候选、媒体暂停；本轮已恢复媒体开发。没有将这些旧证据改写为3.8.7或114通过，历史3.8.5运行报告同样保持原字节与原版本。
 
 ## 已有证据
 

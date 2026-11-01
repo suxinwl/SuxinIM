@@ -1,0 +1,334 @@
+{
+  "createdUtc": "2026-11-01T17:57:43.210823+00:00",
+  "status": "PASS_SCOPED_SEARCH_FIX",
+  "rootCauses": [
+    "Overview callback captured the initial empty chatLogs array and selected index -1.",
+    "Chat-history selection reset to -1 while loading and did not select the first result on completion.",
+    "Current Antd adds an un-sized panel wrapper, breaking the percentage-height chain; actual original virtual lists had zero height.",
+    "Jump imperative handles captured old message props; failed context requests had no loading reset, and history/search sequence cursors were mixed."
+  ],
+  "fixes": [
+    "Use fresh callbacks/imperative handles and a valid result selection; reject summary rows as message anchors.",
+    "Preserve the Modal panel and Spin height chain; retain normal scrolling lists.",
+    "Load exact clientMsgID context using pinned Search view, deduplicate/order messages, preserve pagination cursor, cancel stale async updates and retain existing history on failure.",
+    "Release loading in finally, keep failed jumps retryable, and scroll the actual message into view after render.",
+    "Trim/clear search input, restore Enter search, and ignore superseded keyword responses."
+  ],
+  "archive": {
+    "manifest": {
+      "path": "tests/delivery/windows-387-before/search/manifest.json",
+      "bytes": 1916,
+      "sha256": "1ef2b490131966d02562e1a35a30d5bdd6af8939e08ec3d5b568a92fe564687a"
+    },
+    "allOriginalBytesVerified": true,
+    "archivedFiles": 9
+  },
+  "sourceFiles": [
+    {
+      "path": "clients/web-desktop/src/components/JumpToMessageWrap/index.tsx",
+      "bytes": 2132,
+      "sha256": "7fc5be4b3fbeb6241c8ec44214eb7dd1bdcdb54d827524bfecee450fee9e4196"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/ChatContent.tsx",
+      "bytes": 7742,
+      "sha256": "b72d4f3e23e606d73a16c0dd2d9de734a168aafb31a760aaf07cf0362c633abc"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/index.tsx",
+      "bytes": 4178,
+      "sha256": "394de36e23b4dc0ffb3143e1428b9545e14e5f9d12f29ff2943d6d697b13cffa"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/ChatLogsPanel.tsx",
+      "bytes": 4809,
+      "sha256": "05ae65012acc3b8fad34985f6ce5007302191fc688078e50d9bf7e643a99b084"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/DashboardPanel.tsx",
+      "bytes": 7030,
+      "sha256": "995ff906b5ec9fc4aba35b0675987ce692a829c00fab7b9fe8ee9698d2944a2c"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/index.module.scss",
+      "bytes": 827,
+      "sha256": "ce566fce9af5727ceda4f41e5970db673d9b18bee23cc923faac302b9bcc48d2"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/GlobalSearchModal/index.tsx",
+      "bytes": 11333,
+      "sha256": "d5bbefa7099591b644e8cce54b4bcf247fbd52af829364522027eb518c854983"
+    },
+    {
+      "path": "clients/web-desktop/src/store/message.ts",
+      "bytes": 12784,
+      "sha256": "835f7d7a016454c72a0488a5f985d4015a14fb0499e4eb497868a2ac037e7c5e"
+    },
+    {
+      "path": "clients/web-desktop/src/im/message-history.ts",
+      "bytes": 1995,
+      "sha256": "22760cf8287bbf501eb89e89bd5fcd3f64b8a3228000005f82cb960fec8ed81c"
+    }
+  ],
+  "tests": {
+    "unit": {
+      "passed": 10,
+      "failed": 0,
+      "scope": "Actual Zustand message store with only SDK/network/conversation boundaries replaced.",
+      "runner": {
+        "path": "clients/web-desktop/tests/search-history.test.mjs",
+        "bytes": 8150,
+        "sha256": "6fed29707bbf3663d9089fcdff7a087b96dc1cf8ff7f808591dcbf773b2872bd"
+      },
+      "log": {
+        "path": "tests/delivery/windows-387-search-unit.log",
+        "bytes": 3553,
+        "sha256": "3a267b5a00ba18c4cbddcb6162ef50908fbbf15ebf9dbab16edeec0ecf8ca0c9"
+      }
+    },
+    "ui": {
+      "passed": 5,
+      "failed": 0,
+      "report": {
+        "path": "tests/delivery/windows-387-search-after-20261101T175555290Z/report.json",
+        "bytes": 7608,
+        "sha256": "0f7371344688b9d48b09ed03953280ff7fc603530fad032fbf812b00a4a75b1b"
+      },
+      "runner": {
+        "path": "clients/web-desktop/tests/search-387-ui.mjs",
+        "bytes": 12170,
+        "sha256": "bc90eb8e0ee825edcd4329afa17f006926fe770bac41cfde2db0078e78acfc8f"
+      },
+      "beforeReport": {
+        "path": "tests/delivery/windows-387-search-before-20261101T174914521Z/report.json",
+        "bytes": 4213,
+        "sha256": "5e4fe7d327524180e48589e77dd7948a43b9c038ad8185b95d1be43a9d121493"
+      },
+      "images": [
+        {
+          "path": "tests/delivery/windows-387-search-after-20261101T175555290Z/contacts-search-anchor-visible.png",
+          "bytes": 152047,
+          "sha256": "004dd610347c94c9a9310052e3e67a61bbbe3050e9dcd758ab269859c9a551d9"
+        },
+        {
+          "path": "tests/delivery/windows-387-search-after-20261101T175555290Z/overview-message-selected.png",
+          "bytes": 89416,
+          "sha256": "a4405b8d6dbc7ee81553fea8cb800bb6ada50e78773cba1deef9d15ace9c8adf"
+        },
+        {
+          "path": "tests/delivery/windows-387-search-after-20261101T175555290Z/search-anchor-visible.png",
+          "bytes": 152103,
+          "sha256": "d1d1796910c019286890cc2990d00fce6dc9692f19fd3ebea31e47bbf6e1bf38"
+        }
+      ]
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": {
+        "path": "tests/delivery/windows-387-search-typecheck.log",
+        "bytes": 65,
+        "sha256": "f020efe5bad1d6f3ba3f2001fba959a521b0d4f94a1744b35fdd5aefbe778b1d"
+      }
+    },
+    "runHistory": [
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T174502550Z/report.json",
+        "bytes": 2133,
+        "sha256": "98285c26405c49a763088dc2f8c2e161b9fe9f6ca767f22f83d0ebceec1105f0",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T174616083Z/report.json",
+        "bytes": 3016,
+        "sha256": "318e86862f0e52bc864a71682e9d985c70902882d293b557ad3850be7dd71c93",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T175314189Z/report.json",
+        "bytes": 4033,
+        "sha256": "de9f02ed85efa9d454e0a4007f705f297c06830cb33ebdfc8fa6377d9ee04826",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": true
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T175417421Z/report.json",
+        "bytes": 7613,
+        "sha256": "26821fac2439f4ce30635bbd6a031432a6eeb15ff5f6f25670d8a8f2ceb80461",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": true
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T175503811Z/report.json",
+        "bytes": 7198,
+        "sha256": "bfd5cc4b2f33c75acca416b998943da4bedc9d5f4c8c51f9e3c71300cc9e8fa3",
+        "status": "PASS",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": true
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": true
+          },
+          {
+            "name": "Double-clicking the original result opens the corresponding chat and anchors its actual message",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-after-20261101T175555290Z/report.json",
+        "bytes": 7608,
+        "sha256": "0f7371344688b9d48b09ed03953280ff7fc603530fad032fbf812b00a4a75b1b",
+        "status": "PASS",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": true
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": true
+          },
+          {
+            "name": "Double-clicking the original result opens the corresponding chat and anchors its actual message",
+            "pass": true
+          },
+          {
+            "name": "Searching from contacts navigates back to the matching conversation and visible anchor",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-before-20261101T174140815Z/report.json",
+        "bytes": 1262,
+        "sha256": "bab17ed7565ca4df5d4218d7ebb6ccb02f3652b5ae6f74d77cca314089d7c1f1",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-before-20261101T174252981Z/report.json",
+        "bytes": 2137,
+        "sha256": "58a583e0da8fef2fc67bc08f1b507c2bef7054404dc1bf0125f50518dc4bc854",
+        "status": "FAIL",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-before-20261101T174804284Z/report.json",
+        "bytes": 4644,
+        "sha256": "d62b1404ce5a16a517ba7e000965bb49a8142c8b71dccc2c53c00751b10ce8e0",
+        "status": "REPRODUCED_FAILURE",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": false
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": false
+          }
+        ]
+      },
+      {
+        "path": "tests/delivery/windows-387-search-before-20261101T174914521Z/report.json",
+        "bytes": 4213,
+        "sha256": "5e4fe7d327524180e48589e77dd7948a43b9c038ad8185b95d1be43a9d121493",
+        "status": "REPRODUCED_FAILURE",
+        "stageResults": [
+          {
+            "name": "Pinned SDK returns actual matching local messages",
+            "pass": true
+          },
+          {
+            "name": "Overview result selects the matching conversation and displays its message",
+            "pass": false
+          },
+          {
+            "name": "Chat-history tab has usable list height and selects the first result",
+            "pass": false
+          }
+        ]
+      }
+    ]
+  },
+  "boundaries": [
+    "Normal TLS, synthetic fixture indexes 106/107, original email/password and search/send UI. All test browser processes closed.",
+    "UI verification used installed Chrome headless against canonical E: Vite source; it is not native Windows installer acceptance.",
+    "Core SDK search is local-cache search. Test waits 4 seconds after sending because observed server timestamps were about 2 seconds ahead of the workstation and pinned core rounds the default cutoff down to seconds.",
+    "Two generic Object page errors occurred both in original-386 and fixed-source startup/selection. They are retained in all reports; their underlying cause was not diagnosed here and zero runtime errors is not claimed.",
+    "Earlier failed attempts retain cutoff/timing and strict-locator ambiguity. The second before report independently verifies the original zero-height lists and missing right-pane result; intermediate after height-chain failures are preserved.",
+    "No HRM integration, SDK version changes, release build, server mutation, or real business data migration performed by this subtask."
+  ],
+  "primaryReferences": [
+    "https://docs.openim.io/sdk/wasm/message/searching-messages/search-messages",
+    "https://github.com/openimsdk/openim-sdk-core/blob/d6e0b549db904d0327d76ef7c9c283203879a095/internal/conversation_msg/conversation.go",
+    "clients/web-desktop/node_modules/@openim/wasm-client-sdk/lib/types/params.d.ts"
+  ],
+  "publicTextCredentialScan": {
+    "scope": "Only named source, test-runner, report and log UTF-8 files; no binary/image/OCR/full-project claim. Known private fixture password/token values, password MD5 variants and generic JWT pattern were checked in memory.",
+    "files": 23,
+    "matches": 0
+  }
+}

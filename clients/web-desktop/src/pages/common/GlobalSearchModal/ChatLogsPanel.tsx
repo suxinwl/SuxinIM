@@ -57,7 +57,7 @@ export const ChatLogsRender = memo(
             { "cursor-pointer": isConversation },
           )}
           onClick={() => onClick?.(result)}
-          onDoubleClick={() => jumpWrapRef.current?.jumpToHistory()}
+          onDoubleClick={() => !isConversation && jumpWrapRef.current?.jumpToHistory()}
         >
           <div className="relative min-w-[38px]">
             <OIMAvatar
@@ -108,10 +108,12 @@ const ChatLogsPanel: ForwardRefRenderFunction<
   useEffect(() => {
     if (loading) {
       updateIdx(-1);
+    } else if (data.length && (activeIdx < 0 || activeIdx >= data.length)) {
+      updateIdx(0);
     }
-  }, [loading]);
+  }, [loading, data, activeIdx]);
 
-  useImperativeHandle(ref, () => ({ updateIdx }), []);
+  useImperativeHandle(ref, () => ({ updateIdx }));
 
   return (
     <div className="flex h-full px-3">

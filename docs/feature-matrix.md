@@ -2,12 +2,15 @@
 
 此表区分已保留的实现路径与实际运行证据。原3.5企业UI为客户端来源；3.4后台为管理UI来源。未完成的原组织树、UniMP、云录制入口保持原状态，不通过隐藏功能来代替升级。
 
-按用户2026-11-01新指示，本轮暂缓视频、语音、语音/视频通话和会议测试；以下媒体记录仅保留原运行范围，不是113通过证明。112未完成会议改造及原生实验已归档并从活动源撤出，主线恢复已验证111后，113已通过42项非媒体回归并构建x64/ARM64正常主程序本地候选；安装包存在不等于媒体或真机通过。未完成标记和可恢复文件入口见 `tests/delivery/deferred-media-work-20261101.json`，不得将跳过项记为验收通过。
+历史安排（2026-11-01）曾暂缓视频、语音、语音/视频通话和会议测试；以下媒体记录仅保留原运行范围，不是113通过证明。112未完成会议改造及原生实验已归档并从活动源撤出，主线恢复已验证111后，113已通过42项非媒体回归并构建x64/ARM64正常主程序本地候选；安装包存在不等于媒体或真机通过。未完成标记和可恢复文件入口见 `tests/delivery/deferred-media-work-20261101.json`，不得将跳过项记为验收通过。
 
-2026-11-02当前Windows版本为3.8.6 / 380601，本轮57/57适配测试、真实工作圈/托盘已读、合成截图GUI与ASAR及最终打包启动巡检通过。一次Object页面错误来源未确定，原记录保留，后续同闭环重测0错误；不将其写成已全面修复。当前包未代码签名；Android113与暂停的媒体事项保持原状态。
+2026-11-02当前Windows为3.8.7 / 380701，94项适配与TypeScript检查通过，多人引用转发、搜索定位和视频下载有本轮定向证据。3.8.6的57项及工作圈/托盘已读/截图证据保留为历史；一次Object异常的原记录仍保留。媒体已恢复开发与联调，Android114正在构建和运行验证，159项Dart、108项Java源码结果不能代替AVD或真机媒体验收；113保留旧候选。本轮Windows包未代码签名。
 
 | 功能 | 原入口 / 新适配路径 | 当前证据 |
 |---|---|---|
+| 多人引用转发 | 原转发选择器；串行批次及固定SDK引用消息适配 | Windows3.8.7合成引用消息向5人转发后历史及自信息查询有效；普通文字/媒体仍走原SDK，失败者保留重试。见windows-387-quote-facade-review.json及本轮原生报告 |
+| 顶部综合搜索/聊天记录定位 | 原搜索Modal、虚拟列表、会话Store和消息定位 | Windows3.8.7的5项真实原UI、10项Store行为通过；只覆盖当前账号已同步本地记录，见windows-387-search-review.json |
+| PC视频附件下载 | 原签名URL不变；缓存元数据独立IPC；受管本地协议 | Windows3.8.7的9项行为、隐藏原生Electron合成MP4完整性/Range206/解码及正常TLS下载通过；不是所有旧附件/硬件组合验收，见windows-387-video-download-review.json |
 | PC窗口可见与已读 | 原会话UI；窗口可见、聚焦和对应会话门禁 | Windows3.8.6真实Electron托盘/隐藏/最小化/失焦与重新查看闭环通过；已记录旧已读不回退，仅验证后续新消息，见windows-386-read-runtime-review.json |
 | PC截图确认/取消 | 原截图工具；主进程结束状态与受管结果交接 | Windows3.8.6合成截图GUI、ASAR核验和最终打包启动巡检通过，见windows-386-screenshot-fix-review-final.json、windows-386-screenshot-packaging-review.json与windows-386-native-smoke.json；实际多屏/缩放/显卡组合另验 |
 | 邮箱/手机登录、注册、找回 | login/register/forget_password；新版Chat账号API | registration-reset-report.json：合成SMTP注册、自动登录、错误验证码、找回及改密撤销通过；真实客户端邮箱登录通过。Android111正常x64 main原界面实测精确旧会话三接口拒绝、冷启Login后同进程原表单成功重登，新会话三接口有效；见android-111-cache-revocation-ui-report.json及delivery同名root-runtime-review。曾观察SystemUI ANR弹窗的环境记录保留；本项不含媒体或物理ARM验收。手机短信供应商未配置 |

@@ -83,15 +83,17 @@ const DashboardPanel = ({
       sessionType: item.groupID ? SessionType.WorkingGroup : SessionType.Single,
     });
     closeOverlay();
-  }, []);
+  }, [toSpecifiedConversation, closeOverlay]);
 
   const messageJumpToConversation = useCallback((item: ChatLogsItem) => {
     const idx = chatLogs.data.findIndex(
       (logs) => logs.conversationID === item.conversationID,
     );
+    if (idx < 0) return;
     toggleTab("ChatLogs");
+    // Tabs may mount the detail pane on the next render.
     setTimeout(() => toggleChatLogActive(idx));
-  }, []);
+  }, [chatLogs.data, toggleTab, toggleChatLogActive]);
 
   const loading =
     friends.loading || groups.loading || chatLogs.loading || historyFiles.loading;

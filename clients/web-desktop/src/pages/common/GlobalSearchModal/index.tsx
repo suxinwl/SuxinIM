@@ -71,6 +71,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
   const latestHistoryFiles = useLatest(historyFiles);
   const searchBarRef = useRef<SearchBarHandle>(null);
   const chatLogRef = useRef<{ updateIdx: (idx: number) => void }>(null);
+  const latestKeyword = useRef("");
 
   const { isOverlayOpen, closeOverlay } = useOverlayVisible(ref);
 
@@ -207,6 +208,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
     } catch (error) {
       console.error(error);
     }
+    if (latestKeyword.current !== keyword) return;
     setFriends({
       data: friendlist,
       loading: false,
@@ -230,6 +232,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
       console.error(error);
     }
 
+    if (latestKeyword.current !== keyword) return;
     setGroups({
       data: groupList,
       loading: false,
@@ -274,6 +277,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
     } catch (error) {
       console.error(error);
     }
+    if (latestKeyword.current !== keyword) return;
     setChatLogs({
       data: chatLogList,
       loading: false,
@@ -305,6 +309,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
     } catch (error) {
       console.error(error);
     }
+    if (latestKeyword.current !== keyword) return;
     setHistoryFiles({
       data: historyFileList,
       loading: false,
@@ -312,6 +317,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
   };
 
   const resetState = () => {
+    latestKeyword.current = "";
     setFriends({
       data: [],
       loading: false,
@@ -333,7 +339,15 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
   };
 
   const triggerSearch = (keyword: string) => {
-    if (!keyword) return;
+    keyword = keyword.trim();
+    latestKeyword.current = keyword;
+    if (!keyword) {
+      setFriends({ data: [], loading: false });
+      setGroups({ data: [], loading: false });
+      setChatLogs({ data: [], loading: false });
+      setHistoryFiles({ data: [], loading: false });
+      return;
+    }
     searchFriend(keyword);
     searchGroup(keyword);
     searchChatLogs(keyword);
@@ -417,7 +431,7 @@ const SearchBar: ForwardRefRenderFunction<
         value={keyword}
         ref={inputRef}
         onChange={(e) => onChange(e.target.value)}
-        // onPressEnter={(e) => onPressEnter(e.currentTarget.value)}
+        onPressEnter={(e) => onPressEnter(e.currentTarget.value)}
       />
     </div>
   );

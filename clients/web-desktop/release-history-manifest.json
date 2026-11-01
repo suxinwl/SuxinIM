@@ -42,6 +42,19 @@
       "codeSigned": false,
       "status": "withdrawn",
       "purpose": "Historical validation fixture; not part of the current delivery or recommended for installation"
+    },
+    {
+      "file": "release/OpenIM38-Enterprise-3.8.6-win-x64.exe",
+      "size": 160967316,
+      "sha256": "b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3",
+      "version": "3.8.6",
+      "build": 380601,
+      "platform": "windows",
+      "arch": "x64",
+      "applicationID": "io.openim.enterprise.upgrade38",
+      "codeSigned": false,
+      "status": "withdrawn",
+      "purpose": "Historical validation fixture; not part of the current delivery or recommended for installation"
     }
   ]
 }

@@ -130,8 +130,10 @@ export function useGlobalEvent() {
     };
 
     const downloadSuccessHandler = (url: string, savePath: string) => {
+      const task = useMessageStore.getState().downloadMap[url];
+      if (!task) return;
       const { clientMsgID, conversationID, originUrl, isMediaMessage, isThumb } =
-        useMessageStore.getState().downloadMap[url];
+        task;
       if (isThumb && originUrl) {
         addImageCache(originUrl, savePath);
       }

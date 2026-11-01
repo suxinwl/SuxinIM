@@ -58,18 +58,22 @@ const ChatContent = ({ isNotificationSession }: { isNotificationSession: boolean
   });
 
   useEffect(() => {
+    let unlock: ReturnType<typeof setTimeout> | undefined;
+    let frame: number | undefined;
     if (jumpClientMsgID) {
-      const jumpEl = document.getElementById(`chat_${jumpClientMsgID}`);
-      jumpEl?.scrollIntoView({
-        behavior: "instant",
+      frame = requestAnimationFrame(() => {
+        const jumpEl = document.getElementById(`chat_${jumpClientMsgID}`);
+        jumpEl?.scrollIntoView({ behavior: "instant", block: "center" });
       });
-      setTimeout(() => {
+      unlock = setTimeout(() => {
         setLockScroll(false);
       }, 1000);
     } else {
       setLockScroll(false);
     }
     return () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      if (unlock !== undefined) clearTimeout(unlock);
       setLockScroll(true);
     };
   }, [jumpClientMsgID]);

@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "status": "FROZEN_WINDOWS_387_DOCUMENTATION",
+  "createdUtc": "2026-11-01T18:17:51.904229+00:00",
+  "scope": [
+    "README.md",
+    "REPOSITORY.md",
+    "docs/web-desktop.md",
+    "docs/acceptance.md",
+    "docs/feature-matrix.md",
+    "artifacts/manual/OpenIM38-原版升级使用说明.html",
+    "artifacts/manual/SHA256SUMS.txt",
+    "artifacts/downloads/index.html"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 23502,
+      "sha256": "f0bc28247c395e59310b6138d2ae008d68f882b24b506e52ebcd1f4b1695e5a0"
+    },
+    {
+      "path": "REPOSITORY.md",
+      "bytes": 3448,
+      "sha256": "617e752b05932bf700cf37ab453051bc0c079ca8e4ef418f3a3746a05b344e5c"
+    },
+    {
+      "path": "docs/web-desktop.md",
+      "bytes": 15946,
+      "sha256": "db10fe50e117bbbcc37741f30e5eeb8d1e1f3fabd8cd3ffaccec77617d2b82da"
+    },
+    {
+      "path": "docs/acceptance.md",
+      "bytes": 48620,
+      "sha256": "c6b06ceddd8828ba02efc681dec7993dba28cf9c6283ed9263996eb0bf2f6323"
+    },
+    {
+      "path": "docs/feature-matrix.md",
+      "bytes": 9339,
+      "sha256": "28d284e1570e93e9c4f513d24e9de5b37f0306896d5fba82225ab55825b89b2d"
+    },
+    {
+      "path": "artifacts/manual/OpenIM38-原版升级使用说明.html",
+      "bytes": 29408,
+      "sha256": "2c229b1c5bfdea838e39d46e2950c860db26e62837d0e2954133ec19d1ac463f"
+    },
+    {
+      "path": "artifacts/manual/SHA256SUMS.txt",
+      "bytes": 106,
+      "sha256": "ffe8482c8bcbc0e98ac82d62e8b5a82217b361e558f48b4649968b0bbfb0a59c"
+    },
+    {
+      "path": "artifacts/downloads/index.html",
+      "bytes": 2091,
+      "sha256": "74adbf27ef6af00fa3d7f531f1cf016249adc624491020b55853dd03d42e5996"
+    }
+  ],
+  "beforeArchive": {
+    "path": "tests/delivery/windows-387-before/documentation/manifest.json",
+    "sha256": "418bea6bb2dff53ebb2393f41bbf579ff36565aa8f2960cd0a22b25790add650",
+    "files": 8,
+    "allOriginalBytesVerified": true
+  },
+  "windowsInstaller": {
+    "version": "3.8.7",
+    "build": 380701,
+    "path": "clients/web-desktop/release/OpenIM38-Enterprise-3.8.7-win-x64.exe",
+    "bytes": 160966886,
+    "sha256": "422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873",
+    "windowsCodeSigned": false,
+    "independentlyRehashed": true
+  },
+  "checks": {
+    "allFinalMetadataPlaceholdersRemoved": true,
+    "manualChecksumMatches": true,
+    "currentInstallerMetadataConsistentAcrossFiveDocuments": true,
+    "eightBeforeFilesUnchanged": true,
+    "historical386PackageAnd57TestEvidenceRetained": true,
+    "historical113PackageHashesRetained": true,
+    "oldProjectNamesAndLegacyPortsAbsent": true,
+    "jwtShapeHits": 0,
+    "knownPrivatePasswordValuesReread": false,
+    "publicPasswordsAdded": false,
+    "android114ClaimedDelivered": false,
+    "android114ValidationCountRecorded": 159,
+    "javaSourceBoundaryCountRecorded": 108,
+    "mediaMarkedResumedAndRuntimePending": true,
+    "localInstallerAndCertificateLinksResolved": true,
+    "remoteInstallerPublicationVerifiedByThisOwner": false
+  },
+  "htmlUI": {
+    "report": "tests/delivery/windows-387-documentation-ui/report.json",
+    "sha256": "12d45be302d394212fb3d62c76419f1fe23eb86a0d30a0280d6c5bce36c60ee7",
+    "pass": true,
+    "desktopWidth": 1200,
+    "mobileWidth": 390,
+    "manualSectionAnchors": 14,
+    "horizontalOverflow": false,
+    "pageErrors": 0,
+    "screenshotsInspected": [
+      "manual-desktop.png",
+      "downloads-mobile.png"
+    ]
+  },
+  "limits": [
+    "Only documentation and local evidence were changed by this handoff; no product/deployment/publication tool edits.",
+    "Final installer metadata was confirmed by root and independently read from the actual local EXE. Normal HTTPS publication/download integrity belongs to root publishing step.",
+    "Windows packaging/runtime checks do not claim the running user installation was replaced.",
+    "Android114 remains a build/runtime-validation work item, not a delivered APK; original113 and paused/failed media records retain their original scope.",
+    "No private credential appendix or docs/flutter.md was read or changed by this documentation task."
+  ]
+}

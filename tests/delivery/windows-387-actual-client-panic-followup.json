@@ -1,0 +1,133 @@
+{
+  "createdUtc": "2026-11-01T18:03:12.257973+00:00",
+  "status": "CONFIRMED_GO_EXIT_REJECTION_AFTER_QUOTE_BRANCH_PANIC",
+  "inputLog": {
+    "name": "log2026-11-2.log",
+    "bytes": 81150,
+    "sha256": "58ad483da32bd4586848a32c2be77e88ef24f86d2d681898c936ceb9b29e8b62"
+  },
+  "priorPanicReview": "tests/delivery/windows-387-actual-client-panic-review.json",
+  "realMessageMetadataLimit": {
+    "explicitContentType114LoggedBeforePanic": false,
+    "latestLoggedContentTypeRows": [
+      {
+        "logLine": 662,
+        "localTime": "2026-11-02 01:21:28.642",
+        "contentTypes": [
+          101
+        ]
+      },
+      {
+        "logLine": 693,
+        "localTime": "2026-11-02 01:21:28.642",
+        "contentTypes": [
+          101
+        ]
+      }
+    ],
+    "statement": "The log does not explicitly record the triggering outbound contentType. The Quote branch is identified from the exact panic stack line api.go:509, not from exported message bodies."
+  },
+  "postPanicRejections": {
+    "count": 37,
+    "fixedWhitelistReason": "wasm exist already, fail to run",
+    "samples": [
+      {
+        "firstLogLine": 747,
+        "localTime": "2026-11-02 01:26:45.797",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 779,
+        "method": "Getspecifiedgroupsinfo",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 821,
+        "localTime": "2026-11-02 01:26:45.798",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 853,
+        "method": "Getadvancedhistorymessagelist",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 858,
+        "localTime": "2026-11-02 01:26:56.880",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 890,
+        "method": "Getadvancedhistorymessagelist",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 895,
+        "localTime": "2026-11-02 01:27:01.021",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 927,
+        "method": "Getspecifiedgroupsinfo",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 969,
+        "localTime": "2026-11-02 01:27:01.022",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 1001,
+        "method": "Getadvancedhistorymessagelist",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 1006,
+        "localTime": "2026-11-02 01:27:07.329",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 1038,
+        "method": "Getadvancedhistorymessagelist",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 1043,
+        "localTime": "2026-11-02 01:27:08.814",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 1075,
+        "method": "Getspecifiedgroupsinfo",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      },
+      {
+        "firstLogLine": 1117,
+        "localTime": "2026-11-02 01:27:08.815",
+        "fixedReason": "wasm exist already, fail to run",
+        "numericCharacterFieldCount": 31,
+        "eventLogLine": 1149,
+        "method": "Getadvancedhistorymessagelist",
+        "wrapperErrCode": 0,
+        "wrapperErrMsgEmpty": true
+      }
+    ],
+    "allRecognizedFixedStringObjects": 49,
+    "countScope": "37 objects match the limited history/group method whitelist; 49 fixed-string objects were recognized across all subsequent methods."
+  },
+  "wrapperSource": {
+    "file": "sdks/wasm/src/sdk/index.ts",
+    "method": "invokeCore",
+    "guard": "!getGO() || getGO().exited || this.goExited",
+    "behavior": "Throws the fixed string; catch spreads the string into numeric object keys while leaving initialized errCode=0 and errMsg empty. The logged zero code is not successful completion."
+  },
+  "evidenceMeaning": "After the logged panic, history and group SDK calls reject because the Go WASM instance has exited. The exact database error that produced a nil quoteMessage is not contained in these whitelisted observations; absent referenced message in another target conversation is a source-based hypothesis to reproduce synthetically.",
+  "privacy": {
+    "rawLogCopy": false,
+    "chatBodies": false,
+    "headersOrRequests": false,
+    "tokenOrPasswordOutput": false,
+    "parameterValues": false,
+    "decodedTextRestriction": "Only exact equality with the fixed SDK exit string is reported; no other decoded numeric fields are exported."
+  }
+}

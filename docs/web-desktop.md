@@ -1,8 +1,18 @@
-# Web / Windows 3.8 升级（应用开发版 3.8.6 / 380601）
+# Web / Windows 3.8 升级（应用开发版 3.8.7 / 380701）
 
 本应用由原 3.5 企业项目升级而来，保留原页面、资源与业务消息类型，运行于独立 OpenIM38 实例。原始目录没有修改。
 
-## 2026-11-02 Windows 3.8.6 修复范围
+## 2026-11-02 Windows 3.8.7 修复范围
+
+- 多人转发按批次顺序发送，保留失败接收者供重试。引用消息转发保留原引用内容，避免固定 SDK 在缺失引用目标时退出；普通文字和媒体仍沿原 SDK 发送。
+- 顶部综合搜索和“聊天记录”结果可正常显示、选择并定位到对应会话和原消息；失败或切换搜索时保留可重试状态。搜索范围仍为当前账号已同步的本地消息。
+- 视频附件下载保持原签名地址不变，缓存参数通过客户端内部传递；启动失败可重试，下载后可从受管缓存播放。保留正常证书校验。
+
+当前构建号380701。最终NSIS构建及对应打包程序的正常TLS、SDK初始化、受管文件Range巡检通过，见tests/delivery/windows-387-native-smoke.json。94项适配测试和TypeScript检查通过；真实Electron合成引用消息转发5人后SDK会话/历史有效，搜索5项原UI及10项Store回归通过；视频9项行为及原生MP4/Range/解码、正常TLS下载通过。证据见根tests/delivery下的windows-387-quote-facade-review.json、windows-387-search-review.json、windows-387-video-download-review.json、windows-387-final-adapter-tests.log和windows-387-final-typecheck.log。视频原生测试运行在独立隐藏窗口，未声称所有原聊天UI、历史附件或硬件组合均通过。
+
+媒体已恢复开发和联调；Android114尚未作为已验收包交付。先前归档和以下3.8.6结果按原版本保留。
+
+## 2026-11-02 Windows 3.8.6 历史修复范围
 
 - 聊天窗口关闭到托盘、隐藏、最小化或未获得焦点时，不再仅因会话仍被选中而自动上报新消息已读；重新打开并查看对应会话后才按可见条件上报。服务器此前已经记录的已读不会倒退，请使用升级后新发送的消息复测。
 - 工作圈本人点赞、取消点赞、评论和删除评论成功后立即更新列表与详情；发送失败保留评论草稿供重试。其他人的互动通过事件刷新，服务器缺少相应事件时由可见页面约 5 秒轮询补齐，实测取消点赞与删除合并显示为 5062 毫秒，不承诺严格 5 秒以内。
@@ -11,7 +21,7 @@
 
 安装或覆盖升级前，必须完全退出旧客户端，包括系统托盘，再运行 3.8.6 安装包。启动后在关于页核对 3.8.6 / 380601。当前仍是未作 Windows 代码签名的内网测试包，不包含 Android 或公网发布。
 
-2026年11月2日本轮 Windows 3.8.6 修复通过57/57适配测试；真实工作圈原界面、真实Electron托盘已读闭环、合成截图GUI及打包ASAR核验、最终安装包对应的启动巡检均有通过记录。一次运行曾出现来源未确定的Object类型页面错误，原记录保留，后续同闭环重测为0错误；本轮不据此宣称全部页面错误均已修复。语音、视频、通话与会议继续暂停，Android113仍仅为本地候选。
+2026年11月2日本轮 Windows 3.8.6 修复通过57/57适配测试；真实工作圈原界面、真实Electron托盘已读闭环、合成截图GUI及打包ASAR核验、最终安装包对应的启动巡检均有通过记录。一次运行曾出现来源未确定的Object类型页面错误，原记录保留，后续同闭环重测为0错误；本轮不据此宣称全部页面错误均已修复。当时语音、视频、通话与会议暂停，Android113为本地候选；本轮已恢复媒体开发，结果不倒用于该历史版本。
 
 本轮证据为 `tests/delivery/windows-386-final-adapter-tests.log`（57/57）、`windows-386-read-runtime-review.json`、`windows-386-moments-review.json`、`windows-386-moments-ui/report.json`、`windows-386-screenshot-fix-review-final.json`、`windows-386-screenshot-packaging-review.json` 与 `windows-386-native-smoke.json`。这些均在根 `tests/delivery` 下；Object错误诊断另存 `windows-386-read-object-error-diagnostic-review.json`。截图GUI使用合成截图场景，不能替代所有显卡、缩放或多屏组合的硬件实测。
 
@@ -28,13 +38,13 @@ npm run build:win
 node scripts/build-manifest.mjs
 ```
 
-应用版本由 `build-version.json` 统一供渲染器和 Windows 更新器读取，当前为 3.8.6 / 380601；package.json 与之对应。上游 IM/Chat 和 SDK 版本不随应用修复号变更。
+应用版本由 `build-version.json` 统一供渲染器和 Windows 更新器读取，当前为 3.8.7 / 380701；package.json 与之对应。上游 IM/Chat 和 SDK 版本不随应用修复号变更。
 
 固定 WASM SDK `3.8.3-patch.15.1`、Electron `45.2.1`、electron-builder `26.18.0`、LiveKit JS `2.23.0`。三个历史 package_build/package_dev 文件与 package.json 一致，package-lock.json 是唯一安装锁。官方 npm 发布包已包含运行二进制；构建前 `scripts/sync-sdk-assets.mjs` 从固定 tag 的 `sdks/wasm/assets` 同步 openIM.wasm、sql-wasm.wasm、wasm_exec.js，并生成 public/sdk-assets.json 的 SHA-256。禁止换回原 3.5 WASM。
 
 `test-results/sdk-package-provenance.json` 对官方 registry 原包的 SHA-512 及全部 79 个发布文件逐一校验，当前运行包与官方发布物完全一致（missing=[]、changed=[]）。同步工厂 tuple 解包及旧企业事件名已由该官方 npm 发布物包含；sdks/wasm 源码的相应补丁用于对齐已发布 npm 行为。无需手工修改 node_modules，不增加会在 npm ci 后丢失的运行补丁。表情图片使用随项目的 Twemoji，构建不依赖在线表情 CDN。
 
-Web 输出 dist-web，Windows 当前输出 release/OpenIM38-Enterprise-3.8.6-win-x64.exe，release-manifest.json 记录安装包大小及 SHA-256。版本 3.8.6，构建号 380601。未配置代码签名，测试安装包未签名。当前安装包 160967316 字节，SHA-256 `b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3`。此前 3.8.3/3.8.4/3.8.5 的安装及验收报告保留原版本，不将历史证据改写为3.8.6；未发布的旧3.8.5候选37b337…已弃用。
+Web 输出 dist-web，Windows 当前输出 release/OpenIM38-Enterprise-3.8.7-win-x64.exe，release-manifest.json 记录安装包大小及 SHA-256。版本 3.8.7，构建号 380701。未配置代码签名，测试安装包未签名。当前安装包 160966886 字节，SHA-256 `422bf047b6cfec8c916614aa30464f737ebfb4062d3020b7ae70fbeca1afc873`。此前 3.8.3/3.8.4/3.8.5/3.8.6 的安装及验收报告保留原版本，不将历史证据改写为3.8.7；未发布的旧3.8.5候选37b337…已弃用。
 
 ## 隔离与网络
 

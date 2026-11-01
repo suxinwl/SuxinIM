@@ -1,0 +1,128 @@
+{
+  "createdUtc": "2026-11-01T18:00:38.237249+00:00",
+  "status": "CONFIRMED_WASM_GO_SEND_PANIC",
+  "scope": "Read-only diagnostic of explicitly authorized existing Windows client. No GUI interaction, logout, data reset, shared product edits or raw log copy.",
+  "actualClientPid": 44508,
+  "inputLog": {
+    "name": "log2026-11-2.log",
+    "bytes": 75202,
+    "sha256": "9045b15f08200958390ebe5696c81c30810df7e730a449d86ad4b1bd684ff735",
+    "lines": 2606
+  },
+  "evidence": {
+    "localTime": "2026-11-02 01:26:33.039",
+    "timezone": "Asia/Shanghai",
+    "logLine": 732,
+    "panicType": "runtime error: invalid memory address or nil pointer dereference",
+    "stackWithoutArguments": [
+      {
+        "logLine": 732,
+        "localTime": "2026-11-02 01:26:33.039"
+      },
+      {
+        "logLine": 733,
+        "localTime": "2026-11-02 01:26:33.039"
+      },
+      {
+        "logLine": 734,
+        "localTime": "2026-11-02 01:26:33.039"
+      },
+      {
+        "logLine": 735,
+        "localTime": "2026-11-02 01:26:33.040"
+      },
+      {
+        "logLine": 736,
+        "localTime": "2026-11-02 01:26:33.040",
+        "function": "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg.(*Conversation).sendMessage"
+      },
+      {
+        "logLine": 737,
+        "localTime": "2026-11-02 01:26:33.040",
+        "sourceFile": "conversation_msg/api.go",
+        "sourceLine": 509
+      },
+      {
+        "logLine": 738,
+        "localTime": "2026-11-02 01:26:33.040",
+        "function": "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg.(*Conversation).SendMessage.func1"
+      },
+      {
+        "logLine": 739,
+        "localTime": "2026-11-02 01:26:33.040",
+        "sourceFile": "conversation_msg/api.go",
+        "sourceLine": 621
+      },
+      {
+        "logLine": 740,
+        "localTime": "2026-11-02 01:26:33.040",
+        "function": "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg.(*messageSender).runTask"
+      },
+      {
+        "logLine": 741,
+        "localTime": "2026-11-02 01:26:33.040",
+        "sourceFile": "conversation_msg/send_queue.go",
+        "sourceLine": 128
+      },
+      {
+        "logLine": 742,
+        "localTime": "2026-11-02 01:26:33.040",
+        "function": "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg.(*messageSender).worker"
+      },
+      {
+        "logLine": 743,
+        "localTime": "2026-11-02 01:26:33.040",
+        "sourceFile": "conversation_msg/send_queue.go",
+        "sourceLine": 123
+      },
+      {
+        "logLine": 744,
+        "localTime": "2026-11-02 01:26:33.040"
+      },
+      {
+        "logLine": 745,
+        "localTime": "2026-11-02 01:26:33.041",
+        "sourceFile": "conversation_msg/send_queue.go",
+        "sourceLine": 64
+      },
+      {
+        "logLine": 746,
+        "localTime": "2026-11-02 01:26:45.797"
+      }
+    ],
+    "subsequentLoggedMethodCounts": {
+      "getAdvancedHistoryMessageList": 0,
+      "getAdvancedHistoryMessageListReverse": 0,
+      "getSpecifiedGroupsInfo": 0,
+      "getGroupMemberList": 0,
+      "searchLocalMessages": 0
+    }
+  },
+  "sourceComparison": {
+    "repository": "https://github.com/openimsdk/openim-sdk-core",
+    "tag": "v3.8.3-patch.15",
+    "commit": "d6e0b549db904d0327d76ef7c9c283203879a095",
+    "file": "internal/conversation_msg/api.go",
+    "line": 509,
+    "contentType": "Quote",
+    "operation": "Reads quoteMessage.Seq after target-conversation db.GetMessage returns an error without a nil guard.",
+    "referenceSourceSha256": "4e82a40d121b1dbd96db422f19dd233723132195cd5d0bd9f17abb6688cee701"
+  },
+  "conclusion": {
+    "confirmed": "The logged Go sending-worker panic matches the pinned core nil dereference at api.go:509. The call stack is specific to the Quote branch; ordinary text-forward tests do not exercise it.",
+    "strongInference": "Forwarding a quote/reply into a target conversation that lacks the original quoted clientMsgID makes GetMessage return no quoteMessage, reaching the dereference. Exact message content and recipients were intentionally not extracted.",
+    "notProven": "No authentication, server kick, or SQLite corruption conclusion is established by this diagnostic. Shared-product repair and synthetic reproduction remain owned by root."
+  },
+  "repairProposals": [
+    "Guard nil quoteMessage in pinned Go source and rebuild the matching WASM; retain valid quoted content and set a safe absent-reference sequence.",
+    "As a narrowly scoped adapter mitigation, synthetic-test the public sendMessageNotOss path for forwarded Quote messages: its pinned Quote branch serializes quoted content without looking up the original message in the target conversation. Do not route arbitrary media through this method.",
+    "Add independent-process regression coverage for a forwarded Quote with a reference absent from the target conversation, checking that subsequent SDK history/group calls remain usable."
+  ],
+  "privacy": {
+    "rawLinesCopied": false,
+    "chatBodiesExported": false,
+    "headersOrRequestBodiesExported": false,
+    "argumentValuesExported": false,
+    "fields": "Log metadata, fixed panic type, timestamp, method names and parameter-free stack frames only."
+  }
+}

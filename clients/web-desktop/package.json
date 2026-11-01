@@ -1,6 +1,6 @@
 {
   "name": "openim-enterprise-upgrade",
-  "version": "3.8.6",
+  "version": "3.8.7",
   "main": "dist-electron/main/index.js",
   "description": "OpenIM original enterprise application upgraded to 3.8",
   "author": "blooming",

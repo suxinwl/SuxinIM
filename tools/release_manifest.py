@@ -23,6 +23,9 @@ lockpaths.extend([
  'tools/prepare_windows386_delivery.py',
  'tools/deploy_windows386_isolated.py',
  'tools/finalize_windows386_delivery.py',
+ 'tools/prepare_client_delivery.py',
+ 'tools/deploy_client_delivery.py',
+ 'tools/finalize_windows387_delivery.py',
  'clients/web-desktop/scripts/ensure-screenshot-preload.mjs',
  'clients/web-desktop/scripts/build-electron.mjs',
  'clients/web-desktop/patches/electron-screenshots+0.5.28.patch',
@@ -62,6 +65,13 @@ locks=[{'path':name,'sha256':sha(ROOT/name)} for name in lockpaths if (ROOT/name
 for name in ['docs/dependency-licenses.json','docs/provenance/ui-api-inventory.json','docs/provenance/original-source-sha256.json','docs/provenance/upstream-modifications.json','clients/web-desktop/release-manifest.json','clients/web-desktop/release-history-manifest.json','sdks/flutter/ios/flutter_openim_sdk.podspec','sdks/ios-core/OpenIMSDKCore.podspec','sdks/ios-core/Package.swift','clients/flutter/local_plugin/compat/PATCH-MANIFEST.json','clients/flutter/local_plugin/compat/GRADLE-PATCHES.json','clients/flutter/local_plugin/compat/PATCHES.json','tests/flutter/resolved-aar-hashes.json','tests/flutter/android-artifact.json','tests/web-desktop/sdk-package-provenance.json']:
  if (ROOT/name).is_file():locks.append({'path':name,'sha256':sha(ROOT/name)})
 evidence_patterns=[
+ 'tests/delivery/windows-387*.json',
+ 'tests/delivery/windows-387*.log',
+ 'tests/delivery/windows-387-forward-*/report.json',
+ 'tests/delivery/windows-387-search-*/report.json',
+ 'tests/delivery/media-resume-20261102/*review*.json',
+ 'tests/delivery/media-resume-20261102/source-freeze-114.json',
+ 'tests/delivery/media-resume-20261102/*result*.json',
  'tests/delivery/windows-386*.json',
  'tests/delivery/windows-386*.log',
  'tests/delivery/windows-386-before/**/manifest*.json',
