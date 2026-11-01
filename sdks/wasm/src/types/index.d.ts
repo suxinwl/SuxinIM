@@ -1,0 +1,386 @@
+type DatabaseApi = (...args: any[]) => Promise<any>;
+
+export {};
+
+declare global {
+  interface Window {
+    // registered by js to provide database api
+    [functionName: DatabaseAPI]: (...args: any[]) => Promise<any>;
+    // [functionName: string]: (...args: any[]) => Promise<any>;
+
+    // upload
+    wasmOpen: DatabaseApi;
+    wasmClose: DatabaseApi;
+    wasmRead: DatabaseApi;
+    getUpload: DatabaseApi;
+    insertUpload: DatabaseApi;
+    updateUpload: DatabaseApi;
+    deleteUpload: DatabaseApi;
+    deleteExpireUpload: DatabaseApi;
+    fileMapSet: DatabaseApi;
+    fileMapClear: DatabaseApi;
+
+    setSqlWasmPath: DatabaseApi;
+    initDB: DatabaseApi;
+    closeDB: DatabaseApi;
+    // message
+    getMessage: DatabaseApi;
+    getMultipleMessage: DatabaseApi;
+    getSendingMessageList: DatabaseApi;
+    getNormalMsgSeq: DatabaseApi;
+    updateMessageTimeAndStatus: DatabaseApi;
+    updateMessage: DatabaseApi;
+    updateMessageBySeq: DatabaseApi;
+    updateColumnsMessage: DatabaseApi;
+    insertMessage: DatabaseApi;
+    batchInsertMessageList: DatabaseApi;
+    getMessageList: DatabaseApi;
+    getMessageListNoTime: DatabaseApi;
+    messageIfExists: DatabaseApi;
+    messageIfExistsBySeq: DatabaseApi;
+    getAbnormalMsgSeq: DatabaseApi;
+    getAbnormalMsgSeqList: DatabaseApi;
+    batchInsertExceptionMsg: DatabaseApi;
+    searchMessageByKeyword: DatabaseApi;
+    searchMessageByContentType: DatabaseApi;
+    searchMessageByContentTypeAndKeyword: DatabaseApi;
+    updateMsgSenderNickname: DatabaseApi;
+    updateMsgSenderFaceURL: DatabaseApi;
+    updateMsgSenderFaceURLAndSenderNickname: DatabaseApi;
+    getMsgSeqByClientMsgID: DatabaseApi;
+    getMsgSeqListByGroupID: DatabaseApi;
+    getMsgSeqListByPeerUserID: DatabaseApi;
+    getMsgSeqListBySelfUserID: DatabaseApi;
+    deleteAllMessage: DatabaseApi;
+    getAllUnDeleteMessageSeqList: DatabaseApi;
+    updateSingleMessageHasRead: DatabaseApi;
+    updateGroupMessageHasRead: DatabaseApi;
+    updateMessageStatusBySourceID: DatabaseApi;
+    getAlreadyExistSeqList: DatabaseApi;
+    getLatestValidServerMessage: DatabaseApi;
+    getMessageBySeq: DatabaseApi;
+    getMessagesByClientMsgIDs: DatabaseApi;
+    getMessagesBySeqs: DatabaseApi;
+    getConversationNormalMsgSeq: DatabaseApi;
+    checkConversationNormalMsgSeq: DatabaseApi;
+    getConversationPeerNormalMsgSeq: DatabaseApi;
+    deleteConversationAllMessages: DatabaseApi;
+    markDeleteConversationAllMessages: DatabaseApi;
+    cleanDuplicateInvalidMessages: DatabaseApi;
+    getUnreadMessage: DatabaseApi;
+    markConversationMessageAsReadBySeqs: DatabaseApi;
+    markConversationMessageAsReadDB: DatabaseApi;
+    deleteConversationMsgs: DatabaseApi;
+    markConversationAllMessageAsRead: DatabaseApi;
+    searchAllMessageByContentType: DatabaseApi;
+    insertSendingMessage: DatabaseApi;
+    deleteSendingMessage: DatabaseApi;
+    getAllSendingMessages: DatabaseApi;
+    getLatestActiveMessage: DatabaseApi;
+    // conversation
+    getAllConversationListDB: DatabaseApi;
+    getAllConversationListToSync: DatabaseApi;
+    getHiddenConversationList: DatabaseApi;
+    getConversation: DatabaseApi;
+    getMultipleConversationDB: DatabaseApi;
+    updateColumnsConversation: DatabaseApi;
+    updateConversation: DatabaseApi;
+    updateConversationForSync: DatabaseApi;
+    decrConversationUnreadCount: DatabaseApi;
+    batchInsertConversationList: DatabaseApi;
+    insertConversation: DatabaseApi;
+    getTotalUnreadMsgCountDB: DatabaseApi;
+    batchUpdateConversationList: DatabaseApi;
+    clearAllConversation: DatabaseApi;
+    clearConversation: DatabaseApi;
+    conversationIfExists: DatabaseApi;
+    deleteConversation: DatabaseApi;
+    deleteAllConversation: DatabaseApi;
+    getConversationByUserID: DatabaseApi;
+    getConversationListSplitDB: DatabaseApi;
+    incrConversationUnreadCount: DatabaseApi;
+    removeConversationDraft: DatabaseApi;
+    resetAllConversation: DatabaseApi;
+    resetConversation: DatabaseApi;
+    setConversationDraftDB: DatabaseApi;
+    setMultipleConversationRecvMsgOpt: DatabaseApi;
+    unPinConversation: DatabaseApi;
+    updateAllConversation: DatabaseApi;
+    updateOrCreateConversations: DatabaseApi;
+    getAllSingleConversationIDList: DatabaseApi;
+    findAllUnreadConversationConversationID: DatabaseApi;
+    getAllConversationIDList: DatabaseApi;
+    getAllConversations: DatabaseApi;
+    searchConversations: DatabaseApi;
+    // users
+    getLoginUser: DatabaseApi;
+    insertLoginUser: DatabaseApi;
+    updateLoginUser: DatabaseApi;
+    updateLoginUserByMap: DatabaseApi;
+    processUserCommandGetAll: DatabaseApi;
+    processUserCommandAdd: DatabaseApi;
+    processUserCommandUpdate: DatabaseApi;
+    processUserCommandDelete: DatabaseApi;
+    getStrangerInfo: DatabaseApi;
+    setStrangerInfo: DatabaseApi;
+    getJoinedSuperGroupList: DatabaseApi;
+    getJoinedSuperGroupIDList: DatabaseApi;
+    getSuperGroupInfoByGroupID: DatabaseApi;
+    deleteSuperGroup: DatabaseApi;
+    insertSuperGroup: DatabaseApi;
+    updateSuperGroup: DatabaseApi;
+    // app sdk version
+    getAppSDKVersion: DatabaseApi;
+    setAppSDKVersion: DatabaseApi;
+    // version sync
+    getVersionSync: DatabaseApi;
+    setVersionSync: DatabaseApi;
+    deleteVersionSync: DatabaseApi;
+    // unread messages
+    deleteConversationUnreadMessageList: DatabaseApi;
+    batchInsertConversationUnreadMessageList: DatabaseApi;
+    // super group messages
+    superGroupGetMessage: DatabaseApi;
+    superGroupGetMultipleMessage: DatabaseApi;
+    superGroupGetNormalMinSeq: DatabaseApi;
+    getSuperGroupNormalMsgSeq: DatabaseApi;
+    superGroupUpdateMessageTimeAndStatus: DatabaseApi;
+    superGroupUpdateMessage: DatabaseApi;
+    superGroupInsertMessage: DatabaseApi;
+    superGroupBatchInsertMessageList: DatabaseApi;
+    superGroupGetMessageListNoTime: DatabaseApi;
+    superGroupGetMessageList: DatabaseApi;
+    superGroupUpdateColumnsMessage: DatabaseApi;
+    superGroupDeleteAllMessage: DatabaseApi;
+    superGroupSearchMessageByKeyword: DatabaseApi;
+    superGroupSearchMessageByContentType: DatabaseApi;
+    superGroupSearchMessageByContentTypeAndKeyword: DatabaseApi;
+    superGroupUpdateMessageStatusBySourceID: DatabaseApi;
+    superGroupGetSendingMessageList: DatabaseApi;
+    superGroupUpdateGroupMessageHasRead: DatabaseApi;
+    superGroupGetMsgSeqByClientMsgID: DatabaseApi;
+    superGroupUpdateMsgSenderFaceURLAndSenderNickname: DatabaseApi;
+    superGroupSearchAllMessageByContentType: DatabaseApi;
+    getRowsModified: DatabaseApi;
+
+    // black
+    getBlackListDB: DatabaseApi;
+    getBlackListUserID: DatabaseApi;
+    getBlackInfoByBlockUserID: DatabaseApi;
+    getBlackInfoList: DatabaseApi;
+    insertBlack: DatabaseApi;
+    deleteBlack: DatabaseApi;
+    updateBlack: DatabaseApi;
+
+    // friendRequest
+    insertFriendRequest: DatabaseApi;
+    deleteFriendRequestBothUserID: DatabaseApi;
+    updateFriendRequest: DatabaseApi;
+    getRecvFriendApplication: DatabaseApi;
+    getSendFriendApplication: DatabaseApi;
+    getFriendApplicationByBothID: DatabaseApi;
+    getBothFriendReq: DatabaseApi;
+
+    // friend
+    insertFriend: DatabaseApi;
+    deleteFriendDB: DatabaseApi;
+    updateFriend: DatabaseApi;
+    getAllFriendList: DatabaseApi;
+    searchFriendList: DatabaseApi;
+    getFriendInfoByFriendUserID: DatabaseApi;
+    getFriendInfoList: DatabaseApi;
+    getPageFriendList: DatabaseApi;
+    updateColumnsFriend: DatabaseApi;
+    getFriendListCount: DatabaseApi;
+    batchInsertFriend: DatabaseApi;
+    deleteAllFriend: DatabaseApi;
+
+    // groups
+    insertGroup: DatabaseApi;
+    deleteGroup: DatabaseApi;
+    updateGroup: DatabaseApi;
+    getJoinedGroupListDB: DatabaseApi;
+    getGroupInfoByGroupID: DatabaseApi;
+    getAllGroupInfoByGroupIDOrGroupName: DatabaseApi;
+    subtractMemberCount: DatabaseApi;
+    addMemberCount: DatabaseApi;
+    getJoinedWorkingGroupIDList: DatabaseApi;
+    getJoinedWorkingGroupList: DatabaseApi;
+    getGroupMemberAllGroupIDs: DatabaseApi;
+    getUserJoinedGroupIDs: DatabaseApi;
+    getGroups: DatabaseApi;
+    batchInsertGroup: DatabaseApi;
+    deleteAllGroup: DatabaseApi;
+
+    // groupRequest
+    insertGroupRequest: DatabaseApi;
+    deleteGroupRequest: DatabaseApi;
+    updateGroupRequest: DatabaseApi;
+    getSendGroupApplication: DatabaseApi;
+    insertAdminGroupRequest: DatabaseApi;
+    deleteAdminGroupRequest: DatabaseApi;
+    updateAdminGroupRequest: DatabaseApi;
+    getAdminGroupApplication: DatabaseApi;
+
+    // groupMember
+    getGroupMemberInfoByGroupIDUserID: DatabaseApi;
+    getAllGroupMemberList: DatabaseApi;
+    getAllGroupMemberUserIDList: DatabaseApi;
+    getGroupMemberCount: DatabaseApi;
+    getGroupSomeMemberInfo: DatabaseApi;
+    getGroupAdminID: DatabaseApi;
+    getGroupMemberListByGroupID: DatabaseApi;
+    getGroupMemberListSplit: DatabaseApi;
+    getGroupMemberOwnerAndAdminDB: DatabaseApi;
+    getGroupMemberOwner: DatabaseApi;
+    getGroupMemberListByUserIDs: DatabaseApi;
+    getGroupMemberListSplitByJoinTimeFilter: DatabaseApi;
+    getGroupOwnerAndAdminByGroupID: DatabaseApi;
+    getGroupMemberUIDListByGroupID: DatabaseApi;
+    insertGroupMember: DatabaseApi;
+    batchInsertGroupMember: DatabaseApi;
+    deleteGroupMember: DatabaseApi;
+    deleteGroupAllMembers: DatabaseApi;
+    updateGroupMember: DatabaseApi;
+    updateGroupMemberField: DatabaseApi;
+    searchGroupMembersDB: DatabaseApi;
+
+    // temp chche logs
+    batchInsertTempCacheMessageList: DatabaseApi;
+    InsertTempCacheMessage: DatabaseApi;
+
+    // notification
+    getNotificationAllSeqs: DatabaseApi;
+    batchInsertNotificationSeq: DatabaseApi;
+    setNotificationSeq: DatabaseApi;
+
+    // table master
+    getExistedTables: DatabaseApi;
+    getExistTables: DatabaseApi;
+
+    // registered by Go WASM
+    initSDK: (operationID: string, config: string) => void;
+    commonEventFunc: (listener: (event: string) => void) => void;
+    login: DatabaseApi;
+    logout: DatabaseApi;
+    getLoginStatus: DatabaseApi;
+    setAppBackgroundStatus: DatabaseApi;
+    networkStatusChanged: DatabaseApi;
+    createTextMessage: DatabaseApi;
+    createImageMessage: DatabaseApi;
+    createImageMessageByURL: DatabaseApi;
+    createSoundMessageByURL: DatabaseApi;
+    createVideoMessageByURL: DatabaseApi;
+    createFileMessageByURL: DatabaseApi;
+    createCustomMessage: DatabaseApi;
+    createQuoteMessage: DatabaseApi;
+    createAdvancedQuoteMessage: DatabaseApi;
+    createAdvancedTextMessage: DatabaseApi;
+    createCardMessage: DatabaseApi;
+    createTextAtMessage: DatabaseApi;
+    createVideoMessage: DatabaseApi;
+    createFileMessage: DatabaseApi;
+    createMergerMessage: DatabaseApi;
+    createFaceMessage: DatabaseApi;
+    createForwardMessage: DatabaseApi;
+    createLocationMessage: DatabaseApi;
+    createVideoMessageFromFullPath: DatabaseApi;
+    createImageMessageFromFullPath: DatabaseApi;
+    createSoundMessageFromFullPath: DatabaseApi;
+    createFileMessageFromFullPath: DatabaseApi;
+    createSoundMessage: DatabaseApi;
+    getAtAllTag: DatabaseApi;
+    markConversationMessageAsRead: DatabaseApi;
+    markAllConversationMessageAsRead: DatabaseApi;
+    sendMessage: DatabaseApi;
+    sendMessageNotOss: DatabaseApi;
+    getAllConversationList: DatabaseApi;
+    getConversationListSplit: DatabaseApi;
+    getOneConversation: DatabaseApi;
+    deleteConversationAndDeleteAllMsg: DatabaseApi;
+    getAdvancedHistoryMessageList: DatabaseApi;
+    getAdvancedHistoryMessageListReverse: DatabaseApi;
+    getMultipleConversation: DatabaseApi;
+    hideConversation: DatabaseApi;
+    setConversationDraft: DatabaseApi;
+    setConversation: DatabaseApi;
+    getTotalUnreadMsgCount: DatabaseApi;
+    findMessageList: DatabaseApi;
+    revokeMessage: DatabaseApi;
+    typingStatusUpdate: DatabaseApi;
+    deleteMessageFromLocalStorage: DatabaseApi;
+    deleteMessage: DatabaseApi;
+    hideAllConversations: DatabaseApi;
+    deleteAllMsgFromLocalAndSvr: DatabaseApi;
+    deleteAllMsgFromLocal: DatabaseApi;
+    clearConversationAndDeleteAllMsg: DatabaseApi;
+    insertSingleMessageToLocalStorage: DatabaseApi;
+    insertGroupMessageToLocalStorage: DatabaseApi;
+    searchLocalMessages: DatabaseApi;
+    setMessageLocalEx: DatabaseApi;
+    searchConversation: DatabaseApi;
+    changeInputStates: DatabaseApi;
+    getInputStates: DatabaseApi;
+    createGroup: DatabaseApi;
+    getSpecifiedGroupsInfo: DatabaseApi;
+    joinGroup: DatabaseApi;
+    quitGroup: DatabaseApi;
+    dismissGroup: DatabaseApi;
+    changeGroupMute: DatabaseApi;
+    changeGroupMemberMute: DatabaseApi;
+    setGroupMemberInfo: DatabaseApi;
+    getJoinedGroupList: DatabaseApi;
+    getJoinedGroupListPage: DatabaseApi;
+    searchGroups: DatabaseApi;
+    setGroupInfo: DatabaseApi;
+    getGroupMemberList: DatabaseApi;
+    getGroupMemberOwnerAndAdmin: DatabaseApi;
+    getGroupMemberListByJoinTimeFilter: DatabaseApi;
+    getSpecifiedGroupMembersInfo: DatabaseApi;
+    kickGroupMember: DatabaseApi;
+    transferGroupOwner: DatabaseApi;
+    inviteUserToGroup: DatabaseApi;
+    getGroupApplicationListAsRecipient: DatabaseApi;
+    getGroupApplicationListAsApplicant: DatabaseApi;
+    acceptGroupApplication: DatabaseApi;
+    refuseGroupApplication: DatabaseApi;
+    searchGroupMembers: DatabaseApi;
+    isJoinGroup: DatabaseApi;
+    getUsersInGroup: DatabaseApi;
+    getGroupApplicationUnhandledCount: DatabaseApi;
+    getSelfUserInfo: DatabaseApi;
+    setSelfInfo: DatabaseApi;
+    getUsersInfo: DatabaseApi;
+    subscribeUsersStatus: DatabaseApi;
+    unsubscribeUsersStatus: DatabaseApi;
+    getSubscribeUsersStatus: DatabaseApi;
+    getUserStatus: DatabaseApi;
+    getSpecifiedFriendsInfo: DatabaseApi;
+    getFriendList: DatabaseApi;
+    getFriendListPage: DatabaseApi;
+    searchFriends: DatabaseApi;
+    checkFriend: DatabaseApi;
+    addFriend: DatabaseApi;
+    updateFriends: DatabaseApi;
+    deleteFriend: DatabaseApi;
+    getFriendApplicationListAsRecipient: DatabaseApi;
+    getFriendApplicationListAsApplicant: DatabaseApi;
+    acceptFriendApplication: DatabaseApi;
+    refuseFriendApplication: DatabaseApi;
+    getBlackList: DatabaseApi;
+    removeBlack: DatabaseApi;
+    addBlack: DatabaseApi;
+    getFriendApplicationUnhandledCount: DatabaseApi;
+    updateFcmToken: DatabaseApi;
+    uploadFile: DatabaseApi;
+
+    // debug
+    exec: (sql: string) => Promise<any>;
+    exportDB: () => Promise<string>; //return Uint8Array
+  }
+  class Go {
+    exited: boolean;
+    importObject: WebAssembly.Imports;
+    run: (instance: WebAssembly.Instance) => Promise<void>;
+  }
+}

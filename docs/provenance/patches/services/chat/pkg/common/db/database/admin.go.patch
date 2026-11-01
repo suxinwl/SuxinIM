@@ -1,0 +1,21 @@
+--- upstream/pkg/common/db/database/admin.go
++++ merged/pkg/common/db/database/admin.go
+@@ -80,6 +80,7 @@
+ 	CacheToken(ctx context.Context, userID string, token string, expire time.Duration) error
+ 	GetTokens(ctx context.Context, userID string) (map[string]int32, error)
+ 	DeleteToken(ctx context.Context, userID string) error
++	DeleteTokenValue(ctx context.Context, userID, token string) error
+ 	LatestVersion(ctx context.Context, platform string) (*admindb.Application, error)
+ 	AddVersion(ctx context.Context, val *admindb.Application) error
+ 	UpdateVersion(ctx context.Context, id primitive.ObjectID, update map[string]any) error
+@@ -351,6 +352,10 @@
+ 	return o.cache.DeleteTokenByUid(ctx, userID)
+ }
+ 
++func (o *AdminDatabase) DeleteTokenValue(ctx context.Context, userID, token string) error {
++	return o.cache.DeleteTokenValue(ctx, userID, token)
++}
++
+ func (o *AdminDatabase) LatestVersion(ctx context.Context, platform string) (*admindb.Application, error) {
+ 	return o.application.LatestVersion(ctx, platform)
+ }

@@ -1,0 +1,88 @@
+{
+  "recordedAtUtc": "2026-11-01T16:58:02.642Z",
+  "result": "PASS",
+  "scope": "Read-only final win-unpacked ASAR screenshot code and effective dependency payload; no GUI, packaging, install or execution",
+  "asar": {
+    "path": "O:\\clients\\web-desktop\\release\\win-unpacked\\resources\\app.asar",
+    "bytes": 230144245,
+    "sha256": "172acd80854264698ab047f5068622af6e50e51e2adf4c02cd5482a3abaf99c4",
+    "mtime": "2026-11-01T16:55:57.577Z",
+    "stableBeforeAfter": true
+  },
+  "entries": [
+    {
+      "path": "node_modules\\electron-screenshots\\lib\\preload.js",
+      "bytes": 2478,
+      "sha256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb",
+      "bufferFromArrayBufferPresent": false,
+      "newUint8ArrayArrayBufferCount": 2
+    },
+    {
+      "path": "dist-electron\\main\\index.js",
+      "bytes": 49044,
+      "sha256": "4fc32d861be4428edcda03c49ff378237791387f5df1d00a52e424c2c2835617",
+      "containsCreateScreenshotSession": true,
+      "containsAttemptFinishing": true
+    },
+    {
+      "path": "dist-electron\\main\\index.js.map",
+      "bytes": 85811,
+      "sha256": "3a03e1da21c6003180c78f21c9fff4c4982a615fb8f99f7d7dcd9dde30660ccf"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1708,
+      "sha256": "b50d838af61d595a23c4775f8529b2aa4c280384016ed68c20469455faa69367",
+      "version": "3.8.6"
+    }
+  ],
+  "sourceProof": [
+    {
+      "name": "screenshotsManage.ts",
+      "mapSource": "../../electron/main/screenshotsManage.ts",
+      "bytes": 3412,
+      "sha256": "d0299f1c95dd2b4d050849dd0255275aa19024259678aca102ef7e1def6229fc",
+      "equalsCurrentSourceBytes": true
+    },
+    {
+      "name": "screenshotSession.ts",
+      "mapSource": "../../electron/main/screenshotSession.ts",
+      "bytes": 2266,
+      "sha256": "5c5f31dc1d14c24208d12dcb4184586947f133bd12907e0fc8828c297696dedd",
+      "equalsCurrentSourceBytes": true
+    }
+  ],
+  "sourcePackageVariants": [
+    {
+      "path": "package.json",
+      "version": "3.8.6",
+      "postinstall": "node scripts/ensure-screenshot-preload.mjs",
+      "sha256": "f5b99d2280e39aa8b4d3bc282c7d75b5c843a146828aad0ab62dede407d8a286"
+    },
+    {
+      "path": "package_build.json",
+      "version": "3.8.6",
+      "postinstall": "node scripts/ensure-screenshot-preload.mjs",
+      "sha256": "f5b99d2280e39aa8b4d3bc282c7d75b5c843a146828aad0ab62dede407d8a286"
+    },
+    {
+      "path": "package_build_web.json",
+      "version": "3.8.6",
+      "postinstall": "node scripts/ensure-screenshot-preload.mjs",
+      "sha256": "f5b99d2280e39aa8b4d3bc282c7d75b5c843a146828aad0ab62dede407d8a286"
+    },
+    {
+      "path": "package_dev.json",
+      "version": "3.8.6",
+      "postinstall": "node scripts/ensure-screenshot-preload.mjs",
+      "sha256": "f5b99d2280e39aa8b4d3bc282c7d75b5c843a146828aad0ab62dede407d8a286"
+    }
+  ],
+  "dependencyVersion": "0.5.28",
+  "expectedPatchedPreloadSHA256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb",
+  "limits": [
+    "NSIS final EXE hash and installed-package evidence remain with root",
+    "Packaged package.json omits scripts by electron-builder design; postinstall verified in development source variants",
+    "No focus or desktop access"
+  ]
+}

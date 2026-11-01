@@ -1,0 +1,40 @@
+--- upstream/pkg/common/tokenverify/token_verify.go
++++ merged/pkg/common/tokenverify/token_verify.go
+@@ -18,6 +18,7 @@
+ 	"time"
+ 
+ 	"github.com/golang-jwt/jwt/v4"
++	"github.com/google/uuid"
+ 	"github.com/openimsdk/chat/pkg/common/constant"
+ 	"github.com/openimsdk/tools/errs"
+ )
+@@ -51,6 +52,7 @@
+ 		UserID:   userID,
+ 		UserType: userType,
+ 		RegisteredClaims: jwt.RegisteredClaims{
++			ID:        uuid.NewString(),                          // Distinguish same-second logins/devices.
+ 			ExpiresAt: jwt.NewNumericDate(now.Add(t.Expires)),    // Expiration time
+ 			IssuedAt:  jwt.NewNumericDate(now),                   // Issuing time
+ 			NotBefore: jwt.NewNumericDate(now.Add(-time.Minute)), // Begin Effective time
+@@ -109,6 +111,21 @@
+ 	return userID, userType, nil
+ }
+ 
++// Revocation retries can outlive expiry. Validate the signature and identity,
++// without requiring current validity: this method only authorizes deleting the
++// exact registry field and must never be used to authenticate API requests.
++func (t *Token) GetTokenForRevocation(value string) (string, error) {
++	parsed, err := jwt.ParseWithClaims(value, &claims{}, t.secret(), jwt.WithValidMethods([]string{"HS256"}), jwt.WithoutClaimsValidation())
++	if err != nil || !parsed.Valid {
++		return "", errs.ErrTokenMalformed.Wrap()
++	}
++	c, ok := parsed.Claims.(*claims)
++	if !ok || c.UserID == "" || c.PlatformID != 0 || (c.UserType != TokenUser && c.UserType != TokenAdmin) {
++		return "", errs.ErrTokenMalformed.Wrap()
++	}
++	return c.UserID, nil
++}
++
+ func (t *Token) GetExpire(token string) time.Time {
+ 	val, err := jwt.ParseWithClaims(token, &claims{}, t.secret())
+ 	if err != nil {

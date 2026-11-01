@@ -1,0 +1,97 @@
+{
+  "createdUtc": "2026-11-01T17:04:07.752520+00:00",
+  "status": "NOT_REPRODUCED_IN_SINGLE_DIAGNOSTIC_RERUN",
+  "elapsedSeconds": 30.357,
+  "coreReadStatus": "PASS_CORE",
+  "pageErrorCount": 0,
+  "runtimeExceptionCount": 0,
+  "conclusion": "One final 30.357 second rerun repeated original guarded logins, foreground read, two tray-hidden unread messages and restore/read. No pageerror or Runtime.exceptionThrown was observed. The prior Object pageerror remains recorded and unattributed; this does not establish that it is fixed or harmless.",
+  "collectionWhitelist": [
+    "Runtime.exceptionThrown text",
+    "Stack URL origin/path and line/column only, without query or fragment",
+    "Own property names only",
+    "Primitive errCode/errMsg/message/name values only"
+  ],
+  "notCollected": [
+    "Complete exception or description",
+    "Axios config",
+    "Headers",
+    "Request/response body",
+    "Token property values"
+  ],
+  "evidence": [
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/report.json",
+      "bytes": 11879,
+      "sha256": "5e7a048e64dcf90de879775434c1c0fc3848363aa389ef254791cb0644b7f384"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/progress.json",
+      "bytes": 610,
+      "sha256": "1738239dc9536341423f575805f5bb95fb3eca3379d3fd2db001ff936482f26e"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/harness-executed.mjs",
+      "bytes": 20804,
+      "sha256": "68f7edbc27252f7b262de9452c77c7ab3177ad620ce0620e607e4f8fbf082146"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/receiver-restored-conversation.png",
+      "bytes": 91051,
+      "sha256": "47a2068e839c46616f74c58f386de18e5881bf3683a3665f2e3a5fde561f0058"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/sender-final-all-read.png",
+      "bytes": 104513,
+      "sha256": "20b05103b4176a47fe734951018eee42a3a53715b9da86a4aa3dddd341cc5957"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/sender-foreground-read.png",
+      "bytes": 104823,
+      "sha256": "cbc4fda33f64813738ddef51b3c102de717f65cda61d0bbab1ca766f1c09aae6"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/sender-tray-hidden-unread.png",
+      "bytes": 104629,
+      "sha256": "b4197e352c136779b5035dc911777ba264523ad6b22a92634c2d215d87787bd6"
+    }
+  ],
+  "priorPassEvidencePreserved": {
+    "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/report.json",
+    "bytes": 11626,
+    "sha256": "9a0d8c7561938dc194ffb1cb3b18a795d8f7de8508d3f53a9f7072d770d2485e"
+  },
+  "priorRuntimeReviewPreserved": {
+    "path": "tests/delivery/windows-386-read-runtime-review.json",
+    "bytes": 9943,
+    "sha256": "7608c36d39c773fc90b767e3ad2d8d3411878e89e9e7563d84f1a689fe0072a6"
+  },
+  "credentialTextScan": {
+    "scope": "Only the four listed UTF-8 diagnostic files; known private password/token values, MD5 password variants and JWT-like strings. No binary/OCR or whole-project claim.",
+    "files": [
+      {
+        "path": "clients/web-desktop/tests/windows-read-error-diagnostic-386.mjs",
+        "bytes": 20804,
+        "sha256": "68f7edbc27252f7b262de9452c77c7ab3177ad620ce0620e607e4f8fbf082146"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/harness-executed.mjs",
+        "bytes": 20804,
+        "sha256": "68f7edbc27252f7b262de9452c77c7ab3177ad620ce0620e607e4f8fbf082146"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/report.json",
+        "bytes": 11879,
+        "sha256": "5e7a048e64dcf90de879775434c1c0fc3848363aa389ef254791cb0644b7f384"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-error-runtime-20261101T170257090Z/progress.json",
+        "bytes": 610,
+        "sha256": "1738239dc9536341423f575805f5bb95fb3eca3379d3fd2db001ff936482f26e"
+      }
+    ],
+    "findings": []
+  },
+  "productSourceChanged": false,
+  "additionalTestsPlanned": false
+}

@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/openimsdk/open-im-sdk-flutter.git",
+  "tag": "3.8.3+hotfix.15",
+  "commit": "1b64cba2bdeace5e858b236b5e1b3deedd2760a0",
+  "path": "sdks/flutter",
+  "retrieval": "git fixed tag",
+  "pubspecSha256": "f392209494301975b78d54241e9effdb33d198d18218438dd25a9217fb9d644f"
+}

@@ -1,0 +1,189 @@
+// Copyright 2023 LiveKit, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package clientconfiguration
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/livekit/protocol/codecs/mime"
+	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/utils/must"
+)
+
+func TestStaticConfigurationH264(t *testing.T) {
+	cm := NewStaticClientConfigurationManager(StaticConfigurations)
+
+	h264Disabled := func(info *livekit.ClientInfo) bool {
+		conf := cm.GetConfiguration(info)
+		if conf == nil || conf.DisabledCodecs == nil {
+			return false
+		}
+		for _, c := range conf.DisabledCodecs.Publish {
+			if mime.IsMimeTypeStringH264(c.Mime) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// desktop Linux Firefox publishes H.264 through OpenH264, so it must not be disabled
+	require.False(t, h264Disabled(&livekit.ClientInfo{Browser: "firefox", Os: "linux"}))
+	// Firefox for Android is still worked around
+	require.True(t, h264Disabled(&livekit.ClientInfo{Browser: "firefox mobile", Os: "android"}))
+}
+
+func TestStaticConfigurationAV1(t *testing.T) {
+	cm := NewStaticClientConfigurationManager(StaticConfigurations)
+
+	av1Disabled := func(info *livekit.ClientInfo) bool {
+		conf := cm.GetConfiguration(info)
+		if conf == nil || conf.DisabledCodecs == nil {
+			return false
+		}
+		for _, c := range conf.DisabledCodecs.Codecs {
+			if mime.IsMimeTypeStringEqual(c.Mime, mime.MimeTypeAV1.String()) {
+				return true
+			}
+		}
+		return false
+	}
+
+	require.True(t, av1Disabled(&livekit.ClientInfo{Browser: "Firefox", BrowserVersion: "155.0", Os: "macOS"}))
+	require.True(t, av1Disabled(&livekit.ClientInfo{Browser: "firefox", BrowserVersion: "156.0.1", Os: "windows"}))
+	require.True(t, av1Disabled(&livekit.ClientInfo{Browser: "firefox", BrowserVersion: "158.0.2", Os: "windows"}))
+	// an unknown version is treated as affected
+	require.True(t, av1Disabled(&livekit.ClientInfo{Browser: "firefox", Os: "linux"}))
+	// should not be disabled for Chrome
+	require.False(t, av1Disabled(&livekit.ClientInfo{Browser: "chrome", Os: "linux"}))
+
+	// Firefox for Android keeps the AV1 rule alongside its H.264 publish rule
+	android := &livekit.ClientInfo{Browser: "firefox mobile", BrowserVersion: "156.0", Os: "android"}
+	require.True(t, av1Disabled(android))
+	conf := cm.GetConfiguration(android)
+	require.Len(t, conf.DisabledCodecs.Publish, 1)
+	require.True(t, mime.IsMimeTypeStringH264(conf.DisabledCodecs.Publish[0].Mime))
+}
+
+func TestScriptMatchConfiguration(t *testing.T) {
+	t.Run("no merge", func(t *testing.T) {
+		confs := []ConfigurationItem{
+			{
+				Match: must.Get(NewScriptMatch(`c.protocol > 5 && c.browser != "firefox"`)),
+				Configuration: &livekit.ClientConfiguration{
+					ResumeConnection: livekit.ClientConfigSetting_ENABLED,
+				},
+			},
+		}
+
+		cm := NewStaticClientConfigurationManager(confs)
+
+		conf := cm.GetConfiguration(&livekit.ClientInfo{Protocol: 4})
+		require.Nil(t, conf)
+
+		conf = cm.GetConfiguration(&livekit.ClientInfo{Protocol: 6, Browser: "firefox"})
+		require.Nil(t, conf)
+
+		conf = cm.GetConfiguration(&livekit.ClientInfo{Protocol: 6, Browser: "chrome"})
+		require.Equal(t, conf.ResumeConnection, livekit.ClientConfigSetting_ENABLED)
+	})
+
+	t.Run("merge", func(t *testing.T) {
+		confs := []ConfigurationItem{
+			{
+				Match: must.Get(NewScriptMatch(`c.protocol > 5 && c.browser != "firefox"`)),
+				Configuration: &livekit.ClientConfiguration{
+					ResumeConnection: livekit.ClientConfigSetting_ENABLED,
+				},
+				Merge: true,
+			},
+			{
+				Match: must.Get(NewScriptMatch(`c.sdk == "android"`)),
+				Configuration: &livekit.ClientConfiguration{
+					Video: &livekit.VideoConfiguration{
+						HardwareEncoder: livekit.ClientConfigSetting_DISABLED,
+					},
+				},
+				Merge: true,
+			},
+		}
+
+		cm := NewStaticClientConfigurationManager(confs)
+
+		conf := cm.GetConfiguration(&livekit.ClientInfo{Protocol: 4})
+		require.Nil(t, conf)
+
+		conf = cm.GetConfiguration(&livekit.ClientInfo{Protocol: 6, Browser: "firefox"})
+		require.Nil(t, conf)
+
+		conf = cm.GetConfiguration(&livekit.ClientInfo{Protocol: 6, Browser: "chrome", Sdk: 3})
+		require.Equal(t, conf.ResumeConnection, livekit.ClientConfigSetting_ENABLED)
+		require.Equal(t, conf.Video.HardwareEncoder, livekit.ClientConfigSetting_DISABLED)
+	})
+}
+
+func TestScriptMatch(t *testing.T) {
+	client := &livekit.ClientInfo{
+		Protocol:       6,
+		Browser:        "chrome",
+		Sdk:            3, // android
+		DeviceModel:    "12345",
+		BrowserVersion: "13.2",
+		Version:        "2.17.1",
+	}
+
+	type testcase struct {
+		name   string
+		expr   string
+		result bool
+		err    bool
+	}
+
+	cases := []testcase{
+		{name: "simple match", expr: `c.protocol > 5`, result: true},
+		{name: "invalid expr", expr: `cc.protocol > 5`, err: true},
+		{name: "unexist field", expr: `c.protocols > 5`, err: true},
+		{name: "combined condition", expr: `c.protocol > 5 && (c.sdk=="android" || c.sdk=="ios")`, result: true},
+		{name: "combined condition2", expr: `(c.device_model == "xiaomi 2201117ti" && c.os == "android") || ((c.browser == "firefox" || c.browser == "firefox mobile") && (c.os == "linux" || c.os == "android"))`, result: false},
+		{name: "string lesser", expr: `c.browser_version < "11.3"`, result: false},
+		{name: "string lesser eq", expr: `c.browser_version <= "13.2"`, result: true},
+		{name: "string greater", expr: `c.browser_version > "11.3"`, result: true},
+		{name: "string greater eq", expr: `c.browser_version >= "13.2"`, result: true},
+		{name: "semantic lesser", expr: `c.version < "2.16.10"`, result: false},
+		{name: "semantic lesser eq", expr: `c.version <= "2.17.1"`, result: true},
+		{name: "semantic greater", expr: `c.version > "2.16.10"`, result: true},
+		{name: "semantic greater eq", expr: `c.version >= "2.17.1"`, result: true},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			match, err := NewScriptMatch(c.expr)
+			if err != nil {
+				if !c.err {
+					require.NoError(t, err)
+				}
+				return
+			}
+			m, err := match.Match(client)
+			if c.err {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, c.result, m)
+			}
+		})
+
+	}
+}

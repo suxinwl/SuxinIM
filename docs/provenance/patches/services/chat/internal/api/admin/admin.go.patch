@@ -1,0 +1,10 @@
+--- upstream/internal/api/admin/admin.go
++++ merged/internal/api/admin/admin.go
+@@ -157,6 +157,7 @@
+ 
+ 	err = o.registerChatUser(ctx, ip, []*chat.RegisterUserInfo{req.User})
+ 	if err != nil {
++		apiresp.GinError(c, err)
+ 		return
+ 	}
+ 

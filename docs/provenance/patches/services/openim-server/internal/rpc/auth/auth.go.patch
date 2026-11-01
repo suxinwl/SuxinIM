@@ -1,0 +1,53 @@
+--- upstream/internal/rpc/auth/auth.go
++++ merged/internal/rpc/auth/auth.go
+@@ -38,6 +38,7 @@
+ 	"github.com/openimsdk/tools/log"
+ 	"github.com/openimsdk/tools/tokenverify"
+ 	"google.golang.org/grpc"
++	"google.golang.org/grpc/metadata"
+ )
+ 
+ type authServer struct {
+@@ -247,5 +248,42 @@
+ 	if err := s.authDatabase.BatchSetTokenMapByUidPid(ctx, req.Tokens); err != nil {
+ 		return nil, err
+ 	}
++	// The fixed protocol supports exact token invalidation, but upstream only
++	// changed Redis. Also close transports carrying those exact tokens. A newer
++	// same-platform login must never be kicked by a delayed logout request.
++	conns, err := s.RegisterCenter.GetConns(ctx, s.config.Share.RpcRegisterName.MessageGateway)
++	if err != nil {
++		return nil, err
++	}
++	for _, token := range req.Tokens {
++		claims, err := tokenverify.GetClaimFromToken(token, authverify.Secret(s.config.Share.Secret))
++		if err != nil {
++			continue
++		}
++		const exactHeader = "openim38-revoke-token"
++		exactCtx := metadata.AppendToOutgoingContext(ctx, exactHeader, token)
++		// OpenIM's client interceptor reconstructs outgoing metadata exclusively
++		// from registered context keys. Setting metadata alone silently loses the
++		// exact-token filter and would turn this into a platform-wide kick.
++		headers, _ := ctx.Value(constant.RpcCustomHeader).([]string)
++		headers = append([]string(nil), headers...)
++		found := false
++		for _, header := range headers {
++			if header == exactHeader {
++				found = true
++			}
++		}
++		if !found {
++			headers = append(headers, exactHeader)
++		}
++		exactCtx = context.WithValue(exactCtx, constant.RpcCustomHeader, headers)
++		exactCtx = context.WithValue(exactCtx, exactHeader, []string{token})
++		for _, conn := range conns {
++			_, err := msggateway.NewMsgGatewayClient(conn).KickUserOffline(exactCtx, &msggateway.KickUserOfflineReq{PlatformID: int32(claims.PlatformID), KickUserIDList: []string{claims.UserID}})
++			if err != nil {
++				return nil, err
++			}
++		}
++	}
+ 	return &pbauth.KickTokensResp{}, nil
+ }

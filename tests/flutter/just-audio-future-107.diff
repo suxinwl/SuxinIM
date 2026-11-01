@@ -1,0 +1,79 @@
+--- frozen106/just_audio.dart
++++ candidate107/just_audio.dart
+@@ -999,9 +999,13 @@
+     try {
+       if (!playing) return; // defensive
+       await platform.play(PlayRequest());
+-      playCompleter?.complete();
++      if (playCompleter != null && !playCompleter.isCompleted) {
++        playCompleter.complete();
++      }
+     } catch (e, stackTrace) {
+-      playCompleter?.completeError(e, stackTrace);
++      if (playCompleter != null && !playCompleter.isCompleted) {
++        playCompleter.completeError(e, stackTrace);
++      }
+     }
+   }
+ 
+@@ -1312,6 +1316,18 @@
+ 
+     final durationCompleter = Completer<Duration?>();
+ 
++    // Activation has two separate public paths: load waits for duration, while
++    // deferred play waits for playCompleter. Keep both failures observable,
++    // without changing the cached platform Future into a successful value.
++    void completeActivationError(Object error, StackTrace stackTrace) {
++      if (!durationCompleter.isCompleted) {
++        durationCompleter.completeError(error, stackTrace);
++      }
++      if (playCompleter != null && !playCompleter.isCompleted) {
++        playCompleter.completeError(error, stackTrace);
++      }
++    }
++
+     // Checks if we were interrupted and aborts the current activation. If we
+     // are interrupted, there are two cases:
+     // 1. If we were activating the native platform, abort with an exception.
+@@ -1327,7 +1343,6 @@
+       // An interruption that should throw
+       final e =
+           PlatformException(code: 'abort', message: 'Loading interrupted');
+-      durationCompleter.completeError(e);
+       throw e;
+     }
+ 
+@@ -1534,9 +1549,13 @@
+           if (checkInterruption()) return platform;
+           durationCompleter.complete(duration);
+         } catch (e, stackTrace) {
+-          await _setPlatformActive(false)
+-              ?.catchError((dynamic e) async => null);
+-          durationCompleter.completeError(e, stackTrace);
++          // A late failure from a superseded load owns only its own result.
++          // It must not deactivate a newer native platform on this player.
++          if (!wasInterrupted()) {
++            await _setPlatformActive(false)
++                ?.catchError((dynamic e) async => null);
++          }
++          completeActivationError(e, stackTrace);
+         }
+       } else {
+         durationCompleter.complete(null);
+@@ -1545,7 +1564,15 @@
+       return platform;
+     }
+ 
+-    _platform = setPlatform();
++    final platformFuture = setPlatform();
++    _platform = platformFuture;
++    // init/configuration can fail before _load's catch. Observe the sibling
++    // Future even when callers only await the duration/play result, and bridge
++    // that original error/stack. Real awaiters of _platform still see failure.
++    unawaited(platformFuture.then<void>((_) {},
++        onError: (Object error, StackTrace stackTrace) {
++      completeActivationError(error, stackTrace);
++    }));
+     return durationCompleter.future;
+   }
+ 

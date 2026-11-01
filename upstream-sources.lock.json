@@ -1,0 +1,50 @@
+[
+  {
+    "repository": "https://github.com/openimsdk/open-im-sdk-android",
+    "tag": "v3.8.3.5",
+    "commit": "486212ee1feed8ee5e79164a299ecc84b9f8fa2a",
+    "path": "sdks/android-java",
+    "archiveUrl": "https://codeload.github.com/openimsdk/open-im-sdk-android/tar.gz/486212ee1feed8ee5e79164a299ecc84b9f8fa2a",
+    "archiveSha256": "b6638afce19ed065bedbb863b9180062f7f8f47063e5bda5402c3bd4ee698c5b"
+  },
+  {
+    "repository": "https://github.com/openimsdk/openim-sdk-core-ios",
+    "tag": "3.8.3-hotfix.15",
+    "commit": "45cd9dcc80f3b41fcaa49664c768713d6b4976bb",
+    "path": "sdks/ios-core",
+    "archiveUrl": "https://codeload.github.com/openimsdk/openim-sdk-core-ios/tar.gz/45cd9dcc80f3b41fcaa49664c768713d6b4976bb",
+    "archiveSha256": "518938692dc270c1a749524616bf2ae05386d3204e108f98b571072fdeb21861"
+  },
+  {
+    "repository": "https://github.com/openimsdk/openim-sdk-js-wasm",
+    "tag": "v3.8.3-patch.15.1",
+    "commit": "615d327c78c5ecf9a01a053f6889d01cb9094639",
+    "path": "sdks/wasm",
+    "archiveUrl": "https://codeload.github.com/openimsdk/openim-sdk-js-wasm/tar.gz/615d327c78c5ecf9a01a053f6889d01cb9094639",
+    "archiveSha256": "fa8894443aec6e609070e57a0fe51fd075f2713e9f29f844e2ea26bd13513bf6"
+  },
+  {
+    "repository": "https://github.com/openimsdk/chat",
+    "tag": "v1.8.4-patch.5",
+    "commit": "22dc25e296aef327fb6779079c2a8b5b8fce83db",
+    "path": "services/chat",
+    "archiveUrl": "https://codeload.github.com/openimsdk/chat/tar.gz/22dc25e296aef327fb6779079c2a8b5b8fce83db",
+    "archiveSha256": "bbd87a4f6ff327d722c5313eea9e781c3a62a1bbfbe58872a9c06779e663778e"
+  },
+  {
+    "repository": "https://github.com/openimsdk/open-im-server",
+    "tag": "v3.8.3-patch.18",
+    "commit": "120cee6d5783959a02ea1acfa414589fe5aae90f",
+    "path": "services/openim-server",
+    "archiveUrl": "https://codeload.github.com/openimsdk/open-im-server/tar.gz/120cee6d5783959a02ea1acfa414589fe5aae90f",
+    "archiveSha256": "ad60cf9e5280be03f63cc6a11b83d5759a1a8a67de2676093377d3f64fe437b3"
+  },
+  {
+    "repository": "https://github.com/openimsdk/open-im-sdk-flutter.git",
+    "tag": "3.8.3+hotfix.15",
+    "commit": "1b64cba2bdeace5e858b236b5e1b3deedd2760a0",
+    "path": "sdks/flutter",
+    "retrieval": "git fixed tag",
+    "pubspecSha256": "f392209494301975b78d54241e9effdb33d198d18218438dd25a9217fb9d644f"
+  }
+]

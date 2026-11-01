@@ -1,0 +1,1416 @@
+// Copyright 2023 LiveKit, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package rtc
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/pion/webrtc/v4"
+	"github.com/stretchr/testify/require"
+	"github.com/twitchtv/twirp"
+	"go.uber.org/atomic"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/livekit/livekit-server/pkg/sfu/buffer"
+	"github.com/livekit/protocol/auth"
+	protoCodecs "github.com/livekit/protocol/codecs"
+	"github.com/livekit/protocol/codecs/mime"
+	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/logger"
+	"github.com/livekit/protocol/logger/zaputil"
+	"github.com/livekit/protocol/observability/roomobs"
+	lksdp "github.com/livekit/protocol/sdp"
+	"github.com/livekit/protocol/signalling"
+	"github.com/livekit/protocol/utils"
+	"github.com/livekit/protocol/utils/guid"
+
+	"github.com/livekit/livekit-server/pkg/config"
+	"github.com/livekit/livekit-server/pkg/routing"
+	"github.com/livekit/livekit-server/pkg/routing/routingfakes"
+	"github.com/livekit/livekit-server/pkg/rtc/types"
+	"github.com/livekit/livekit-server/pkg/rtc/types/typesfakes"
+	"github.com/livekit/livekit-server/pkg/testutils"
+)
+
+func TestIsReady(t *testing.T) {
+	tests := []struct {
+		state livekit.ParticipantInfo_State
+		ready bool
+	}{
+		{
+			state: livekit.ParticipantInfo_JOINING,
+			ready: false,
+		},
+		{
+			state: livekit.ParticipantInfo_JOINED,
+			ready: true,
+		},
+		{
+			state: livekit.ParticipantInfo_ACTIVE,
+			ready: true,
+		},
+		{
+			state: livekit.ParticipantInfo_DISCONNECTED,
+			ready: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.state.String(), func(t *testing.T) {
+			p := &ParticipantImpl{}
+			p.state.Store(test.state)
+			require.Equal(t, test.ready, p.IsReady())
+		})
+	}
+}
+
+// Disabling a codec can leave the publish list with only RTX and FEC. The
+// fallback must still pick a real codec, or the track registers as RTX and
+// subscribers see a blank tile.
+func TestPublishCodecFallbackSkipsRTX(t *testing.T) {
+	h264 := &livekit.Codec{Mime: mime.MimeTypeH264.String()}
+	rtx := &livekit.Codec{Mime: mime.MimeTypeRTX.String()}
+
+	newParticipant := func() *ParticipantImpl {
+		return &ParticipantImpl{params: ParticipantParams{Logger: logger.GetLogger()}}
+	}
+
+	t.Run("h264 enabled, rtx is last and not chosen", func(t *testing.T) {
+		p := newParticipant()
+		p.setupEnabledCodecs([]*livekit.Codec{h264, rtx}, nil, nil)
+
+		require.Equal(t, mime.MimeTypeH264.String(), selectAlternativeVideoCodec(p.enabledPublishCodecs))
+	})
+
+	t.Run("h264 disabled leaves rtx only, fallback avoids rtx", func(t *testing.T) {
+		p := newParticipant()
+		disabled := &livekit.DisabledCodecs{Publish: []*livekit.Codec{{Mime: mime.MimeTypeH264.String()}}}
+		p.setupEnabledCodecs([]*livekit.Codec{h264, rtx}, nil, disabled)
+
+		require.Len(t, p.enabledPublishCodecs, 1)
+		require.True(t, mime.IsMimeTypeStringRTX(p.enabledPublishCodecs[0].Mime))
+
+		alt := selectAlternativeVideoCodec(p.enabledPublishCodecs)
+		require.False(t, mime.IsMimeTypeStringRTX(alt), "fallback must not be rtx, got %q", alt)
+		require.Equal(t, mime.MimeTypeVP8.String(), alt)
+	})
+}
+
+func TestSupportsMoving(t *testing.T) {
+	t.Run("current protocol version", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{protocolVersion: types.CurrentProtocol})
+		require.NoError(t, p.SupportsMoving())
+	})
+
+	// a move rejected because of what the participant is cannot be retried into working, but it is
+	// still a caller error, so it has to surface as a 4xx rather than a 500
+	t.Run("client version that cannot be moved", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{protocolVersion: 6})
+
+		err := p.SupportsMoving()
+		require.ErrorIs(t, err, ErrMoveOldClientVersion)
+
+		var twirpErr twirp.Error
+		require.ErrorAs(t, err, &twirpErr)
+		require.Equal(t, twirp.FailedPrecondition, twirpErr.Code())
+	})
+}
+
+func TestTrackPublishing(t *testing.T) {
+	t.Run("should send the correct events", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		track := &typesfakes.FakeMediaTrack{}
+		track.IDReturns("id")
+		published := false
+		updated := false
+		p.listener().(*typesfakes.FakeLocalParticipantListener).OnTrackUpdatedCalls(func(p types.Participant, track types.MediaTrack) {
+			updated = true
+		})
+		p.listener().(*typesfakes.FakeLocalParticipantListener).OnTrackPublishedCalls(func(p types.Participant, track types.MediaTrack) {
+			published = true
+		})
+		p.UpTrackManager.AddPublishedTrack(track)
+		p.handleTrackPublished(track, false, false)
+		require.True(t, published)
+		require.False(t, updated)
+		require.Len(t, p.UpTrackManager.publishedTracks, 1)
+	})
+
+	t.Run("sends back trackPublished event", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:    "cid",
+			Name:   "webcam",
+			Type:   livekit.TrackType_VIDEO,
+			Width:  1024,
+			Height: 768,
+		})
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+		res := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+		require.IsType(t, &livekit.SignalResponse_TrackPublished{}, res.Message)
+		published := res.Message.(*livekit.SignalResponse_TrackPublished).TrackPublished
+		require.Equal(t, "cid", published.Cid)
+		require.Equal(t, "webcam", published.Track.Name)
+		require.Equal(t, livekit.TrackType_VIDEO, published.Track.Type)
+		require.Equal(t, uint32(1024), published.Track.Width)
+		require.Equal(t, uint32(768), published.Track.Height)
+	})
+
+	t.Run("should not allow adding of duplicate tracks", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "webcam",
+			Type: livekit.TrackType_VIDEO,
+		})
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "duplicate",
+			Type: livekit.TrackType_AUDIO,
+		})
+
+		// error response on duplicate adds a message
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+	})
+
+	t.Run("should queue adding of duplicate tracks if already published by client id in signalling", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+
+		track := &typesfakes.FakeLocalMediaTrack{}
+		track.HasSignalCidCalls(func(s string) bool { return s == "cid" })
+		track.ToProtoReturns(&livekit.TrackInfo{})
+		// directly add to publishedTracks without lock - for testing purpose only
+		p.UpTrackManager.publishedTracks["cid"] = track
+
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "webcam",
+			Type: livekit.TrackType_VIDEO,
+		})
+		// `queued` `RequestResponse` should add a message
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+		require.Equal(t, 1, len(p.pendingTracks["cid"].trackInfos))
+
+		// add again - it should be added to the queue
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "webcam",
+			Type: livekit.TrackType_VIDEO,
+		})
+		// `queued` `RequestResponse`s should have been sent for duplicate additions
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+		require.Equal(t, 2, len(p.pendingTracks["cid"].trackInfos))
+
+		// check SID is the same
+		require.Equal(t, p.pendingTracks["cid"].trackInfos[0].Sid, p.pendingTracks["cid"].trackInfos[1].Sid)
+	})
+
+	t.Run("should queue adding of duplicate tracks if already published by client id in sdp", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+
+		track := &typesfakes.FakeLocalMediaTrack{}
+		track.ToProtoReturns(&livekit.TrackInfo{})
+		track.HasSdpCidCalls(func(s string) bool { return s == "cid" })
+		// directly add to publishedTracks without lock - for testing purpose only
+		p.UpTrackManager.publishedTracks["cid"] = track
+
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "webcam",
+			Type: livekit.TrackType_VIDEO,
+		})
+		// `queued` `RequestResponse` should add a message
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+		require.Equal(t, 1, len(p.pendingTracks["cid"].trackInfos))
+
+		// add again - it should be added to the queue
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:  "cid",
+			Name: "webcam",
+			Type: livekit.TrackType_VIDEO,
+		})
+		// `queued` `RequestResponse`s should have been sent for duplicate additions
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+		require.Equal(t, 2, len(p.pendingTracks["cid"].trackInfos))
+
+		// check SID is the same
+		require.Equal(t, p.pendingTracks["cid"].trackInfos[0].Sid, p.pendingTracks["cid"].trackInfos[1].Sid)
+	})
+
+	t.Run("should release timed out pending tracks when at the pending track limit", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{protocolVersion: 7})
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+
+		// one slot holds two queued entries that share a track id, both before any media
+		queued := p.addPendingTrack(&livekit.AddTrackRequest{Cid: "cidq", Name: "q0", Type: livekit.TrackType_VIDEO})
+		require.NotNil(t, queued)
+		p.addPendingTrack(&livekit.AddTrackRequest{Cid: "cidq", Name: "q1", Type: livekit.TrackType_VIDEO}) // queued, returns nil
+		require.Len(t, p.pendingTracks["cidq"].trackInfos, 2)
+
+		var sids []livekit.TrackID
+		for i := 0; i < cMaxPendingTracks-1; i++ {
+			ti := p.addPendingTrack(&livekit.AddTrackRequest{
+				Cid:  fmt.Sprintf("cid%d", i),
+				Name: fmt.Sprintf("track%d", i),
+				Type: livekit.TrackType_VIDEO,
+			})
+			require.NotNil(t, ti)
+			sids = append(sids, livekit.TrackID(ti.Sid))
+		}
+		require.Len(t, p.pendingTracks, cMaxPendingTracks)
+
+		// nothing timed out, so a new publish is rejected
+		require.Nil(t, p.addPendingTrack(&livekit.AddTrackRequest{Cid: "fresh", Name: "fresh", Type: livekit.TrackType_VIDEO}))
+
+		// one lone track times out, a new publish takes its slot
+		p.supervisor.SetPublicationTimedOutForTest(sids[0])
+		numMessages := sink.WriteMessageCallCount()
+		require.NotNil(t, p.addPendingTrack(&livekit.AddTrackRequest{Cid: "fresh", Name: "fresh", Type: livekit.TrackType_VIDEO}))
+		require.Nil(t, p.pendingTracks["cid0"])
+		require.NotNil(t, p.pendingTracks["fresh"])
+		require.Len(t, p.pendingTracks, cMaxPendingTracks)
+		require.Empty(t, p.supervisor.TimedOutPublications())
+
+		require.Equal(t, numMessages+1, sink.WriteMessageCallCount())
+		res := sink.WriteMessageArgsForCall(numMessages).(*livekit.SignalResponse)
+		require.IsType(t, &livekit.SignalResponse_TrackUnpublished{}, res.Message)
+		require.Equal(t, string(sids[0]), res.Message.(*livekit.SignalResponse_TrackUnpublished).TrackUnpublished.TrackSid)
+
+		// the queued track id times out, both entries are released together
+		p.supervisor.SetPublicationTimedOutForTest(livekit.TrackID(queued.Sid))
+		require.NotNil(t, p.addPendingTrack(&livekit.AddTrackRequest{Cid: "fresh2", Name: "fresh2", Type: livekit.TrackType_VIDEO}))
+		require.Nil(t, p.pendingTracks["cidq"])
+		require.NotNil(t, p.pendingTracks["fresh2"])
+		require.Len(t, p.pendingTracks, cMaxPendingTracks)
+	})
+
+	t.Run("should not match late media of a released pending track to another pending track", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{protocolVersion: 7})
+
+		released := p.addPendingTrack(&livekit.AddTrackRequest{Cid: "cidA", Name: "a", Type: livekit.TrackType_VIDEO})
+		require.NotNil(t, released)
+		// SDP client id that an offer would set, as Firefox does
+		p.pendingTracks["cidA"].trackInfos[0].Codecs[0].SdpCid = "sdpA"
+
+		p.pendingTracksLock.Lock()
+		p.releasePendingTrackLocked(livekit.TrackID(released.Sid))
+		p.pendingTracksLock.Unlock()
+
+		other := p.addPendingTrack(&livekit.AddTrackRequest{Cid: "cidB", Name: "b", Type: livekit.TrackType_VIDEO})
+		require.NotNil(t, other)
+
+		// media for the released track, by signal or SDP client id, does not fall back to the other track by type
+		for _, cid := range []string{"cidA", "sdpA"} {
+			_, ti, _, _, _ := p.getPendingTrack(cid, livekit.TrackType_VIDEO, true)
+			require.Nil(t, ti, cid)
+		}
+		// an unknown client id still falls back by type, as before
+		_, ti, _, _, _ := p.getPendingTrack("unknown", livekit.TrackType_VIDEO, true)
+		require.NotNil(t, ti)
+		require.Equal(t, other.Sid, ti.Sid)
+
+		// reusing the released client id publishes on it again
+		reused := p.addPendingTrack(&livekit.AddTrackRequest{Cid: "cidA", Name: "a2", Type: livekit.TrackType_VIDEO})
+		require.NotNil(t, reused)
+		_, ti, _, _, _ = p.getPendingTrack("cidA", livekit.TrackType_VIDEO, true)
+		require.NotNil(t, ti)
+		require.Equal(t, reused.Sid, ti.Sid)
+		// the old SDP id is cleared too, a reused transceiver keeps it
+		p.pendingTracksLock.Lock()
+		require.False(t, p.isReleasedTrackCidLocked("sdpA"))
+		p.pendingTracksLock.Unlock()
+	})
+
+	t.Run("should clear a released track when a new request reuses one of its codec client ids", func(t *testing.T) {
+		p := newParticipantForTest("test")
+
+		p.pendingTracksLock.Lock()
+		p.addReleasedTrackCidsLocked([]string{"cidA", "codecA", "sdpA"})
+		p.addReleasedTrackCidsLocked([]string{"cidB"})
+		p.clearReleasedTrackCidsLocked(&livekit.AddTrackRequest{
+			Cid:             "cidC",
+			SimulcastCodecs: []*livekit.SimulcastCodec{{Codec: "vp8", Cid: "codecA"}},
+		})
+		for _, cid := range []string{"cidA", "codecA", "sdpA"} {
+			require.False(t, p.isReleasedTrackCidLocked(cid), cid)
+		}
+		require.True(t, p.isReleasedTrackCidLocked("cidB"))
+		p.pendingTracksLock.Unlock()
+	})
+
+	t.Run("should bound released track client ids", func(t *testing.T) {
+		p := newParticipantForTest("test")
+
+		p.pendingTracksLock.Lock()
+		for i := 0; i <= cMaxReleasedTracks; i++ {
+			p.addReleasedTrackCidsLocked([]string{fmt.Sprintf("cid%d", i), fmt.Sprintf("sdp%d", i)})
+		}
+		require.Len(t, p.releasedTrackCids, cMaxReleasedTracks)
+		// the oldest track ages out with all of its ids
+		require.False(t, p.isReleasedTrackCidLocked("cid0"))
+		require.False(t, p.isReleasedTrackCidLocked("sdp0"))
+		require.True(t, p.isReleasedTrackCidLocked(fmt.Sprintf("sdp%d", cMaxReleasedTracks)))
+		p.pendingTracksLock.Unlock()
+	})
+
+	t.Run("should not allow adding disallowed sources", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		p.SetPermission(&livekit.ParticipantPermission{
+			CanPublish: true,
+			CanPublishSources: []livekit.TrackSource{
+				livekit.TrackSource_CAMERA,
+			},
+		})
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:    "cid",
+			Name:   "webcam",
+			Source: livekit.TrackSource_CAMERA,
+			Type:   livekit.TrackType_VIDEO,
+		})
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:    "cid2",
+			Name:   "rejected source",
+			Type:   livekit.TrackType_AUDIO,
+			Source: livekit.TrackSource_MICROPHONE,
+		})
+		// an error response for disallowed source should send a `RequestResponse`.
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+	})
+}
+
+func TestSetPermissionDataTrackSubscriptions(t *testing.T) {
+	p := newParticipantForTestWithOpts("sub", &participantOpts{
+		permissions: &livekit.ParticipantPermission{
+			CanSubscribe: true,
+		},
+	})
+	defer p.Close(false, types.ParticipantCloseReasonNone, false)
+
+	pubID := livekit.ParticipantID("PA_pub")
+	dt := NewDataTrack(
+		DataTrackParams{
+			Logger:              logger.GetLogger(),
+			ParticipantID:       func() livekit.ParticipantID { return pubID },
+			ParticipantIdentity: "pub",
+		},
+		&livekit.DataTrackInfo{PubHandle: 1, Sid: "DTR_test", Name: "test"},
+	)
+	defer dt.Close()
+
+	helper := p.params.ParticipantHelper.(*typesfakes.FakeLocalParticipantHelper)
+	helper.ResolveDataTrackReturns(types.DataResolverResult{
+		DataTrack:         dt,
+		HasPermission:     true,
+		PublisherID:       pubID,
+		PublisherIdentity: "pub",
+	})
+
+	p.SubscribeToDataTrack(dt.ID())
+	// the data track adds the subscriber before the subscription manager records it, and a
+	// revoke only removes recorded subscriptions, so wait for both
+	require.Eventually(t, func() bool {
+		return dt.IsSubscriber(p.ID()) && len(p.GetSubscribedDataTracks()) == 1
+	}, 5*time.Second, 10*time.Millisecond, "data track subscription should be established")
+
+	// revoking canSubscribe should drop data track subscriptions, like media track subscriptions
+	require.True(t, p.SetPermission(&livekit.ParticipantPermission{CanSubscribe: false}))
+	require.False(t, dt.IsSubscriber(p.ID()))
+	require.Empty(t, p.GetSubscribedDataTracks())
+
+	// granting canSubscribe again should restore the subscription
+	require.True(t, p.SetPermission(&livekit.ParticipantPermission{CanSubscribe: true}))
+	require.Eventually(t, func() bool {
+		return dt.IsSubscriber(p.ID())
+	}, 5*time.Second, 10*time.Millisecond, "data track subscription should be restored")
+}
+
+func TestOutOfOrderUpdates(t *testing.T) {
+	p := newParticipantForTest("test")
+	p.updateState(livekit.ParticipantInfo_JOINED)
+	p.SetMetadata("initial metadata")
+	sink := p.GetResponseSink().(*routingfakes.FakeMessageSink)
+	pi1 := p.ToProto()
+	p.SetMetadata("second update")
+	pi2 := p.ToProto()
+
+	require.Greater(t, pi2.Version, pi1.Version)
+
+	// send the second update first
+	require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{pi2}))
+	require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{pi1}))
+
+	// only sent once, and it's the earlier message
+	require.Equal(t, 1, sink.WriteMessageCallCount())
+	sent := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+	require.Equal(t, "second update", sent.GetUpdate().Participants[0].Metadata)
+}
+
+func TestRecentlyDisconnectedKeepsUpdateOrder(t *testing.T) {
+	p := newParticipantForTest("test")
+
+	// fill the update cache (128 entries), the last update is a disconnect
+	const cacheSize = 128
+	for i := range cacheSize {
+		state := livekit.ParticipantInfo_ACTIVE
+		if i == cacheSize-1 {
+			state = livekit.ParticipantInfo_DISCONNECTED
+		}
+		require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{{
+			Sid:      fmt.Sprintf("PA_%d", i),
+			Identity: fmt.Sprintf("p%d", i),
+			Version:  1,
+			State:    state,
+		}}))
+	}
+
+	disconnected := p.GetRecentlyDisconnectedParticipants()
+	require.Len(t, disconnected, 1)
+	require.Equal(t, "PA_127", disconnected[0].Sid)
+
+	// an update for a new participant evicts the least recently updated entry,
+	// not the disconnect that was just reported
+	require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{{
+		Sid:      "PA_new",
+		Identity: "new",
+		Version:  1,
+		State:    livekit.ParticipantInfo_ACTIVE,
+	}}))
+
+	disconnected = p.GetRecentlyDisconnectedParticipants()
+	require.Len(t, disconnected, 1)
+	require.Equal(t, "PA_127", disconnected[0].Sid)
+}
+
+// after disconnection, things should continue to function and not panic
+func TestDisconnectTiming(t *testing.T) {
+	t.Run("Negotiate doesn't panic after channel closed", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		msg := routing.NewMessageChannel(livekit.ConnectionID("test"), routing.DefaultMessageChannelSize)
+		p.params.Sink = msg
+		go func() {
+			for msg := range msg.ReadChan() {
+				t.Log("received message from chan", msg)
+			}
+		}()
+		track := &typesfakes.FakeMediaTrack{}
+		p.UpTrackManager.AddPublishedTrack(track)
+		p.handleTrackPublished(track, false, false)
+
+		// close channel and then try to Negotiate
+		msg.Close()
+	})
+}
+
+func TestCorrectJoinedAt(t *testing.T) {
+	p := newParticipantForTest("test")
+	info := p.ToProto()
+	require.NotZero(t, info.JoinedAt)
+	require.True(t, time.Now().Unix()-info.JoinedAt <= 1)
+}
+
+func TestMuteSetting(t *testing.T) {
+	t.Run("can set mute when track is pending", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		ti := &livekit.TrackInfo{Sid: "testTrack"}
+		p.pendingTracks["cid"] = &pendingTrackInfo{trackInfos: []*livekit.TrackInfo{ti}}
+
+		p.SetTrackMuted(&livekit.MuteTrackRequest{
+			Sid:   ti.Sid,
+			Muted: true,
+		}, false)
+		require.True(t, p.pendingTracks["cid"].trackInfos[0].Muted)
+	})
+
+	t.Run("can publish a muted track", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		p.AddTrack(&livekit.AddTrackRequest{
+			Cid:   "cid",
+			Type:  livekit.TrackType_AUDIO,
+			Muted: true,
+		})
+
+		_, ti, _, _, _ := p.getPendingTrack("cid", livekit.TrackType_AUDIO, false)
+		require.NotNil(t, ti)
+		require.True(t, ti.Muted)
+	})
+}
+
+func TestSubscriberAsPrimary(t *testing.T) {
+	t.Run("protocol 4 uses subs as primary", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			permissions: &livekit.ParticipantPermission{
+				CanSubscribe: true,
+				CanPublish:   true,
+			},
+		})
+		require.True(t, p.SubscriberAsPrimary())
+	})
+
+	t.Run("protocol 2 uses pub as primary", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			protocolVersion: 2,
+			permissions: &livekit.ParticipantPermission{
+				CanSubscribe: true,
+				CanPublish:   true,
+			},
+		})
+		require.False(t, p.SubscriberAsPrimary())
+	})
+
+	t.Run("publisher only uses pub as primary", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			permissions: &livekit.ParticipantPermission{
+				CanSubscribe: false,
+				CanPublish:   true,
+			},
+		})
+		require.False(t, p.SubscriberAsPrimary())
+
+		// ensure that it doesn't change after perms
+		p.SetPermission(&livekit.ParticipantPermission{
+			CanSubscribe: true,
+			CanPublish:   true,
+		})
+		require.False(t, p.SubscriberAsPrimary())
+	})
+}
+
+func TestDisableCodecs(t *testing.T) {
+	participant := newParticipantForTestWithOpts("123", &participantOpts{
+		publisher: false,
+		clientConf: &livekit.ClientConfiguration{
+			DisabledCodecs: &livekit.DisabledCodecs{
+				Codecs: []*livekit.Codec{
+					{Mime: "video/h264"},
+				},
+			},
+		},
+	})
+
+	participant.SetMigrateState(types.MigrateStateComplete)
+
+	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	require.NoError(t, err)
+	transceiver, err := pc.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo, webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendrecv})
+	require.NoError(t, err)
+	sdp, err := pc.CreateOffer(nil)
+	require.NoError(t, err)
+	pc.SetLocalDescription(sdp)
+	codecs := transceiver.Receiver().GetParameters().Codecs
+	var found264 bool
+	for _, c := range codecs {
+		if mime.IsMimeTypeStringH264(c.MimeType) {
+			found264 = true
+		}
+	}
+	require.True(t, found264)
+	offerId := uint32(42)
+
+	// negotiated codec should not contain h264
+	sink := &routingfakes.FakeMessageSink{}
+	participant.SwapResponseSink(sink, types.SignallingCloseReasonUnknown)
+	var answer webrtc.SessionDescription
+	var answerId uint32
+	var answerReceived atomic.Bool
+	var answerIdReceived atomic.Uint32
+	sink.WriteMessageCalls(func(msg proto.Message) error {
+		if res, ok := msg.(*livekit.SignalResponse); ok {
+			if res.GetAnswer() != nil {
+				answer, answerId, _ = signalling.FromProtoSessionDescription(res.GetAnswer())
+				answerReceived.Store(true)
+				answerIdReceived.Store(answerId)
+			}
+		}
+		return nil
+	})
+	participant.HandleOffer(&livekit.SessionDescription{
+		Type: webrtc.SDPTypeOffer.String(),
+		Sdp:  sdp.SDP,
+		Id:   offerId,
+	})
+
+	testutils.WithTimeout(t, func() string {
+		if answerReceived.Load() && answerIdReceived.Load() == offerId {
+			return ""
+		} else {
+			return "answer not received OR answer id mismatch"
+		}
+	})
+	require.NoError(t, pc.SetRemoteDescription(answer), answer.SDP, sdp.SDP)
+
+	codecs = transceiver.Receiver().GetParameters().Codecs
+	found264 = false
+	for _, c := range codecs {
+		if mime.IsMimeTypeStringH264(c.MimeType) {
+			found264 = true
+		}
+	}
+	require.False(t, found264)
+}
+
+func TestDisablePublishCodec(t *testing.T) {
+	participant := newParticipantForTestWithOpts("123", &participantOpts{
+		publisher: true,
+		clientConf: &livekit.ClientConfiguration{
+			DisabledCodecs: &livekit.DisabledCodecs{
+				Publish: []*livekit.Codec{
+					{Mime: "video/h264"},
+				},
+			},
+		},
+	})
+
+	for _, codec := range participant.enabledPublishCodecs {
+		require.False(t, mime.IsMimeTypeStringH264(codec.Mime))
+	}
+
+	sink := &routingfakes.FakeMessageSink{}
+	participant.SwapResponseSink(sink, types.SignallingCloseReasonUnknown)
+	var publishReceived atomic.Bool
+	sink.WriteMessageCalls(func(msg proto.Message) error {
+		if res, ok := msg.(*livekit.SignalResponse); ok {
+			if published := res.GetTrackPublished(); published != nil {
+				publishReceived.Store(true)
+				require.NotEmpty(t, published.Track.Codecs)
+				require.True(t, mime.IsMimeTypeStringVP8(published.Track.Codecs[0].MimeType))
+			}
+		}
+		return nil
+	})
+
+	// simulcast codec response should pick an alternative
+	participant.AddTrack(&livekit.AddTrackRequest{
+		Cid:  "cid1",
+		Type: livekit.TrackType_VIDEO,
+		SimulcastCodecs: []*livekit.SimulcastCodec{{
+			Codec: "h264",
+			Cid:   "cid1",
+		}},
+	})
+
+	require.Eventually(t, func() bool { return publishReceived.Load() }, 5*time.Second, 10*time.Millisecond)
+
+	// publishing a supported codec should not change
+	publishReceived.Store(false)
+	sink.WriteMessageCalls(func(msg proto.Message) error {
+		if res, ok := msg.(*livekit.SignalResponse); ok {
+			if published := res.GetTrackPublished(); published != nil {
+				publishReceived.Store(true)
+				require.NotEmpty(t, published.Track.Codecs)
+				require.True(t, mime.IsMimeTypeStringVP8(published.Track.Codecs[0].MimeType))
+			}
+		}
+		return nil
+	})
+	participant.AddTrack(&livekit.AddTrackRequest{
+		Cid:  "cid2",
+		Type: livekit.TrackType_VIDEO,
+		SimulcastCodecs: []*livekit.SimulcastCodec{{
+			Codec: "vp8",
+			Cid:   "cid2",
+		}},
+	})
+	require.Eventually(t, func() bool { return publishReceived.Load() }, 5*time.Second, 10*time.Millisecond)
+}
+
+func TestPreferMediaCodecForPublisher(t *testing.T) {
+	testCases := []struct {
+		name                       string
+		mediaKind                  string
+		trackBaseCid               string
+		preferredCodec             string
+		addTrack                   *livekit.AddTrackRequest
+		mimeTypeStringChecker      func(string) bool
+		mimeTypeCodecStringChecker func(string) bool
+		transceiverMimeType        mime.MimeType
+	}{
+		{
+			name:           "video",
+			mediaKind:      "video",
+			trackBaseCid:   "preferH264Video",
+			preferredCodec: "h264",
+			addTrack: &livekit.AddTrackRequest{
+				Type:   livekit.TrackType_VIDEO,
+				Name:   "video",
+				Width:  1280,
+				Height: 720,
+				Source: livekit.TrackSource_CAMERA,
+			},
+			mimeTypeStringChecker:      mime.IsMimeTypeStringH264,
+			mimeTypeCodecStringChecker: mime.IsMimeTypeCodecStringH264,
+			transceiverMimeType:        mime.MimeTypeVP8,
+		},
+		{
+			name:           "audio",
+			mediaKind:      "audio",
+			trackBaseCid:   "preferPCMAAudio",
+			preferredCodec: "pcma",
+			addTrack: &livekit.AddTrackRequest{
+				Type:   livekit.TrackType_AUDIO,
+				Name:   "audio",
+				Source: livekit.TrackSource_MICROPHONE,
+			},
+			mimeTypeStringChecker:      mime.IsMimeTypeStringPCMA,
+			mimeTypeCodecStringChecker: mime.IsMimeTypeCodecStringPCMA,
+			transceiverMimeType:        mime.MimeTypeOpus,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			participant := newParticipantForTestWithOpts("123", &participantOpts{
+				publisher: true,
+			})
+			participant.SetMigrateState(types.MigrateStateComplete)
+
+			pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+			require.NoError(t, err)
+			defer pc.Close()
+
+			for i := 0; i < 2; i++ {
+				// publish preferred track without client using setCodecPreferences()
+				trackCid := fmt.Sprintf("%s-%d", tc.trackBaseCid, i)
+				req := proto.CloneOf(tc.addTrack)
+				req.SimulcastCodecs = []*livekit.SimulcastCodec{
+					{
+						Codec: tc.preferredCodec,
+						Cid:   trackCid,
+					},
+				}
+				participant.AddTrack(req)
+
+				track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: tc.transceiverMimeType.String()}, trackCid, trackCid)
+				require.NoError(t, err)
+				transceiver, err := pc.AddTransceiverFromTrack(track, webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendrecv})
+				require.NoError(t, err)
+				codecs := transceiver.Receiver().GetParameters().Codecs
+
+				if i > 0 {
+					// the negotiated codecs order could be updated by first negotiation,
+					// reorder to make tested preferred codec not preferred
+					for tc.mimeTypeStringChecker(codecs[0].MimeType) {
+						codecs = append(codecs[1:], codecs[0])
+					}
+				}
+				// preferred codec should not be preferred in `offer`
+				require.False(t, tc.mimeTypeStringChecker(codecs[0].MimeType), "codecs", codecs)
+
+				sdp, err := pc.CreateOffer(nil)
+				require.NoError(t, err)
+				require.NoError(t, pc.SetLocalDescription(sdp))
+				offerId := uint32(23)
+
+				sink := &routingfakes.FakeMessageSink{}
+				participant.SwapResponseSink(sink, types.SignallingCloseReasonUnknown)
+				var answer webrtc.SessionDescription
+				var answerId uint32
+				var answerReceived atomic.Bool
+				var answerIdReceived atomic.Uint32
+				sink.WriteMessageCalls(func(msg proto.Message) error {
+					if res, ok := msg.(*livekit.SignalResponse); ok {
+						if res.GetAnswer() != nil {
+							answer, answerId, _ = signalling.FromProtoSessionDescription(res.GetAnswer())
+							pc.SetRemoteDescription(answer)
+							answerReceived.Store(true)
+							answerIdReceived.Store(answerId)
+						}
+					}
+					return nil
+				})
+				participant.HandleOffer(&livekit.SessionDescription{
+					Type: webrtc.SDPTypeOffer.String(),
+					Sdp:  sdp.SDP,
+					Id:   offerId,
+				})
+
+				require.Eventually(t, func() bool { return answerReceived.Load() && answerIdReceived.Load() == offerId }, 5*time.Second, 10*time.Millisecond)
+
+				var havePreferred bool
+				parsed, err := answer.Unmarshal()
+				require.NoError(t, err)
+				var mediaSectionIndex int
+				for _, m := range parsed.MediaDescriptions {
+					if m.MediaName.Media == tc.mediaKind {
+						if mediaSectionIndex == i {
+							codecs, err := lksdp.CodecsFromMediaDescription(m)
+							require.NoError(t, err)
+							if tc.mimeTypeCodecStringChecker(codecs[0].Name) {
+								havePreferred = true
+								break
+							}
+						}
+						mediaSectionIndex++
+					}
+				}
+
+				require.Truef(t, havePreferred, "%s should be preferred for %s section %d, answer sdp: \n%s", tc.preferredCodec, tc.mediaKind, i, answer.SDP)
+			}
+		})
+	}
+}
+
+func TestOneShotSimulcastOfferAppliesRids(t *testing.T) {
+	participant := newParticipantForTestWithOpts("whip", &participantOpts{
+		publisher: true,
+		oneShot:   true,
+	})
+	participant.SetMigrateState(types.MigrateStateComplete)
+
+	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	require.NoError(t, err)
+	defer pc.Close()
+
+	codec := webrtc.RTPCodecCapability{MimeType: mime.MimeTypeVP8.String()}
+	medium, err := webrtc.NewTrackLocalStaticRTP(codec, "video", "stream", webrtc.WithRTPStreamID("h"))
+	require.NoError(t, err)
+	low, err := webrtc.NewTrackLocalStaticRTP(codec, "video", "stream", webrtc.WithRTPStreamID("q"))
+	require.NoError(t, err)
+	sender, err := pc.AddTrack(medium)
+	require.NoError(t, err)
+	require.NoError(t, sender.AddEncoding(low))
+
+	offer, err := pc.CreateOffer(nil)
+	require.NoError(t, err)
+	require.NoError(t, pc.SetLocalDescription(offer))
+	require.Contains(t, offer.SDP, "a=simulcast:send h;q")
+
+	require.NoError(t, participant.HandleOffer(&livekit.SessionDescription{
+		Type: webrtc.SDPTypeOffer.String(),
+		Sdp:  offer.SDP,
+	}))
+
+	participant.pendingTracksLock.RLock()
+	pti := participant.pendingTracks["video"]
+	participant.pendingTracksLock.RUnlock()
+	require.NotNil(t, pti)
+
+	layers := pti.trackInfos[0].Codecs[0].Layers
+	require.Len(t, layers, 2)
+	require.Equal(t, livekit.VideoQuality_LOW, layers[0].Quality)
+	require.Equal(t, "q", layers[0].Rid)
+	require.EqualValues(t, 0, layers[0].SpatialLayer)
+	require.Equal(t, livekit.VideoQuality_MEDIUM, layers[1].Quality)
+	require.Equal(t, "h", layers[1].Rid)
+	require.EqualValues(t, 1, layers[1].SpatialLayer)
+}
+
+func TestOneShotSingleLayerOfferUnchanged(t *testing.T) {
+	participant := newParticipantForTestWithOpts("whip", &participantOpts{
+		publisher: true,
+		oneShot:   true,
+	})
+	participant.SetMigrateState(types.MigrateStateComplete)
+
+	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	require.NoError(t, err)
+	defer pc.Close()
+
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: mime.MimeTypeVP8.String()}, "video", "stream")
+	require.NoError(t, err)
+	_, err = pc.AddTransceiverFromTrack(track, webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendonly})
+	require.NoError(t, err)
+
+	offer, err := pc.CreateOffer(nil)
+	require.NoError(t, err)
+	require.NoError(t, pc.SetLocalDescription(offer))
+	require.NotContains(t, offer.SDP, "a=simulcast")
+	require.NotContains(t, offer.SDP, "a=rid")
+
+	require.NoError(t, participant.HandleOffer(&livekit.SessionDescription{
+		Type: webrtc.SDPTypeOffer.String(),
+		Sdp:  offer.SDP,
+	}))
+
+	participant.pendingTracksLock.RLock()
+	pti := participant.pendingTracks["video"]
+	participant.pendingTracksLock.RUnlock()
+	require.NotNil(t, pti)
+
+	layers := pti.trackInfos[0].Codecs[0].Layers
+	require.Len(t, layers, 1)
+	require.Equal(t, "", layers[0].Rid)
+	require.EqualValues(t, 0, layers[0].SpatialLayer)
+}
+
+func TestPreferAudioCodecForRed(t *testing.T) {
+	participant := newParticipantForTestWithOpts("123", &participantOpts{
+		publisher: true,
+	})
+	participant.SetMigrateState(types.MigrateStateComplete)
+
+	me := webrtc.MediaEngine{}
+	opusCodecParameters := protoCodecs.OpusCodecParameters
+	opusCodecParameters.RTPCodecCapability.RTCPFeedback = []webrtc.RTCPFeedback{{Type: webrtc.TypeRTCPFBNACK}}
+	require.NoError(t, me.RegisterCodec(opusCodecParameters, webrtc.RTPCodecTypeAudio))
+	redCodecParameters := protoCodecs.RedCodecParameters
+	redCodecParameters.RTPCodecCapability.RTCPFeedback = []webrtc.RTCPFeedback{{Type: webrtc.TypeRTCPFBNACK}}
+	require.NoError(t, me.RegisterCodec(redCodecParameters, webrtc.RTPCodecTypeAudio))
+
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(&me))
+	pc, err := api.NewPeerConnection(webrtc.Configuration{})
+	require.NoError(t, err)
+	defer pc.Close()
+
+	for idx, disableRed := range []bool{false, true, false, true} {
+		t.Run(fmt.Sprintf("disableRed=%v", disableRed), func(t *testing.T) {
+			trackCid := fmt.Sprintf("audiotrack%d", idx)
+			req := &livekit.AddTrackRequest{
+				Type: livekit.TrackType_AUDIO,
+				Cid:  trackCid,
+			}
+			if idx < 2 {
+				req.DisableRed = disableRed
+			} else {
+				codec := "red"
+				if disableRed {
+					codec = "opus"
+				}
+				req.SimulcastCodecs = []*livekit.SimulcastCodec{
+					{
+						Codec: codec,
+						Cid:   trackCid,
+					},
+				}
+			}
+			participant.AddTrack(req)
+
+			track, err := webrtc.NewTrackLocalStaticRTP(
+				webrtc.RTPCodecCapability{MimeType: "audio/opus"},
+				trackCid,
+				trackCid,
+			)
+			require.NoError(t, err)
+
+			transceiver, err := pc.AddTransceiverFromTrack(
+				track,
+				webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendrecv},
+			)
+			require.NoError(t, err)
+			codecs := transceiver.Sender().GetParameters().Codecs
+			for i, c := range codecs {
+				if c.MimeType == "audio/opus" {
+					if i != 0 {
+						codecs[0], codecs[i] = codecs[i], codecs[0]
+					}
+					break
+				}
+			}
+			transceiver.SetCodecPreferences(codecs)
+			sdp, err := pc.CreateOffer(nil)
+			require.NoError(t, err)
+			pc.SetLocalDescription(sdp)
+			// opus should be preferred
+			require.Equal(t, codecs[0].MimeType, "audio/opus", sdp)
+			offerId := uint32(0xffffff)
+
+			sink := &routingfakes.FakeMessageSink{}
+			participant.SwapResponseSink(sink, types.SignallingCloseReasonUnknown)
+			var answer webrtc.SessionDescription
+			var answerId uint32
+			var answerReceived atomic.Bool
+			var answerIdReceived atomic.Uint32
+			sink.WriteMessageCalls(func(msg proto.Message) error {
+				if res, ok := msg.(*livekit.SignalResponse); ok {
+					if res.GetAnswer() != nil {
+						answer, answerId, _ = signalling.FromProtoSessionDescription(res.GetAnswer())
+						pc.SetRemoteDescription(answer)
+						answerReceived.Store(true)
+						answerIdReceived.Store(answerId)
+					}
+				}
+				return nil
+			})
+			participant.HandleOffer(&livekit.SessionDescription{
+				Type: webrtc.SDPTypeOffer.String(),
+				Sdp:  sdp.SDP,
+				Id:   offerId,
+			})
+			require.Eventually(
+				t,
+				func() bool {
+					return answerReceived.Load() && answerIdReceived.Load() == offerId
+				},
+				5*time.Second,
+				10*time.Millisecond,
+			)
+
+			var redPreferred bool
+			parsed, err := answer.Unmarshal()
+			require.NoError(t, err)
+			var audioSectionIndex int
+			for _, m := range parsed.MediaDescriptions {
+				if m.MediaName.Media == "audio" {
+					if audioSectionIndex == idx {
+						codecs, err := lksdp.CodecsFromMediaDescription(m)
+						require.NoError(t, err)
+						// nack is always enabled. if red is preferred, server will not generate nack request
+						var nackEnabled bool
+						for _, c := range codecs {
+							if c.Name == "opus" {
+								for _, fb := range c.RTCPFeedback {
+									if strings.Contains(fb, "nack") {
+										nackEnabled = true
+										break
+									}
+								}
+							}
+						}
+						require.True(t, nackEnabled, "nack should be enabled for opus")
+
+						if mime.IsMimeTypeCodecStringRED(codecs[0].Name) {
+							redPreferred = true
+							break
+						}
+					}
+					audioSectionIndex++
+				}
+			}
+			require.Equalf(t, !disableRed, redPreferred, "offer : \n%s\nanswer sdp: \n%s", sdp, answer.SDP)
+		})
+	}
+}
+
+type participantOpts struct {
+	permissions     *livekit.ParticipantPermission
+	protocolVersion types.ProtocolVersion
+	publisher       bool
+	clientConf      *livekit.ClientConfiguration
+	clientInfo      *livekit.ClientInfo
+	migration       bool
+	oneShot         bool
+}
+
+func newParticipantForTestWithOpts(identity livekit.ParticipantIdentity, opts *participantOpts) *ParticipantImpl {
+	if opts == nil {
+		opts = &participantOpts{}
+	}
+	if opts.protocolVersion == 0 {
+		opts.protocolVersion = 6
+	}
+	conf, _ := config.NewConfig("", true, nil, nil)
+	// disable mux, it doesn't play too well with unit test
+	conf.RTC.TCPPort = 0
+	rtcConf, err := NewWebRTCConfig(conf)
+	if err != nil {
+		panic(err)
+	}
+	ff := buffer.NewFactoryOfBufferFactory(500, 200)
+	rtcConf.SetBufferFactory(ff.CreateBufferFactory())
+	grants := &auth.ClaimGrants{
+		Video: &auth.VideoGrant{},
+	}
+	if opts.permissions != nil {
+		grants.Video.SetCanPublish(opts.permissions.CanPublish)
+		grants.Video.SetCanPublishData(opts.permissions.CanPublishData)
+		grants.Video.SetCanSubscribe(opts.permissions.CanSubscribe)
+	}
+
+	enabledCodecs := make([]*livekit.Codec, 0, len(conf.Room.EnabledCodecs))
+	for _, c := range conf.Room.EnabledCodecs {
+		enabledCodecs = append(enabledCodecs, &livekit.Codec{
+			Mime:     c.Mime,
+			FmtpLine: c.FmtpLine,
+		})
+	}
+	sid := livekit.ParticipantID(guid.New(utils.ParticipantPrefix))
+	p, _ := NewParticipant(ParticipantParams{
+		SID:                      sid,
+		Identity:                 identity,
+		Config:                   rtcConf,
+		Sink:                     &routingfakes.FakeMessageSink{},
+		ProtocolVersion:          opts.protocolVersion,
+		SessionStartTime:         time.Now(),
+		PLIThrottleConfig:        conf.RTC.PLIThrottle,
+		Grants:                   grants,
+		PublishEnabledCodecs:     enabledCodecs,
+		SubscribeEnabledCodecs:   enabledCodecs,
+		ClientConf:               opts.clientConf,
+		ClientInfo:               ClientInfo{ClientInfo: opts.clientInfo},
+		Logger:                   LoggerWithParticipant(logger.GetLogger(), identity, sid, false),
+		Reporter:                 roomobs.NewNoopParticipantSessionReporter(),
+		TelemetryListener:        &typesfakes.FakeParticipantTelemetryListener{},
+		VersionGenerator:         utils.NewDefaultTimedVersionGenerator(),
+		ParticipantListener:      &typesfakes.FakeLocalParticipantListener{},
+		ParticipantHelper:        &typesfakes.FakeLocalParticipantHelper{},
+		Migration:                opts.migration,
+		UseOneShotSignallingMode: opts.oneShot,
+	})
+	p.isPublisher.Store(opts.publisher)
+	p.updateState(livekit.ParticipantInfo_ACTIVE)
+
+	return p
+}
+
+func newParticipantForTest(identity livekit.ParticipantIdentity) *ParticipantImpl {
+	return newParticipantForTestWithOpts(identity, nil)
+}
+
+func TestUnsequencedReliableDataBufferedWhileJoining(t *testing.T) {
+	// unsequenced reliable data, i. e. room service SendData, arriving before the
+	// reliable data channel is writable should be held and replayed, not dropped
+	t.Run("buffers and replays", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		require.False(t, p.reliableDataInfo.canWriteReliable)
+
+		require.NoError(t, p.SendDataMessage(livekit.DataPacket_RELIABLE, []byte("one"), "", 0))
+		require.NoError(t, p.SendDataMessage(livekit.DataPacket_RELIABLE, []byte("two"), "", 0))
+
+		require.Equal(t, [][]byte{[]byte("one"), []byte("two")}, p.reliableDataInfo.joiningUnsequencedMessages)
+		require.Equal(t, 6, p.reliableDataInfo.joiningUnsequencedBytes)
+
+		p.replayJoiningReliableMessages()
+
+		require.True(t, p.reliableDataInfo.canWriteReliable)
+		require.Empty(t, p.reliableDataInfo.joiningUnsequencedMessages)
+		require.Zero(t, p.reliableDataInfo.joiningUnsequencedBytes)
+	})
+
+	t.Run("does not buffer once writable", func(t *testing.T) {
+		p := newParticipantForTest("test")
+		p.replayJoiningReliableMessages()
+
+		// no data channel in test, so the write through fails rather than getting buffered
+		require.Error(t, p.SendDataMessage(livekit.DataPacket_RELIABLE, []byte("one"), "", 0))
+		require.Empty(t, p.reliableDataInfo.joiningUnsequencedMessages)
+	})
+
+	t.Run("bounded buffer", func(t *testing.T) {
+		p := newParticipantForTest("test")
+
+		data := make([]byte, cMaxJoiningUnsequencedReliableBytes)
+		require.NoError(t, p.SendDataMessage(livekit.DataPacket_RELIABLE, data, "", 0))
+		require.Error(t, p.SendDataMessage(livekit.DataPacket_RELIABLE, []byte("overflow"), "", 0))
+
+		require.Len(t, p.reliableDataInfo.joiningUnsequencedMessages, 1)
+		require.Equal(t, 1, p.reliableDataInfo.joiningUnsequencedDropped)
+	})
+
+	t.Run("lossy is not buffered", func(t *testing.T) {
+		p := newParticipantForTest("test")
+
+		require.Error(t, p.SendDataMessage(livekit.DataPacket_LOSSY, []byte("one"), "", 0))
+		require.Empty(t, p.reliableDataInfo.joiningUnsequencedMessages)
+	})
+}
+
+func TestMigratingInParticipantWaitsForReconnectResponse(t *testing.T) {
+	// a migrating in participant resumes on a ReconnectResponse, the client takes it only
+	// as the first message on the resumed signal connection, so everything else waits
+	newMigratingParticipant := func() (*ParticipantImpl, *routingfakes.FakeMessageSink) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			migration:       true,
+			protocolVersion: 17,
+			clientInfo:      &livekit.ClientInfo{Sdk: livekit.ClientInfo_JS, Version: "2.15.2"},
+		})
+		return p, p.params.Sink.(*routingfakes.FakeMessageSink)
+	}
+
+	t.Run("not ready until the response is sent", func(t *testing.T) {
+		p, sink := newMigratingParticipant()
+		require.False(t, p.IsReady())
+
+		require.NoError(t, p.HandleReconnectAndSendResponse(
+			livekit.ReconnectReason_RR_UNKNOWN,
+			&livekit.ReconnectResponse{LastMessageSeq: 21},
+			nil,
+		))
+		require.True(t, p.IsReady())
+
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+		res := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+		require.NotNil(t, res.GetReconnect())
+		require.EqualValues(t, 21, res.GetReconnect().LastMessageSeq)
+	})
+
+	t.Run("the response goes out first", func(t *testing.T) {
+		p, sink := newMigratingParticipant()
+
+		// a room update while waiting is dropped, it is re-sent after the migration
+		require.NoError(t, p.SendRoomUpdate(&livekit.Room{Name: "test"}))
+		// participant updates while waiting are queued
+		require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{{
+			Sid:      "PA_other",
+			Identity: "other",
+			Version:  1,
+		}}))
+		require.Zero(t, sink.WriteMessageCallCount())
+
+		require.NoError(t, p.HandleReconnectAndSendResponse(
+			livekit.ReconnectReason_RR_UNKNOWN,
+			&livekit.ReconnectResponse{},
+			nil,
+		))
+
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+		first := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+		require.NotNil(t, first.GetReconnect())
+		second := sink.WriteMessageArgsForCall(1).(*livekit.SignalResponse)
+		require.NotNil(t, second.GetUpdate())
+		require.Len(t, second.GetUpdate().Participants, 1)
+		require.EqualValues(t, "PA_other", second.GetUpdate().Participants[0].Sid)
+	})
+
+	t.Run("a client that cannot handle the response is ready right away", func(t *testing.T) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			migration:       true,
+			protocolVersion: 17,
+			clientInfo:      &livekit.ClientInfo{Sdk: livekit.ClientInfo_JS, Version: "1.6.2"},
+		})
+		sink := p.params.Sink.(*routingfakes.FakeMessageSink)
+
+		require.NoError(t, p.HandleReconnectAndSendResponse(
+			livekit.ReconnectReason_RR_UNKNOWN,
+			&livekit.ReconnectResponse{},
+			nil,
+		))
+		require.True(t, p.IsReady())
+		require.Zero(t, sink.WriteMessageCallCount())
+
+		require.NoError(t, p.SendRoomUpdate(&livekit.Room{Name: "test"}))
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+	})
+}
+
+func TestResumedParticipantWaitsForReconnectResponse(t *testing.T) {
+	// a resumed connection has to open with the ReconnectResponse too, and the
+	// participant is ready throughout, so the signaller holds messages back
+	newResumedParticipant := func(version string) (*ParticipantImpl, *routingfakes.FakeMessageSink) {
+		p := newParticipantForTestWithOpts("test", &participantOpts{
+			protocolVersion: 17,
+			clientInfo:      &livekit.ClientInfo{Sdk: livekit.ClientInfo_JS, Version: version},
+		})
+		require.True(t, p.IsReady())
+
+		sink := &routingfakes.FakeMessageSink{}
+		p.SwapResponseSink(sink, types.SignallingCloseReasonResume)
+		return p, sink
+	}
+
+	t.Run("the response goes out first", func(t *testing.T) {
+		p, sink := newResumedParticipant("2.15.2")
+
+		// a room update in this window is dropped, the resume path re-sends room state
+		require.NoError(t, p.SendRoomUpdate(&livekit.Room{Name: "test"}))
+		// participant updates are queued
+		require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{{
+			Sid:      "PA_other",
+			Identity: "other",
+			Version:  1,
+		}}))
+		require.Zero(t, sink.WriteMessageCallCount())
+
+		require.NoError(t, p.HandleReconnectAndSendResponse(
+			livekit.ReconnectReason_RR_SIGNAL_DISCONNECTED,
+			&livekit.ReconnectResponse{LastMessageSeq: 7},
+			nil,
+		))
+
+		require.Equal(t, 2, sink.WriteMessageCallCount())
+		first := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+		require.NotNil(t, first.GetReconnect())
+		require.EqualValues(t, 7, first.GetReconnect().LastMessageSeq)
+		second := sink.WriteMessageArgsForCall(1).(*livekit.SignalResponse)
+		require.NotNil(t, second.GetUpdate())
+		require.EqualValues(t, "PA_other", second.GetUpdate().Participants[0].Sid)
+	})
+
+	t.Run("a connection that opens without a response still delivers the queue", func(t *testing.T) {
+		p, sink := newResumedParticipant("2.15.2")
+
+		require.NoError(t, p.SendParticipantUpdate([]*livekit.ParticipantInfo{{
+			Sid:      "PA_other",
+			Identity: "other",
+			Version:  1,
+		}}))
+		require.Zero(t, sink.WriteMessageCallCount())
+
+		// no ReconnectResponse written, this is what the handshake window does on expiry
+		p.signaller.OpenHandshake()
+
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+		res := sink.WriteMessageArgsForCall(0).(*livekit.SignalResponse)
+		require.NotNil(t, res.GetUpdate())
+		require.EqualValues(t, "PA_other", res.GetUpdate().Participants[0].Sid)
+	})
+
+	t.Run("a client that cannot handle the response is not held back", func(t *testing.T) {
+		p, sink := newResumedParticipant("1.6.2")
+
+		require.NoError(t, p.HandleReconnectAndSendResponse(
+			livekit.ReconnectReason_RR_SIGNAL_DISCONNECTED,
+			&livekit.ReconnectResponse{},
+			nil,
+		))
+		require.Zero(t, sink.WriteMessageCallCount())
+
+		require.NoError(t, p.SendRoomUpdate(&livekit.Room{Name: "test"}))
+		require.Equal(t, 1, sink.WriteMessageCallCount())
+	})
+}
+
+func TestLeaveJoinSession(t *testing.T) {
+	p := newParticipantForTest("leave-join-session")
+	p.params.LoggerResolver = zaputil.NoOpDeferrer{}
+	_, p.params.ReporterResolver = roomobs.DeferredParticipantReporter(roomobs.NewNoopProjectReporter())
+	tl := p.GetTelemetryListener().(*typesfakes.FakeParticipantTelemetryListener)
+
+	track := &typesfakes.FakeLocalMediaTrack{}
+	track.IDReturns("TR_test")
+	track.PublishedReturns(true)
+	p.UpTrackManager.AddPublishedTrack(track)
+
+	// leaving reports the track unpublished, then runs the leave under the left session's
+	// guard, and the next session gets a fresh one
+	prevGuard := p.TelemetryGuard()
+	require.NotNil(t, prevGuard)
+	left := false
+	p.LeaveSession(func() {
+		left = true
+		require.Same(t, prevGuard, p.TelemetryGuard())
+		require.Equal(t, 1, tl.OnTrackUnpublishedCallCount())
+	})
+	require.True(t, left)
+	require.NotSame(t, prevGuard, p.TelemetryGuard())
+	require.Equal(t, 1, tl.OnTrackUnpublishedCallCount())
+	_, _, _, wasPublished, shouldSend := tl.OnTrackUnpublishedArgsForCall(0)
+	require.True(t, wasPublished)
+	require.True(t, shouldSend)
+
+	// joining runs the join first, then reports the track published again
+	joined := false
+	p.JoinSession(func() {
+		joined = true
+		require.Zero(t, tl.OnTrackPublishedCallCount())
+	})
+	require.True(t, joined)
+	require.Equal(t, 1, tl.OnTrackPublishedCallCount())
+	_, _, _, shouldSend = tl.OnTrackPublishedArgsForCall(0)
+	require.True(t, shouldSend)
+
+	// nil callbacks are fine
+	p.LeaveSession(nil)
+	p.JoinSession(nil)
+	require.Equal(t, 2, tl.OnTrackUnpublishedCallCount())
+	require.Equal(t, 2, tl.OnTrackPublishedCallCount())
+}

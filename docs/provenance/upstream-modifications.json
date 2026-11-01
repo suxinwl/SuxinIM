@@ -1,0 +1,154 @@
+[
+  {
+    "component": "services/chat",
+    "path": "internal/api/admin/admin.go",
+    "status": "modified",
+    "upstreamSha256": "d6e7eb51534391e4551dd625a4e21c7e88f8e6f50ebaac8ea8f78868cae8b07b",
+    "currentSha256": "d4632fc3359eb8bbc59f9da1c8096a6d250127d360905f8f0047661a70f3504f",
+    "patch": "docs/provenance/patches/services/chat/internal/api/admin/admin.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/api/chat/chat.go",
+    "status": "modified",
+    "upstreamSha256": "79c16e084fe2d750da50e726e55f789696f20cc184bb0f2a628b8b0458f7a647",
+    "currentSha256": "d642ebf8c85f2ed96cedf345661612f4a0a210a752d8c001d3701d94d09c2e3d",
+    "patch": "docs/provenance/patches/services/chat/internal/api/chat/chat.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/rpc/admin/token.go",
+    "status": "modified",
+    "upstreamSha256": "2b960ebcf5f9851db0e708aa47f3a774554fdfd50228e85ca2d86953640e0057",
+    "currentSha256": "da2365222cb8e8d92bb9e06380b838d772ad0083afed9caf6dcefaa723261b6d",
+    "patch": "docs/provenance/patches/services/chat/internal/rpc/admin/token.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/rpc/chat/password.go",
+    "status": "modified",
+    "upstreamSha256": "662c5e466346339ad5ffc759545a865c6b6db44206df4b6e451b76471fc0c656",
+    "currentSha256": "e82b73b730721058eda299a578051b9c7677d275c1b63d79f2f4b8c09dc3e442",
+    "patch": "docs/provenance/patches/services/chat/internal/rpc/chat/password.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/db/cache/token.go",
+    "status": "modified",
+    "upstreamSha256": "50abac0a977b8f322d652cd990cd78aab384cee01739e68dd0d1020581bb8b0f",
+    "currentSha256": "c89c82bf1c12ad93863135b40dc5abf18ec2cacea687e955eaebb5a15f6cd0b4",
+    "patch": "docs/provenance/patches/services/chat/pkg/common/db/cache/token.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/db/database/admin.go",
+    "status": "modified",
+    "upstreamSha256": "a0aead60c9a9c06472510fe420ff89c7cce9ace2c02bc242af654a049ce3b225",
+    "currentSha256": "4e3f6c14bdd95926facd72fd6c9e0d153ee0f52ea80000b3d846275a81d107c0",
+    "patch": "docs/provenance/patches/services/chat/pkg/common/db/database/admin.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/imapi/caller.go",
+    "status": "modified",
+    "upstreamSha256": "f436b20533a0a58898f03a098a9214f6dd8fe8a2eabed617f7385fd6ee9ad0d5",
+    "currentSha256": "27ace6813add63a1d25ee5d76833fe9d1717081df0931904f859ba564ef64435",
+    "patch": "docs/provenance/patches/services/chat/pkg/common/imapi/caller.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/tokenverify/token_verify.go",
+    "status": "modified",
+    "upstreamSha256": "53dfa752d032900611d07848e447ca1c481b7067b4ab2d45869f2db248764cd4",
+    "currentSha256": "3d9b1418c90c3b8a67492df617f7ef3c7f0ce6aaa5c7224c8d1e0b2fa2251adf",
+    "patch": "docs/provenance/patches/services/chat/pkg/common/tokenverify/token_verify.go.patch"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/api/chat/password_test.go",
+    "status": "added",
+    "currentSha256": "4ebdd106faa6d651fa97010baabfadc4ba46990aa8b9c75adf254d72e541af3f"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/rpc/admin/logout_exact_test.go",
+    "status": "added",
+    "currentSha256": "99b9d7ff1393d0f81e495057bfbc3bc02cff98318071d183e7a736e8fafd962f"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/rpc/admin/logs/DefaultLogger.2026-11-01",
+    "status": "added",
+    "currentSha256": "326275a8e694bf6db06c2c00e076d35941ad36122c7c11f70442a32ffe863014"
+  },
+  {
+    "component": "services/chat",
+    "path": "internal/rpc/chat/password_test.go",
+    "status": "added",
+    "currentSha256": "6e6af3c01cf0b711c86f2e51f93b80517f459b209203f8b0bb18459d75044032"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/db/cache/logout_exact_test.go",
+    "status": "added",
+    "currentSha256": "ed2e872e72fb20100076abc50ea0b80cd949a7b2d610476443d2c930078b72a7"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/imapi/caller_test.go",
+    "status": "added",
+    "currentSha256": "aa45a06c03047c02efc1fb5d25ab2db38e6e7271e51f426b407b1922ae56d14b"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/imapi/logs/DefaultLogger.2026-11-01",
+    "status": "added",
+    "currentSha256": "b75d390e8fd023444235a05a738b75d417793170253c28fcaa574487699bb027"
+  },
+  {
+    "component": "services/chat",
+    "path": "pkg/common/tokenverify/logout_exact_test.go",
+    "status": "added",
+    "currentSha256": "e8b5390dcd3880a851aaf86f4696456d813b6ba40b3ba01a86e3f88d69195082"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/msggateway/hub_server.go",
+    "status": "modified",
+    "upstreamSha256": "bc7b78c0675725d9302bb6e894f81bcbc0b6c8bfa9569b717fb9bfaa8f99a23e",
+    "currentSha256": "df0dcfcf9a6ada98a641f595d5e3434d52eca9e806e27c4468fc4ea9f0b38bfb",
+    "patch": "docs/provenance/patches/services/openim-server/internal/msggateway/hub_server.go.patch"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/rpc/auth/auth.go",
+    "status": "modified",
+    "upstreamSha256": "ecef9a00f4461a52d06fbbf6079660da13141895856b5af9a1e70dc524f09ef4",
+    "currentSha256": "c6303610680b941030c9576075e0c13f99e45cbc98ff0ec6be121338a4e5f176",
+    "patch": "docs/provenance/patches/services/openim-server/internal/rpc/auth/auth.go.patch"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/msggateway/logout_exact_test.go",
+    "status": "added",
+    "currentSha256": "150de5728af6261396fb8e5e61fd35797f5cbae11a0baafa41f458e6a704dd78"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/msggateway/logs/DefaultLogger.2026-11-01",
+    "status": "added",
+    "currentSha256": "716dd60dd20b0f2483a8ad99e93e6842b79e401c0420a41886e1478c1d97307b"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/rpc/auth/logout_exact_test.go",
+    "status": "added",
+    "currentSha256": "e5a332766e936e67749ab8739fa8e15326d275fed1882be50fe2b73572657142"
+  },
+  {
+    "component": "services/openim-server",
+    "path": "internal/rpc/auth/logs/DefaultLogger.2026-11-01",
+    "status": "added",
+    "currentSha256": "3a88e062f2b9d3eab91eccf6f1dc552b64a9bfbfd9cf023fd7df2a0aaca34e39"
+  }
+]

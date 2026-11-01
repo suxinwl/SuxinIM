@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="UTF-8"><title>OpenIM38 SDK load client</title></head><body><script>
+if(parent!==window && parent.__loadCompiledWasm){
+ const native=WebAssembly.instantiateStreaming.bind(WebAssembly);
+ WebAssembly.instantiateStreaming=async(source,imports)=>{
+  const response=await source;
+  if(response.url.includes("openIM.wasm") || imports.gojs || imports.go){const module=parent.__loadCompiledWasm;return {module,instance:await WebAssembly.instantiate(module,imports)};}
+  return native(response,imports);
+ };
+}
+</script><script src="/wasm_exec.js"></script><script type="module" src="/tests/load-client.ts"></script></body></html>

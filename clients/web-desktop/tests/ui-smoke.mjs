@@ -1,0 +1,17 @@
+import {mkdirSync} from "node:fs";
+import {resolve as tempResolve} from "node:path";
+const taskTemp=tempResolve("../../.cache/temp-web");mkdirSync(taskTemp,{recursive:true});process.env.TEMP=taskTemp;process.env.TMP=taskTemp;
+import { chromium } from "playwright";
+import { mkdir, writeFile } from "node:fs/promises";
+const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined});
+const page=await browser.newPage();const failures=[];const responses=[];
+page.on("pageerror",error=>failures.push(error.message));
+page.on("response",res=>{if(/wasm/.test(res.url()))responses.push({url:res.url(),status:res.status()});});
+await page.goto(process.env.WEB_TEST_URL || "http://127.0.0.1:7777",{waitUntil:"networkidle",timeout:90000});
+await page.waitForFunction(()=>typeof window.login==="function",{timeout:90000});
+await page.waitForTimeout(1000);await mkdir("test-results",{recursive:true});
+await page.screenshot({path:"test-results/login.png",fullPage:true});
+const summary={title:await page.title(),url:page.url(),inputs:await page.locator("input").count(),crossOriginIsolated:await page.evaluate(()=>crossOriginIsolated),wasmLoginRegistered:await page.evaluate(()=>typeof window.login==="function"),failures,responses};
+await writeFile("test-results/ui-smoke.json",JSON.stringify(summary,null,2));await browser.close();
+if(failures.length || summary.inputs<1)throw new Error(JSON.stringify(summary));
+console.log(JSON.stringify(summary));

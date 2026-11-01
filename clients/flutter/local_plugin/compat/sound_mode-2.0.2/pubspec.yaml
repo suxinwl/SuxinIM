@@ -1,0 +1,27 @@
+name: sound_mode
+description: A plugin to manage a device's sound mode for android. This plugin also supports requesting the required
+  permissions to modify the device's sound mode for Android API 24 and above.
+version: 2.0.2
+homepage: https://github.com/TryingOutSomething/sound_mode.git
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+  flutter: ">=1.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+# The following section is specific to Flutter.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.tryingoutsomething.soundmode.sound_mode
+        pluginClass: SoundModePlugin
+      ios:
+        pluginClass: SoundModePlugin

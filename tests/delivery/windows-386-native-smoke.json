@@ -1,0 +1,24 @@
+{
+  "url": "openim38://app/index.html#/login",
+  "isolated": true,
+  "platform": 3,
+  "wasmLoginRegistered": true,
+  "runtime": {
+    "app": "3.8.6",
+    "electron": "45.2.1",
+    "userData": "O:\\.cache\\electron-smoke-386"
+  },
+  "bridge": {
+    "path": "O:\\.cache\\electron-smoke-386\\OpenIMData\\synthetic-smoke\\sentFileCache\\smoke.txt",
+    "name": "smoke.txt",
+    "content": "OpenIM38 bridge",
+    "protocolContent": "OpenIM38 bridge",
+    "protocolStatus": 200
+  },
+  "cacheAccess": {
+    "status": 206,
+    "content": "cdef",
+    "contentRange": "bytes 2-5/10"
+  },
+  "errors": []
+}

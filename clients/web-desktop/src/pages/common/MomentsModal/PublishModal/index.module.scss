@@ -1,0 +1,56 @@
+.modal {
+  :global {
+    .ant-modal-content {
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .ant-upload-list-picture-card {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      flex-direction: row;
+      flex-wrap: wrap;
+      padding: 0 8px 0 8px;
+    }
+
+    .ant-upload-list-item-container {
+      width: 74px !important;
+      height: 74px !important;
+    }
+
+    .ant-upload-list-item.ant-upload-list-item-done {
+      border: none !important;
+      padding: 0 !important;
+    }
+
+    .ant-upload-list-item.ant-upload-list-item-done::before {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .ant-upload-select {
+      width: 74px !important;
+      height: 74px !important;
+    }
+  }
+}
+
+// content height not fixed. height 100% is not working
+.prepare-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  :global {
+    .ant-spin-nested-loading {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .ant-spin-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}

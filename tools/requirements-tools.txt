@@ -1,0 +1,15 @@
+# Tooling only; install inside a project venv, never replace system runtimes.
+PyYAML==6.0.3
+requests==2.32.5
+paramiko==3.5.1
+bcrypt==5.0.0
+cffi==2.1.1
+cryptography==50.0.2
+pycparser==3.12
+PyNaCl==1.6.2
+certifi==2026.2.25
+idna==3.11
+urllib3==2.6.3
+charset-normalizer==3.4.4
+# Pixel comparisons in the Android media regression tools.
+Pillow==12.1.1

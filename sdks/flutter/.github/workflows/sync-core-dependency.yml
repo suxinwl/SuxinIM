@@ -1,0 +1,178 @@
+name: Sync & Verify Core Dependencies (Android AAR & iOS XCFramework)
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Check every 6 hours automatically
+  workflow_dispatch:
+    inputs:
+      ios_core_tag:
+        description: 'Target OpenIMSDKCore iOS tag (leave blank to auto-detect)'
+        required: false
+        default: ''
+      android_aar_version:
+        description: 'Target Maven Central Android AAR version (leave blank to auto-detect)'
+        required: false
+        default: ''
+      auto_merge:
+        description: 'Auto-commit directly if all checks pass (true/false, default false creates PR)'
+        required: false
+        default: 'false'
+        type: boolean
+  repository_dispatch:
+    types: [core_updated]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-and-update:
+    runs-on: macos-14
+    steps:
+      - name: Checkout open-im-sdk-flutter
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Detect Versions (Maven Central & CocoaPods)
+        id: detect
+        env:
+          INPUT_IOS_TAG: ${{ github.event.inputs.ios_core_tag || github.event.client_payload.tag }}
+          INPUT_AAR_VER: ${{ github.event.inputs.android_aar_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Detect iOS OpenIMSDKCore version
+          if [ -n "$INPUT_IOS_TAG" ]; then
+            TARGET_IOS_TAG="$INPUT_IOS_TAG"
+          else
+            TARGET_IOS_TAG=$(gh api "repos/openimsdk/openim-sdk-core-ios/tags?per_page=100" --jq '.[].name' | grep -v 'dynamic' | sort -V | tail -n 1)
+          fi
+          echo "TARGET_IOS_TAG=$TARGET_IOS_TAG" >> $GITHUB_ENV
+
+          # Read current iOS version in podspec
+          CURRENT_IOS_POD=$(grep "dependency 'OpenIMSDKCore'" ios/flutter_openim_sdk.podspec | sed -E "s/.*'OpenIMSDKCore'[[:space:]]*,[[:space:]]*'([^']+)'.*/\1/")
+          echo "Current iOS Core dependency: $CURRENT_IOS_POD"
+          echo "Latest iOS Core tag: $TARGET_IOS_TAG"
+
+          # 2. Detect Android AAR version from Maven Central
+          if [ -n "$INPUT_AAR_VER" ]; then
+            TARGET_AAR_VER="$INPUT_AAR_VER"
+          else
+            TARGET_AAR_VER=$(curl -s "https://repo1.maven.org/maven2/io/openim/core-sdk/maven-metadata.xml" | sed -n 's/.*<release>\(.*\)<\/release>.*/\1/p')
+          fi
+          echo "TARGET_AAR_VER=$TARGET_AAR_VER" >> $GITHUB_ENV
+
+          # Read current Android AAR version in build.gradle
+          CURRENT_AAR_VER=$(grep "io.openim:core-sdk:" android/build.gradle | sed -E "s/.*io.openim:core-sdk:([^@]+)@aar.*/\1/")
+          echo "Current Android AAR dependency: $CURRENT_AAR_VER"
+          echo "Latest Maven Central AAR version: $TARGET_AAR_VER"
+
+          # 3. Check if update is needed
+          if [ "$CURRENT_IOS_POD" = "$TARGET_IOS_TAG" ] && [ "$CURRENT_AAR_VER" = "$TARGET_AAR_VER" ]; then
+            echo "NEED_UPDATE=false" >> $GITHUB_ENV
+            echo "Both iOS and Android core dependencies are already up to date. Skipping."
+          else
+            echo "NEED_UPDATE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Update Dependencies & Version
+        if: env.NEED_UPDATE == 'true'
+        run: |
+          # 1. Update iOS podspec
+          sed -i '' "s/s.dependency 'OpenIMSDKCore'.*/s.dependency 'OpenIMSDKCore', '${TARGET_IOS_TAG}'/g" ios/flutter_openim_sdk.podspec
+          echo "Updated ios/flutter_openim_sdk.podspec -> OpenIMSDKCore: ${TARGET_IOS_TAG}"
+
+          # 2. Update Android build.gradle
+          sed -i '' "s/implementation 'io.openim:core-sdk:.*@aar'/implementation 'io.openim:core-sdk:${TARGET_AAR_VER}@aar'/g" android/build.gradle
+          echo "Updated android/build.gradle -> core-sdk: ${TARGET_AAR_VER}@aar"
+
+          # 3. Update pubspec.yaml version (aligned with iOS core version format)
+          PUB_VER=$(echo "$TARGET_IOS_TAG" | sed 's/-hotfix\./+hotfix\./g')
+          sed -i '' "s/^version: .*/version: ${PUB_VER}/g" pubspec.yaml
+          echo "Updated pubspec.yaml -> version: ${PUB_VER}"
+
+      - name: Verify Flutter / Dart
+        if: env.NEED_UPDATE == 'true'
+        run: |
+          echo "Running flutter pub get..."
+          flutter pub get
+          echo "Running flutter analyze..."
+          flutter analyze
+
+      - name: Verify iOS Podspec
+        if: env.NEED_UPDATE == 'true'
+        run: |
+          echo "Linting ios/flutter_openim_sdk.podspec..."
+          which pod || gem install cocoapods --no-document
+          pod lib lint ios/flutter_openim_sdk.podspec --allow-warnings --skip-tests
+
+      - name: Verify Android Gradle Build
+        if: env.NEED_UPDATE == 'true'
+        run: |
+          echo "Compiling Android example app against new Maven Central AAR..."
+          cd example/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Create Pull Request on Success
+        if: env.NEED_UPDATE == 'true' && github.event.inputs.auto_merge != 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): bump core dependencies (iOS: ${{ env.TARGET_IOS_TAG }}, Android: ${{ env.TARGET_AAR_VER }})"
+          branch: "automation/bump-core-dependencies"
+          title: "chore(deps): bump core dependencies (iOS: ${{ env.TARGET_IOS_TAG }}, Android: ${{ env.TARGET_AAR_VER }})"
+          body: |
+            ### Automated Dependency Update 🚀
+            
+            Synchronized latest OpenIM core dependencies across iOS and Android:
+            - **iOS XCFramework (`OpenIMSDKCore`)**: `${{ env.TARGET_IOS_TAG }}`
+            - **Android AAR (Maven Central `io.openim:core-sdk`)**: `${{ env.TARGET_AAR_VER }}`
+            
+            #### Automated Verification Results:
+            - ✅ **Flutter Analyze (`flutter analyze`)**: Passed with 0 issues.
+            - ✅ **CocoaPods Lint (`pod lib lint`)**: Passed iOS pod validation.
+            - ✅ **Android Gradle (`./gradlew assembleDebug`)**: Successfully fetched Maven Central AAR and built app.
+            
+            All checks passed without error! Ready for review.
+          labels: |
+            dependencies
+            automated-pr
+
+      - name: Push Directly (if auto_merge is true)
+        if: env.NEED_UPDATE == 'true' && github.event.inputs.auto_merge == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ios/flutter_openim_sdk.podspec android/build.gradle pubspec.yaml
+          git commit -m "chore(deps): bump core dependencies (iOS: ${TARGET_IOS_TAG}, Android: ${TARGET_AAR_VER})"
+          git push origin HEAD
+
+          # Push a version tag to trigger the pub.dev publish workflow (publish.yml)
+          # The tag must match the pattern configured on pub.dev Automated Publishing admin page.
+          PUB_VER=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "Pushing tag v${PUB_VER} to trigger pub.dev publish workflow..."
+          git tag "v${PUB_VER}"
+          git push origin "v${PUB_VER}"
+
+      - name: Report Failure via Issue
+        if: failure() && env.NEED_UPDATE == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "🚨 [CI Failure] OpenIM Core update broke Flutter SDK build" \
+            --body "Automated dependency update (iOS: **${TARGET_IOS_TAG}**, Android: **${TARGET_AAR_VER}**) failed during verification.\n\nPlease inspect the GitHub Actions run logs."

@@ -1,0 +1,110 @@
+{
+  "mongo": {
+    "tag": "docker.io/library/mongo:7.0",
+    "image": "docker.io/library/mongo@sha256:e634fcaae4d0915b365fb88c076dd33c851ed61a611c7ee9816aba6d6b5159cd",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:bf46c3fd4f186a3569a6c8d180ee6f55e46cc81e98c0cadaee2f56718c84979f",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\mongo.tar.gz",
+      "sha256": "450fc3b3c73e7de576e44c96a67927df078316543a13dfe474b7e0e1ec56579c",
+      "tag": "library/mongo:openim38-bf46c3fd4f18"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\mongo.oci.tar",
+      "sha256": "82601d59a16dd9f0c1dde0350320b12e7b7f114e82ec5bdda42931529a686f57",
+      "tag": "docker.io/library/mongo:openim38-pinned"
+    }
+  },
+  "redis": {
+    "tag": "docker.io/library/redis:7.0.0",
+    "image": "docker.io/library/redis@sha256:803ec2b3b74c0f95758bf680d7caa370fa8d3b6058b4d57d6485d06d8027a588",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:53aa81e8adfa939348cd4c846c0ab682b16dc7641714e36bfc57b764f0b947dc",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\redis.tar.gz",
+      "sha256": "b669b076367fde49cd292439166e1cf402696f2c57aafef96d8fc63a04d0db39",
+      "tag": "library/redis:openim38-53aa81e8adfa"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\redis.oci.tar",
+      "sha256": "42b8e7f3b0a88be8fa5566b12207b327363d2f020c07c90e8578ce3f2952a2ae",
+      "tag": "docker.io/library/redis:openim38-pinned"
+    }
+  },
+  "kafka": {
+    "tag": "docker.io/bitnamilegacy/kafka:3.5.1",
+    "image": "docker.io/bitnamilegacy/kafka@sha256:f0738950c006c14cc226c29fe32f1d7631bcfd3bfdb818ca5f920eb92ff09db3",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:f79889e4e4af47d029583eb24d69c6d01681682fcf3198a3ccb66ddd68e4cbf7"
+  },
+  "minio": {
+    "tag": "docker.io/bitnamilegacy/minio:2024.1.13",
+    "image": "docker.io/bitnamilegacy/minio@sha256:1075797e013623897482a4ef22ed167e79af03b6e20483a4dd07272ac0d509cd",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:3cccdba27c931a2555e460e20563f3a6084f8e96b2faa2a4f4d82cdb0a6f03a1",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\minio.tar.gz",
+      "sha256": "38067a4c8defe7f7c482e5adeb6e4592cbe295044970b703ab48a26eb757ebb2",
+      "tag": "bitnamilegacy/minio:openim38-3cccdba27c93"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\minio.oci.tar",
+      "sha256": "31e08efe74700000455acf124fd4e15a7180c0d0f93fd6ef773f7063029ac6b4",
+      "tag": "docker.io/bitnamilegacy/minio:openim38-pinned"
+    }
+  },
+  "etcd": {
+    "tag": "docker.io/bitnamilegacy/etcd:3.5.21",
+    "image": "docker.io/bitnamilegacy/etcd@sha256:4abe38869d5919c9ec70b2008713c2eb90c1b26d9e6700e126875894681b5b99",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:3389325d940ed0969c2315f09646606a0a9993d682e407630813413e5aad88d7",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\etcd.tar.gz",
+      "sha256": "a0424ade96b53117b70029efb4fcc5583f0a05233ae1fc1150c0dfe210eb220f",
+      "tag": "bitnamilegacy/etcd:openim38-3389325d940e"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\etcd.oci.tar",
+      "sha256": "1be58227576e7a97eaccb45fc0d927e11f46ca8ba1180d6e9940864a4773d4b9",
+      "tag": "docker.io/bitnamilegacy/etcd:openim38-pinned"
+    }
+  },
+  "livekit": {
+    "tag": "docker.io/livekit/livekit-server:v1.13.11",
+    "image": "docker.io/livekit/livekit-server@sha256:04668840140552c7e5d7faf28959cbf2256fb04ea641c4fd23ea69cbf3d7d105",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:0e20c255a2c17000c52d0631b79737a4216c06bc51df13878768df01261c8dfd",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\livekit.tar.gz",
+      "sha256": "e225a99a1653a4403f84671a956128ce51d6550a36708718189cc975c5e90158",
+      "tag": "livekit/livekit-server:openim38-0e20c255a2c1"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\livekit.oci.tar",
+      "sha256": "211ec73c56747cd0ba1f2952730c5d3d0f80e6d10af7e9016cf52ae123374f93",
+      "tag": "docker.io/livekit/livekit-server:openim38-pinned"
+    }
+  },
+  "nginx": {
+    "tag": "docker.io/library/nginx:1.28.0-alpine",
+    "image": "docker.io/library/nginx@sha256:09ab424a8c788f8d0fe3a64429f6d19dfa526885c8609b748d0943a75dcb9f8c",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:c318e336065b17ff460aeac6d14bce5d0b13e35f25d5cb1843b635359fc00c9a",
+    "offlineArchive": {
+      "path": ".private\\image-archives\\nginx.tar.gz",
+      "sha256": "4ec26cbff37f06c152f7028faf6f4b2f06ec6b6f6a34eae660f48973b9ac355b",
+      "tag": "library/nginx:openim38-c318e336065b"
+    },
+    "ociArchive": {
+      "path": ".private\\image-archives\\nginx.oci.tar",
+      "sha256": "565ccb84d9df9cb347c4eedf6bc737a9369d51702d81a3c6b98946677670001b",
+      "tag": "docker.io/library/nginx:openim38-pinned"
+    }
+  },
+  "runtime": {
+    "tag": "docker.io/library/debian:bookworm-slim",
+    "image": "docker.io/library/debian@sha256:a3bba7dc7dbcc1f37c2856c51fc9a7fac96608f50cb87b1b4e4d8b8c85ae988e",
+    "platform": "linux/amd64",
+    "localImageId": "sha256:354cdc53abb843ea02e9a72c153b000c290014d8a90aba62897c143710a5667f"
+  }
+}

@@ -1,0 +1,39 @@
+--- upstream/internal/rpc/admin/token.go
++++ merged/internal/rpc/admin/token.go
+@@ -21,7 +21,9 @@
+ 
+ 	"github.com/openimsdk/chat/pkg/eerrs"
+ 	adminpb "github.com/openimsdk/chat/pkg/protocol/admin"
++	"github.com/openimsdk/tools/errs"
+ 	"github.com/openimsdk/tools/log"
++	"google.golang.org/grpc/metadata"
+ )
+ 
+ func (o *adminServer) CreateToken(ctx context.Context, req *adminpb.CreateTokenReq) (*adminpb.CreateTokenResp, error) {
+@@ -69,6 +71,26 @@
+ }
+ 
+ func (o *adminServer) InvalidateToken(ctx context.Context, req *adminpb.InvalidateTokenReq) (*adminpb.InvalidateTokenResp, error) {
++	// Private RPC metadata extends the fixed protocol without changing its
++	// module/version. Public HTTP routes never forward this header. Absence keeps
++	// the original all-user revocation for password changes and account bans.
++	md, _ := metadata.FromIncomingContext(ctx)
++	if tokens := md.Get("openim38-chat-revoke-token"); len(tokens) > 0 {
++		if len(tokens) != 1 || tokens[0] == "" {
++			return nil, errs.ErrArgs.WrapMsg("one exact Chat credential required")
++		}
++		userID, err := o.Token.GetTokenForRevocation(tokens[0])
++		if err != nil {
++			return nil, err
++		}
++		if userID != req.UserID {
++			return nil, errs.ErrNoPermission.WrapMsg("Chat credential identity mismatch")
++		}
++		if err := o.Database.DeleteTokenValue(ctx, userID, tokens[0]); err != nil && err != redis.Nil {
++			return nil, err
++		}
++		return &adminpb.InvalidateTokenResp{}, nil
++	}
+ 	err := o.Database.DeleteToken(ctx, req.UserID)
+ 	if err != nil && err != redis.Nil {
+ 		return nil, err

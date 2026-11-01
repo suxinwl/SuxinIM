@@ -1,0 +1,1960 @@
+{
+  "baseline": "original3.5",
+  "entries": [
+    {
+      "source": "src/AntdGlobalComp.tsx",
+      "originalSHA256": "b00a86bb696e11f62fd623891415a7493e4625b53e7b447e8f754cc496f3bbb7",
+      "targetSHA256": "bd64b457d40f06039531bdb2acd8087be4b596b0d1f8634cc13fe663e3f20104",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/App.tsx",
+      "originalSHA256": "5fa0d9d804aa27ea9f46863a0c80b3a69878a3143f97861067a895d2f3df39cd",
+      "targetSHA256": "e6a07b23f49bb023b13929d7f4acdef33df53058dc0f204f7a34d133f737798b",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/main.tsx",
+      "originalSHA256": "4ebc43b541cf0b1ca166c1470837a2264e20b7fcc141170b00987fda57b3ad1d",
+      "targetSHA256": "e0f12a619dbdc5bd81228c12e0bb6db4fed4b76abc7b5eaf1e68ba393659f79f",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/vite-env.d.ts",
+      "originalSHA256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
+      "targetSHA256": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/api/errorHandle.ts",
+      "originalSHA256": "246368838f7be42a977c5072762fe68b26765ff3f609d3c6d05401e40a7ef5ad",
+      "targetSHA256": "bafba9749adee43a29019cf6eb1b147ea604daee719dedd93fd26f83c59b9ac0",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/api/imApi.ts",
+      "originalSHA256": "3645ad14839fe1acd84961b2b55f3a0ef70e4e406086dd25678715c34e64dbbe",
+      "targetSHA256": "a526d018bb56c34cea42e39a077e10d8496cdb2f6781856b8d7c193084c06e12",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/api/login.ts",
+      "originalSHA256": "9058d84ded5d4c5339ebbe012cfe66c4ffd1f45c33077bddc712296e8a683100",
+      "targetSHA256": "00bb46080085e9a9ed67e87a0105ee05c6878fd699f2830d673f278e18f2f03a",
+      "sdkMethods": [],
+      "apiPaths": [
+        "/account/code/send",
+        "/account/code/verify",
+        "/account/login",
+        "/account/password/change",
+        "/account/password/reset",
+        "/account/register",
+        "/user/find/full",
+        "/user/search/full",
+        "/user/update"
+      ],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/api/moments.ts",
+      "originalSHA256": "4d1f50a168cff0a8c26214f8a3dbef22ec35ae2fd244011ef09e06f0a394bc07",
+      "targetSHA256": "ed22c2e2afd2b467b2a6809dd1f6ababc2d2043ad82431c2875103c4b4a09b90",
+      "sdkMethods": [],
+      "apiPaths": [
+        "/office/work_moment/add",
+        "/office/work_moment/comment/add",
+        "/office/work_moment/comment/del",
+        "/office/work_moment/del",
+        "/office/work_moment/get",
+        "/office/work_moment/like",
+        "/office/work_moment/logs",
+        "/office/work_moment/unread/clear",
+        "/office/work_moment/unread/count"
+      ],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/api/typings.d.ts",
+      "originalSHA256": "906beafef5fb7b41b35980707feb58e73ae557cfff9ef4eee38d29eb4850509f",
+      "targetSHA256": "f30d7e0293fbe3110e2a362523f67a2c4baad666089dfeae06827dfb098b06bf",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/config/index.ts",
+      "originalSHA256": "ca88ed9e92794be13ea5dffceaa6cfca5376ff90d8ae07bab810ec61fe47ef69",
+      "targetSHA256": "e274089794189bdc2dd8a643570cee61f32fdcb388f6cde91cd78c58932aafce",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/constants/errcode.ts",
+      "originalSHA256": "f106191200f2966df815f5554d4a799888835f447c3cfdfa9e8d29821495988c",
+      "targetSHA256": "e0291a7915a5b5af023af93a7cba6b5f6f70ed7cc0744b86b7db48c1ced5c504",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/constants/im.ts",
+      "originalSHA256": "cc3f5011172478c9b6535ce49b9b9a28c4e12013eebb64860aacc94d70578509",
+      "targetSHA256": "0f266d03c8dc9b720e7694708466e30836d4ffb8a27fc268d67286d5f9ff2496",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/constants/index.ts",
+      "originalSHA256": "b15df47940b1239e8a6905d55e8ac18afa9dad2566966c7190bc96b3b2a2123b",
+      "targetSHA256": "46780dc85fea4dc52f6ef68fdaaaf2ddd9a8f171348b9f96ac606b0e9a513423",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/constants/moments.ts",
+      "originalSHA256": "50543c5f72847c3911438d379c0bba62379dde7e78da318c765fe1e888edc9a4",
+      "targetSHA256": "391dfad938c4cbfec42ae8929b6cd81878d652d067f5fa70f80af0bbfd0acfe5",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useConversationSettings.ts",
+      "originalSHA256": "1daa68b5a926674e019cda66c7fe6f5964b5eee66fae6f6e25f1e73e63369b77",
+      "targetSHA256": "5d52e8f8333b6c23d811bf93a9c9061627a6c943d8bf9a17e0d6948cea7a01f2",
+      "sdkMethods": [
+        "clearConversationAndDeleteAllMsg",
+        "pinConversation",
+        "setConversationBurnDuration",
+        "setConversationIsMsgDestruct",
+        "setConversationMsgDestructTime",
+        "setConversationPrivateChat",
+        "setConversationRecvMessageOpt"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useConversationToggle.ts",
+      "originalSHA256": "fd18ca919fb4bac474e0605ec8afc55a26f318cc90ecd0894e3ff2210ba1b6cd",
+      "targetSHA256": "a9c747fa277e60f9cfcf069866449d426e3a1657872e1caca07d6df323029c03",
+      "sdkMethods": [
+        "getOneConversation"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useCurrentMemberRole.ts",
+      "originalSHA256": "a70f90304950a985a033c4006892d7353a05ca22069c74231348a0991aeced16",
+      "targetSHA256": "f3acae608028a794100c4938362eb618e2f149d18e923013b7e31aab56dae839",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useGroupMembers.ts",
+      "originalSHA256": "c8e04f4ed07815ed298b842964a74c35ac0fd74bedba15a6a445b42669068df1",
+      "targetSHA256": "7f717985a4b8eba818fd46537d1dfd57a185c9dd7c7217dea92edc5f55c0993a",
+      "sdkMethods": [
+        "getGroupMemberList",
+        "off",
+        "on",
+        "searchGroupMembers"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useMessageFileDownloadState.tsx",
+      "originalSHA256": "55b30c8e33df0118d4a1e1ec2721e592db2ca77b0afe6d2783a104b1bc2491d6",
+      "targetSHA256": "fb0c477a856a68e18504579e79bc5c6b73a617ed466bc02cb3e31998ea69b08b",
+      "sdkMethods": [
+        "findMessageList",
+        "getOneConversation"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/hooks/useOverlayVisible.ts",
+      "originalSHA256": "a49e0bd6dbaf494d03c0ba5743772ba83a2dec1a054aee32b0a8474ece61c7f1",
+      "targetSHA256": "904bc9b918358d2247f4ce5354ef2270a8a658b4df11b54da4947688ffcd3afc",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/i18n/index.ts",
+      "originalSHA256": "d4734c114b169613330a93e0e3111e68f8c3e510dfa19b2f8fd7115119933274",
+      "targetSHA256": "faec2635b6889f10acfa81f29c7166ed5c8d70f626978393ea894971657204df",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/MainContentLayout.tsx",
+      "originalSHA256": "28b740ef52b6458a51c7f5f1381d5103e8e938a6017be07fef0bf124d7af4b3a",
+      "targetSHA256": "d2bd24da1f082163a397afd038bb890e76cafa95426610f2f2fafcd534547acb",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/MainContentWrap.tsx",
+      "originalSHA256": "44595f6caffec83247486b329462ced53201d2a53eaadfc71b2c0fb2b435e9e0",
+      "targetSHA256": "3104956fd17a478d7f1afbd34e16adeeee748b2aa2ef32a661aca476fa31d8f4",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/useAutoUpdate.tsx",
+      "originalSHA256": "0bc3ae9236467344761bcc3fd3c781bcd4d641fa80a1eb8f4e95fc8a57c254e1",
+      "targetSHA256": "4f6ecabddc074cb29c1f4723637fafd290de8cbc27e7a3c3109babdb9e652549",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/useGlobalEvents.tsx",
+      "originalSHA256": "82f18ac63ded4bbac24b1e40dcaff694f92a3177cc4006c3e658dae801b60b93",
+      "targetSHA256": "7f2b245ae506278b018a0a7dbddd9ac57a264df3533aa68ccdabd226e1ea8b91",
+      "sdkMethods": [
+        "getOneConversation",
+        "login",
+        "off",
+        "on",
+        "setMessageLocalEx"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/routes/ContactRoutes.ts",
+      "originalSHA256": "17d4637314b32cf1da03ac2a547320063b5867aeb6e95dc4c9deac9b6a52fde1",
+      "targetSHA256": "d0583987916fd4bb7c9ba82f962a78e5776f519d971dce1cb8c1a149dd901b5a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/routes/GlobalErrorElement.tsx",
+      "originalSHA256": "05ec9997f88d620b23d8834e38dbbcf239388fbba128c80b59c663a0ca4a7f41",
+      "targetSHA256": "545dbc349b0d800798b1d2f662fc27024c3e7008da19c524ed4e505bc93dd122",
+      "sdkMethods": [
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/routes/index.tsx",
+      "originalSHA256": "4ad70e33152cc738fd60ff2d79117605ac843f4c72a3e1fc9e989decdb3a80fb",
+      "targetSHA256": "13e34e5a761a5a0612e5bb3e3e670d7e3f82f1b91aaaabb604e472aaa60a3ed6",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/routes/thirdRoutes.ts",
+      "originalSHA256": "221eb3a0902ead1d646a0180f7b93df8c6c62561b44b3b868f7496ba92428342",
+      "targetSHA256": "241941c4ee02eebe211f45b4134527440a2e24cb4b3c21dabd826e369b63c5b1",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/contact.ts",
+      "originalSHA256": "500189d49eb2e26de528245a90da6aa6e65336e784645dac11f38b0d781cc25f",
+      "targetSHA256": "1ec1c88292ea2283a0cfa9b68c8ebab6222b7c286e60319f2400da76c67430ec",
+      "sdkMethods": [
+        "getBlackList",
+        "getFriendApplicationListAsApplicant",
+        "getFriendApplicationListAsRecipient",
+        "getFriendList",
+        "getGroupApplicationListAsApplicant",
+        "getGroupApplicationListAsRecipient",
+        "getJoinedGroupList"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/conversation.ts",
+      "originalSHA256": "ee1c77af6524df73ab03d0974de734c4c279062a8a8b490e831d3a11e927a836",
+      "targetSHA256": "3be926d70300e823da109248e0f2f3b23bbcb1652a3ecf8f5b934524e6a1bfee",
+      "sdkMethods": [
+        "getConversationListSplit",
+        "getSpecifiedGroupMembersInfo",
+        "getSpecifiedGroupsInfo",
+        "getTotalUnreadMsgCount"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/index.ts",
+      "originalSHA256": "6ac643c686e3c865a85e8452c1861ddff483d3c17e580fc61aeabd2eccb033c4",
+      "targetSHA256": "64a5788e60c509461c6ef0118658c3477cb3928b863453364cc177afaab9816c",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/message.ts",
+      "originalSHA256": "00cd5cf419383c2e3d81d310484e2b58d167f309a60d8b47aa5091c373896e94",
+      "targetSHA256": "a8014e9c8db1cee369f05be6c070cb340f9b3af2e392ddf668a69cc474be5100",
+      "sdkMethods": [
+        "getAdvancedHistoryMessageList",
+        "getAdvancedHistoryMessageListReverse",
+        "searchLocalMessages"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/type.d.ts",
+      "originalSHA256": "a3f5d2cdaeb06b3235c33ad39a9ef384926fe8baf452049305fd15679c4a21be",
+      "targetSHA256": "952634e45a933cb58f3e0783cc2b5df45a2f5b10fa598f8b51a0a90a41362246",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/store/user.ts",
+      "originalSHA256": "248d9a6d3dbdd8428fe76cdb30bb1506d1400752322660ecceb512430b27976c",
+      "targetSHA256": "6c78e566077dded9d058837bf83b304918f6bc548de3607c145a51db978f7715",
+      "sdkMethods": [
+        "getSelfUserInfo",
+        "logout"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/types/common.d.ts",
+      "originalSHA256": "fa71353715abc15bce6c7d75c654c0a870bf0efb8f0126a78724116156f5720f",
+      "targetSHA256": "0557e24f03bc1085fba27c2f057c9d853cc65dedd09890b35741aa0bab2d6184",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/types/globalExpose.d.ts",
+      "originalSHA256": "76415420d3707f7b4872bea6bce2606d7ca0261a4e1e486f95e764f396fbb977",
+      "targetSHA256": "8f985b5c7aa7f74060729c652a3e7809aa2d8b77ed01322289931f088d3e236f",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/types/moment.ts",
+      "originalSHA256": "b34ba56d00cb8360aabfdacbec7edf0c726a5940867d14685c4506470cc8f984",
+      "targetSHA256": "9ec8c0767cbc32624f6ac583e51de41f837959d56618206e46020d84a476c71e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/avatar.ts",
+      "originalSHA256": "77aa91fa8666e7d205fec1d085c6e46c3d78b9da7261a9eff2c34d8ef2f215db",
+      "targetSHA256": "d7ae546a9926b1aae084c724ec1211202073223e30564c8f9b10b979b2ef57bb",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/childWindows.ts",
+      "originalSHA256": "fc66fb6153666ceb866e25ba3cd966a17d26761290049702cd13efc8f7aa4cfe",
+      "targetSHA256": "cdc9f1641c7d955d69269bea4cf0c6afc2ff2b5d40f200567ae48fb643c9d8ec",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/common.ts",
+      "originalSHA256": "5c47b3a80c5cacd87f62f1b5e04c4858526fc72050a89e2d6474914e65f5d4a4",
+      "targetSHA256": "10af5658050ad7b33c5ba1bb4cae69c00678f09ea66c731a611a0d668f1238c6",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/events.ts",
+      "originalSHA256": "514af30fabbd8b6fb299eb3a2899680358cc22d2d351654136e9622a136f8f8c",
+      "targetSHA256": "37d379240bd8315e396295b33b97926f3bac2877135fdc888b17804582e6c124",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/imCommon.ts",
+      "originalSHA256": "6bc416dc0269f1c66766e98e1e0754e8e5ffc974bc9eacb4a79569ae57b6c464",
+      "targetSHA256": "55ec016d31e2fa708db2147b6bf4fb66dbaf73fa7231204d467b43efb5de980a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/pinyin.ts",
+      "originalSHA256": "7438c947d47e1b833d049336f014b5f7f6bcecefb67cac537684a3754cd1e649",
+      "targetSHA256": "db6cb5e8123919d4b33e438a730eaf06e9ac0dd589183c20edffc6c56f23c6d3",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/request.ts",
+      "originalSHA256": "814ce8f7c0abedd5817c2c8e6bd3afb263a8438d1a74a306e9c7b35754162618",
+      "targetSHA256": "cf92cd231ce663482523095ab3f68fd2cd68813f2d5881005cbc4950f89e8299",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/utils/storage.ts",
+      "originalSHA256": "93c0b050784c2ecab35c67946f671b2a7b976592e47b07a75adfae056ca3ce71",
+      "targetSHA256": "973a325f2e3a447f5d46caf6f295e053513c5d72a28fabf8194eeb1f641cd5b9",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/svg/FileDownloadIcon/index.tsx",
+      "originalSHA256": "4c1e8df296676bb92f1bfd0ead63a57bfedb8068d41a14e8779d746155066651",
+      "targetSHA256": "7c315e5e86955077b6ab398334df86ec9315e552c4ed98a2fa5f600fbd52abac",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/svg/VoiceIcon/index.tsx",
+      "originalSHA256": "66ddd9370a8374f1f54bc8b034c86e8a7769586b907eefbd204690391464aa01",
+      "targetSHA256": "0195c8f38f67441f8af6fe69522f2ce39c39de724f9b51376791d2496a2773ab",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/EmptyChat.tsx",
+      "originalSHA256": "9d64060ef0552216b784d73ebcbb83b5261ccb2375759de1f24b6228b3de7f79",
+      "targetSHA256": "80620bab10753664efeba5fe68a275915c26c30f7e7660043dd04048c7783690",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/index.tsx",
+      "originalSHA256": "1d0637bd55547dbdc407e78dbabe52a17558f3e2c830cc833df8d34ee44deda6",
+      "targetSHA256": "7a18e83e1188107dd75a7dd18936739fac16401630d8e98329beb59d909c8d20",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MergePreviewModal.tsx",
+      "originalSHA256": "b792d61b3cefb3453992952e20ae649823c609630183d13d51af571aaa1bc35c",
+      "targetSHA256": "fa2d3085181fd4f3c968062682c71301952ada022d2f746f934afbd4fb5b8623",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/ContactSider.tsx",
+      "originalSHA256": "1a3f04e98900df89c8decf6b4f0f27900cae83e354e17ddf5688e60f7d97e071",
+      "targetSHA256": "0efc194bc7884889875fa641880e742038c270a9102e02f88ab6aabefb6a8d27",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/index.tsx",
+      "originalSHA256": "f269c6d4e1246f0001d55bdd087cd3e5f8eab125557edb5175a993857e668cb0",
+      "targetSHA256": "70bff56abb25f92c7c1900f147f98d812bac385aa8ab84f33c5db05740a4267d",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/areaCode.ts",
+      "originalSHA256": "76c966f067b5a3cf508350856355ce0e8dc65bdb60172d9fca867abaf92883c4",
+      "targetSHA256": "7121a1a2dee3e017d1364b83c1ca0b89e70568027dc93bf139880a22a48ead5a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/ConfigModal.tsx",
+      "originalSHA256": "bc40e00b624853dea719076263ed442bde319e521aabf3040bffdcf2c56573c4",
+      "targetSHA256": "f1a654594a839a10132621c63dd8ed3b88cbb6dacf5fa5859c722a0aa153b361",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/index.tsx",
+      "originalSHA256": "81b0ef8e95ce266aa3f5c6b13f3f92f9b3c0ae80bdfbf1bdaccebb0738aacf6b",
+      "targetSHA256": "98151a79b1eb2cf226be2475f681d7a3af363af71648265eab83552426506631",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/LoginForm.tsx",
+      "originalSHA256": "8db600ac08bfd00cb6626c2c8adafbfd0104b945ac01ab50032322551ec3af27",
+      "targetSHA256": "efe3e54c9c1fe6b5d41021d25cee345c9b631f1bd11ef7093ddec20ff0d6d542",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/ModifyForm.tsx",
+      "originalSHA256": "61d8843f2d025432e99490ad23d6bda7a90b620050829f5279304d8519affff3",
+      "targetSHA256": "f435958b6b4ce4fa22ca51d8b4d1afb3eab91c53dc07cc84e086fea955b55814",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/login/RegisterForm.tsx",
+      "originalSHA256": "0c8a3358bab07f2d844165399082cc2a6f58eac28310372d7d3f4a5c0a5cbb46",
+      "targetSHA256": "5fca6b94250ba381d736ebea986c6b278e5098bd47375142859f5355f1a8ba8e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/about/index.tsx",
+      "originalSHA256": "813e070988e5115d9fe44814e041b2d9d05c584b4f8ae8aea0cd0b301d7a5889",
+      "targetSHA256": "c176c94459b2f1f3fa8d0a884dfe08113e96c1f3cd3f8b8a941d416b498b3032",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/blackList/index.tsx",
+      "originalSHA256": "d580cbabb5db34674593c86b0c1278fcedddf90d9089ec075208c8530c2bdf1d",
+      "targetSHA256": "e71f352bbeb488376f17dedb6926791713c415a378af3303abaa7ae9e21a2bd4",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/changePassword/index.tsx",
+      "originalSHA256": "e28c0f823e63f87675e3dbceb7baffca0c41a388829772870adbc047c2f721ca",
+      "targetSHA256": "ca11aedc2584778dae19a79bf2efba6f8b62b3cb7aaeeea67a29ed5b0436d21c",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/chooseContact/index.tsx",
+      "originalSHA256": "6ceb54ab1f1adc3c7b4c0eaabe7de412539ee488cc04f7f3353c42fee61b9b3a",
+      "targetSHA256": "12fb3b53ee093272a561b2e4cbd4e2e99110958dfab36a904939e8279f6d79da",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/moments/index.tsx",
+      "originalSHA256": "37e76a6435ab53afc7e567d4efdbc1cb5593cdb031bf0fc11cad107d693432ce",
+      "targetSHA256": "70bc144e517d4b17712484fadfdd8ffb0dcbdf6036c02d5f2b2e9d2a8f9bdcee",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/third/personalSettings/index.tsx",
+      "originalSHA256": "92447dfb2dade32619b710b8231d2a14a2b0c0d532c3296a1a7fc87f4a983d3f",
+      "targetSHA256": "afb262bbb94925b58f25117699e1031d407d2772857997bb43c4b1406ef0136e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/groupNotifications/index.tsx",
+      "originalSHA256": "e3214793abcfdc8763fee04f1264c71bedd9cb4e792c134d9b0cb4961b3ee888",
+      "targetSHA256": "19b9908f7b972125646fe616de8f2cebc1c69b345b2ef10a7411cfca6687c77e",
+      "sdkMethods": [
+        "acceptGroupApplication",
+        "refuseGroupApplication"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/myFriends/AlphabetIndex.tsx",
+      "originalSHA256": "60c9ab3bbc11365f38b9438574e9b203ac85e0f62e62f73a79d4c6c80b837ea1",
+      "targetSHA256": "1abb8003975d1757622344ee2f6e86fc754dbfd11a7d51e7864deee2f1ca82cf",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/myFriends/FriendListItem.tsx",
+      "originalSHA256": "ed2fc1ea5b353379421b7fbe6f0342fe6c6544982368fe86110fcfea2e56c5e2",
+      "targetSHA256": "3d1082849910475a3c37e95b9e29671055b3b3aa1c538bf35b93eeb162f761ee",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/myFriends/index.tsx",
+      "originalSHA256": "b17234bf60ff7b5dd618072f0ae5d44c662677ecaac49a63f445dca1aa4f9016",
+      "targetSHA256": "4a788f723cdf76c2995cf359cf9927368a542329e135163954c440fb7c8dc3ff",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/myGroups/GroupListItem.tsx",
+      "originalSHA256": "a05e213eb0a9891bae9df69ccaae19579776ba603428863103b4b109a3124911",
+      "targetSHA256": "b361ae597fcc3855b68b1c4edf65b6132527ac4fbd415b65ad741b83c8718a03",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/myGroups/index.tsx",
+      "originalSHA256": "a89db105ae81444579187e7bd6ffaebde3982f0ec2033ab9a87e8813bddb9d27",
+      "targetSHA256": "6d99403bcf01d34de0c12d64e8ba214667c8e4e6388212e742fa3c5f70bde011",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/contact/newFriends/index.tsx",
+      "originalSHA256": "c70e6eea3cbb4a5f44938464da4547a6ef76faac67e15c516fcafaca7ece38b8",
+      "targetSHA256": "288da7ebfa7c7240c8ed2821c4019c7cbd3753a8e9fe0ed01598b406580e5cb0",
+      "sdkMethods": [
+        "acceptFriendApplication",
+        "refuseFriendApplication"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/ChooseModal/index.tsx",
+      "originalSHA256": "4caef704f3326079f92572c9c7d772afe5c21f25d0a0cb47d0b76d519e482ae0",
+      "targetSHA256": "9d724258cc7721384eda4421acb47be3c76bf958b8e6e85ad207e2eede90d31d",
+      "sdkMethods": [
+        "createCardMessage",
+        "createCustomMessage",
+        "createForwardMessage",
+        "createGroup",
+        "createMergerMessage",
+        "createTextMessage",
+        "inviteUserToGroup",
+        "isJoinGroup",
+        "kickGroupMember",
+        "transferGroupOwner",
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/ChatLogsPanel.tsx",
+      "originalSHA256": "4ecd1b3e2b8a780cb9ff86feca29cb29f6117bd0ae9f9295be70ce1487f4e4ee",
+      "targetSHA256": "5ea8fbe2ff64d55301637a610f348c8186cb3915172a925c3bdd506d88d229ca",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/ContactPanel.tsx",
+      "originalSHA256": "6c3c0042b1fd83c5bd9c3537c98acf5ab134f1cf0cb1472dd0426f4ead9a64e7",
+      "targetSHA256": "fc7283b99cc8e907850f212ff86006061b92c2938b7df12795d718edcc20df5a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/DashboardPanel.tsx",
+      "originalSHA256": "1775b202320d560e6af112dd5e22ed0f03857f2411e251e7af5e9866238ff655",
+      "targetSHA256": "f78a58b828ca0002acb18edbb3dffcc98bbe40ef788db7a209fa89a85f4784e4",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/FilePanel.tsx",
+      "originalSHA256": "a578d3596fdd470b288ca1c3f0663d74af2cd856ed34a6a6dc77509a35163835",
+      "targetSHA256": "38071c5755617d4752815f9d644ddc7e3cb629521ac042fd85d87b7a10066f51",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/index.tsx",
+      "originalSHA256": "dc2150f14041d14640ae72331c1c3a4edd9398558368c1eefce973410b7c4d42",
+      "targetSHA256": "09218346a29f0709b5fd26c396d9abf56eb52ca50316ac34d5838e0c27d269e4",
+      "sdkMethods": [
+        "searchFriends",
+        "searchGroups",
+        "searchLocalMessages"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/useKeyPage.ts",
+      "originalSHA256": "d3a707c9238b0633825de4125ee7922b73b994574b709d25ce8ed59178c80ad6",
+      "targetSHA256": "fb2f216f532f453a4b5146bc8ce75620457dd491fa72398fc5b9b5b074cb9583",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GlobalSearchModal/ViewFileInFinder.tsx",
+      "originalSHA256": "3e6bb88dd217610f3f98a952ae4d2981617e875a529d82d2fc51b33197e67f80",
+      "targetSHA256": "20feb60a870e2f50da281ce18df7610c8bb4ce0c24c7c63acfe4198a906afd5c",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/GroupCardModal/index.tsx",
+      "originalSHA256": "6d38cc84d3c632086089b9245ca498de6b8416f718aea8cc7eea2fd1fc8d823c",
+      "targetSHA256": "7faa558956e27ed9bc8d869e4afa8d15ef2a549407ca2ec134522ea60ae8d6ff",
+      "sdkMethods": [
+        "joinGroup"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingManageModal/data.ts",
+      "originalSHA256": "4572e5c432a81f3b581bc5a4a919894a2009f715e09f47c21d08f9128e9a34d1",
+      "targetSHA256": "5702ebb53910c8d772326b73a62f23076ab6524f88429d3387cdf8fda221a15b",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingManageModal/index.tsx",
+      "originalSHA256": "11547ceb11d5ccea21db59846d0ead5ac3356ab31ef0335746cd62db9b71e050",
+      "targetSHA256": "6e8394d97c66fdceb6b7fc66bc4418975f5ff953b6414c999fc0816051d4f916",
+      "sdkMethods": [
+        "signalingCloseRoom",
+        "signalingJoinMeeting"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingManageModal/MeetingDisplay.tsx",
+      "originalSHA256": "d540006f22695a3fb2f96b045f9a0274fa231a0a2630f6d48bc2015f9876614c",
+      "targetSHA256": "26164e2feafe7ecd23b0db4e6b4cb8f6bf082edcfdaf06fc54dde3bd56bdd4dc",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingManageModal/MeetingPrepare.tsx",
+      "originalSHA256": "91a0dab47356911dc73b66a60cf24fde9d793504dd56b029485bc4b4fb8b9d99",
+      "targetSHA256": "c53cced3551645bfad9390c731dff0928a8b7150c71286036bb5cda7ac1402b4",
+      "sdkMethods": [
+        "getUsersInfoWithCache",
+        "signalingCreateMeeting",
+        "signalingGetMeetings",
+        "signalingUpdateMeetingInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingManageModal/OrderOrJoinMeeting.tsx",
+      "originalSHA256": "02f822ffad7a17f04ae96cbfd71aed7ee20359c38302aeb82409f47b177f975c",
+      "targetSHA256": "b07cfb77f162d6e7f9920833150626d700df4fa7678a684ffa85be0898e2fe55",
+      "sdkMethods": [
+        "signalingCreateMeeting",
+        "signalingUpdateMeetingInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/data.ts",
+      "originalSHA256": "7ea3249c3d5be2a7c7503e4cd82df8812dd267bd489dcbf5e6227163d65e5c13",
+      "targetSHA256": "d5876077b0f36561a44c094858ace0e8616b347133142bfa8904ca37a549e291",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/index.tsx",
+      "originalSHA256": "e619eabbd15a3ab2029f4a2113240f527556b786bfd9187d2c6433b9dc1a2e7e",
+      "targetSHA256": "3edbb00fc3704d611007595690806a2940e37a82dc5917c0803ecf551e96c704",
+      "sdkMethods": [
+        "signalingCloseRoom"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/index.tsx",
+      "originalSHA256": "ab5b72aa79402131edfebafba7c8ac14b0ed3444e390060bb5afc2e8ecb7d721",
+      "targetSHA256": "50f04ddc8645f0355cf8122ea2614c2ce272561d6fad3a61552e2f0fbea1b3af",
+      "sdkMethods": [
+        "off",
+        "on"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/Counter.tsx",
+      "originalSHA256": "1ea67f15658d15a255101cb3e3890ef6507d5d5b09b6a77302d7705a62d8098f",
+      "targetSHA256": "3863a9c018e96e96bd4a6abe6d68cbff800f1d1c7838b80fd4d9e68ae2a0f417",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/data.ts",
+      "originalSHA256": "30c9700323f2aca8eb2e3f9f82fa0a712eb6416f2290b1e71897f54d5198833b",
+      "targetSHA256": "02b8fba4e41dcbf1410b1bbefa8d8011270aac1f0aaeb4649eb70822f5250b8e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/GroupProfile.tsx",
+      "originalSHA256": "c7f74be26b8cb868bc5216ebd8222930bb7055d44334b2d9b43b0af20889bdec",
+      "targetSHA256": "50adff84b464fba68f61140a3cffb9241e06c5ef7f443f5a8ff337ca8d7af0e0",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/index.tsx",
+      "originalSHA256": "cf33a4030df0203789540133f005711c3a24aa87ff00867925444088d345f8d4",
+      "targetSHA256": "a555336fdf13086a0403abc48e7ad51c3d17af4eba9681e72846279fd6096522",
+      "sdkMethods": [
+        "signalingGetTokenByRoomID"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/RtcControl.tsx",
+      "originalSHA256": "8652af26006ba7c72840bb8c6d3b773782e63ead905a266f5c7a6c3d7e1768fe",
+      "targetSHA256": "536d5ca632196750fb1c6f116c41e0b4ec48f7c1743779eebf66b148f0c72fae",
+      "sdkMethods": [
+        "createCustomMessage",
+        "insertSingleMessageToLocalStorage",
+        "off",
+        "on",
+        "signalingAccept",
+        "signalingCancel",
+        "signalingHungUp"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/RtcLayout.tsx",
+      "originalSHA256": "333aa66266cdd89eda2e8a948207c2938d75240e48639c0d03b76ad03d9e729a",
+      "targetSHA256": "606f7d0211251336fecf055b32adcacd9ca12aa6f20ca2edc4cc037769b01428",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/UserCardModal/CardActionRow.tsx",
+      "originalSHA256": "0a603f6b253f378d4e285c612a490e9b71697651f7eee640c6778de7dc0200a2",
+      "targetSHA256": "17522e59987d9b9ffe3a376406be22a72939e2a484db3be6c418d8b3d4cc785c",
+      "sdkMethods": [
+        "deleteFriend"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/UserCardModal/EditSelfInfo.tsx",
+      "originalSHA256": "e7657469c0ddc182f1b0c41b34114e245423d9c438ee39cc9b5352a106b1e750",
+      "targetSHA256": "3d27a27433a059cd6ff200a637b40b21d32676e16cb476e6e367ccab30b21976",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/UserCardModal/index.tsx",
+      "originalSHA256": "a9a8b31d710a768feeb83fc581dc17593e236022bee8c95eb06f834406a2e6a7",
+      "targetSHA256": "c8d8d0559915eaa7b4482a253edc71842d8b469d243d852b156a2e154ad46d8b",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo",
+        "getUsersInfoWithCache",
+        "off",
+        "on",
+        "setFriendRemark"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/UserCardModal/SendRequest.tsx",
+      "originalSHA256": "407bf85058caefde91c82e572282330107134d7a0f2f6f50bfbcbcb507a7e03b",
+      "targetSHA256": "097f7e1e1102a8bfc7ba734c74f891b8c0e600127234d8585f23464624421e71",
+      "sdkMethods": [
+        "addFriend"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/VideoPlayerModal/index.tsx",
+      "originalSHA256": "da35de471049f1a6eb88304b85e3a221709eaed1f595b5dc3f9ff6f4d24d79b8",
+      "targetSHA256": "c839fb94c15ad75740c5bd137f63c9b9e52616f9572b6756ccf3d48286609493",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/GroupCallingLayout/GroupTrackItem.tsx",
+      "originalSHA256": "3b6f74184939f29600928dd89cc405ce23af73a8b31843315cb444b2aafa77c8",
+      "targetSHA256": "14117448d682e7bd0eb6b6db9c55cb8adb0815292a4edc4c4f3512cb2149f872",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/RtcCallModal/GroupCallingLayout/index.tsx",
+      "originalSHA256": "99e4457145434e518763f5fcc7e567ad34b1f7f75aad85f5efd2e6654cdce2a6",
+      "targetSHA256": "6fa236e5a2987ad91b992b8c45a7a241acf1540e719a772ba8cb57cf2efe571c",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsHeader/index.tsx",
+      "originalSHA256": "b7c0f0385faf1668ff364d690d674e1c957b5746ec5efe99fb49c4bff704fbda",
+      "targetSHA256": "83189b6529fe6e26b4d2cd8360ef3e85fa8fb838c68bb6cd4207d1cf4f13fa21",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsHeader/MomentsMessageList.tsx",
+      "originalSHA256": "5d9790aa857590b4c2e1354bb9c3d4a2d5f3b0287afb0f5c32160f7bef4e8ad6",
+      "targetSHA256": "0ce2d77de1b8e09b292a8f1de6964aa2215da3464d66fda1df0094ef192e7c9a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsHeader/PublishMenu.tsx",
+      "originalSHA256": "1ba933f008b755c8b02fb5cbe070595b9109a29bd971adcf45db490dbd60bf0c",
+      "targetSHA256": "026235dd9dbe8de0ca7303500026288ea43652adfa667d0946e8a41537467777",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsItemRender/CommentInput.tsx",
+      "originalSHA256": "3e66b35f7fb2c138053f61d5ddfcdb92e67cc2769a65625b6e065b4688fafc51",
+      "targetSHA256": "abcc27a13bca9e0dfc3228c7c9a24ef7f5bbfc56721201fae3397541764d51cd",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsItemRender/CommentRow.tsx",
+      "originalSHA256": "2c46a1015ab3f53968c7b9967f1a89cf38b110e028cdc48b9ab5146df49d0dd8",
+      "targetSHA256": "655cf651b79d767a6d7ba1fc8d3a26d19cdc4cb499d9ca7285c81ab0d81da12e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsItemRender/index.tsx",
+      "originalSHA256": "816c234c4d9068321c6d0ffa7517691937bfcb5f28aff2c0901cf5dd98ca32c7",
+      "targetSHA256": "66b625a575e6715c3edf4520965e61245d1c243246b16977175bb3a5a990c229",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/MomentsItemRender/MomentsMediaRow.tsx",
+      "originalSHA256": "6d27be327c88fc0055127f7b5ca1d1806b7dae02c2c8df92b7d6f97cb691f137",
+      "targetSHA256": "25d2f648e3cd7615bd86a47290e030319b99d69d05549274a232117d7ad85e41",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/PublishModal/index.tsx",
+      "originalSHA256": "6c647f2d63e68c69ff693d7309ce410a27d0829387de8938b2a1cf5c44a8d4f1",
+      "targetSHA256": "333cce00ebff3ea253c8d7575836cfb4283927a548e3aa6e2e9eead0b04240fa",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/PublishModal/PermissionSelect.tsx",
+      "originalSHA256": "81032a538b1f51ea5163ba64ec8a88d5aba40226cfdf510e11bbc1a3907b6d3c",
+      "targetSHA256": "2700ab4dfc5e0fa3d74116226f7e8de11b0cf64a1a3744733cffe804bf3e03a6",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MomentsModal/PublishModal/PrepareContent.tsx",
+      "originalSHA256": "b44b8682c426d88b2f389a00f4e8a598ba173de3479c09c78a5096aecb0fdfa7",
+      "targetSHA256": "9ec73c0bcdfa1c9f616226f20863d91aab340e2087797cf63369816f22bba2b2",
+      "sdkMethods": [
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/AllInOneVideoGrid.tsx",
+      "originalSHA256": "4262abe04e996e73fe1ac1405554775d40c2317555745890b9669b28cf34eac9",
+      "targetSHA256": "c4a3e6317cdef012b59aa2e02f43d829367bd749695bd333a0a37741030d248b",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/index.tsx",
+      "originalSHA256": "f5d158d085ec348cc444f69e4aab676f1bbe108a93aaa4dde289b8d1dcd090d3",
+      "targetSHA256": "81a728228d223fd534e72e3b863ccaced0a1f43538cd4c2c4ced0cecee236331",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/MeetingActionRow.tsx",
+      "originalSHA256": "d46938dffa3e217be4a8b3b2df5117bfe14e127f469a41733d7afc49e63a947c",
+      "targetSHA256": "cda493c072c572cc8b18ef9d8b3aef8457a43d7b5104e6bf59b6e3c6fc3c9285",
+      "sdkMethods": [
+        "off",
+        "on",
+        "signalingUpdateMeetingInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/NomalVideoGrid.tsx",
+      "originalSHA256": "4ea59bd514eb34b4b3f934be7e33a36db579edc16210b2c4ddc9424183274b30",
+      "targetSHA256": "1b11f5242ab7c484fdedc248eb8d16922466dffef131043f4521180ed71b9dd6",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/VideoMemberItem.tsx",
+      "originalSHA256": "dd18ff22b59e703a3f35108a0caa0cc2559c4199f4253cec7bd7613948b58585",
+      "targetSHA256": "2c2e4bf7e75fdc73da2d1ddf763b35f428a13b4147f69f45c59092efb94e3842",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingMain/VoiceMemberItem.tsx",
+      "originalSHA256": "12fb3bd44c81d74f9c01439cf21a5ea26d0af44e7b8dd93742ad4617197a4589",
+      "targetSHA256": "42a0bebc1cc62c05c63493d4040114e68c0c3f4929400ffb36b33cd5c86ec993",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingSlider/index.tsx",
+      "originalSHA256": "fcf209d260147752b52f740c55a0635cb64f3e80e670a1105910f67483f47445",
+      "targetSHA256": "65702742a5733b566ebcc2057e62d1c5b454d1d1b9c6d5ee6fdc5879a5539901",
+      "sdkMethods": [
+        "signalingUpdateMeetingInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/MeetingSlider/SliderMemberItem.tsx",
+      "originalSHA256": "1b7f42ad2ea703f3214c174b7f8450fd373d2f9af92ea10ba3e86cf443026c34",
+      "targetSHA256": "54695d3018d621254fa8c3cb5ecd89aa7a59dd028f08017c4e08f17e2252fe4c",
+      "sdkMethods": [
+        "signalingOperateStream",
+        "signalingUpdateMeetingInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/sorting/base-sort-functions.ts",
+      "originalSHA256": "7aa12c734a746428d560e2b594999bbf96de0a089a78fd017785163c73376ddb",
+      "targetSHA256": "6675f2b273f02ca0035d05580aa582034db5e8362020edb720327c7eead24a15",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/sorting/index.ts",
+      "originalSHA256": "3a1df45d2d7d4c6cba6f66edaf95cbbb867f1fc71a07271db17d5fbcc829d5fd",
+      "targetSHA256": "b9edf66954471e0bc898f209084d0d60a9ce1f3e7b40adfa299dccff5a6177ef",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/sorting/sort-participants.ts",
+      "originalSHA256": "57dc22284ae30dbf93dab601d014bedf2c02023769598423b4bfaef053b21ba4",
+      "targetSHA256": "015e36d249321cbbd812b9541d60b27de0a61efed657717c453c2fa5765021a9",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/MeetingModal/sorting/sort-track-bundles.ts",
+      "originalSHA256": "45e3f5e488fc483d679ceb3df63615bd1cffaf50710638b768e836c44d9e337a",
+      "targetSHA256": "0a4a0257894f8971481cb60c2b723839f1cf1b7a0ec17ab89531e38188aa712a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/ChooseModal/ChooseBox/CheckItem.tsx",
+      "originalSHA256": "0cd52c2fb5d092a78ed56f4cdeee41ec6ee17e218ea303f0afd4fa077f7668f3",
+      "targetSHA256": "ce9e73dc3e28a9b689d21563028af21bdc7c403d2299ca5124c7b38d670b2302",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/ChooseModal/ChooseBox/index.tsx",
+      "originalSHA256": "1aec96213a79c0eb509b61b1a99d6887166895c821b7b46478432d73b373c98a",
+      "targetSHA256": "8d2de162e5c8e27fe7e5e6f674f6ef97ae91d3f227798aeedbc877a1bac474ec",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/common/ChooseModal/ChooseBox/MenuItem.tsx",
+      "originalSHA256": "64f0ac714db15a1164b09ebe823bf040bdafccbdb0495f8bfc00d3d4a0e7d995",
+      "targetSHA256": "bd5a0d265478bc1eeef7ab38cbed8c1c62f95e43e8e0c940ca2c7561060a6811",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/ConversationSider/ConversationItem.tsx",
+      "originalSHA256": "bd8b5882c10ae90217dfa0d8c0153132c62959b9b92b2e7669f05e3c8af2b867",
+      "targetSHA256": "9fe944330fe3ebcff75826ed403d587e44086c1493d065e330e9e871857a1b00",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/ConversationSider/ConversationMenuContent.tsx",
+      "originalSHA256": "e230de2ccbb5778ba7462f4a40e83dc7c54a1e09ea71260353d853ab577c3da9",
+      "targetSHA256": "6213aabab94567dcd682c790e5a8cce850d1eff11e14d053242f9058399adca2",
+      "sdkMethods": [
+        "deleteConversationAndDeleteAllMsg",
+        "markConversationMessageAsRead",
+        "pinConversation"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/ConversationSider/index.tsx",
+      "originalSHA256": "d53010763b9d4cce2f37e6e00de70e49c6ee89447349e2d3583a3f9866b7710f",
+      "targetSHA256": "23208d15e6b7904614c046dcc6cdd86edbbdf7367a976f6ce25dd63862c2b03a",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/ConversationSider/useDropFileAndDom.tsx",
+      "originalSHA256": "ae466c0eaf10bee0a18745fe830721d0352c4978cc6646fc8c7d27243bc60ac2",
+      "targetSHA256": "f16783248a4cd6622ed14034774e9dce49387bf52440af6763bb8657905760bb",
+      "sdkMethods": [
+        "createForwardMessage",
+        "getSpecifiedGroupMembersInfo",
+        "getSpecifiedGroupsInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatContent.tsx",
+      "originalSHA256": "3fc20ee95c762e91127b260502f879dd23e0c3ef9dd2697348cb03fd250011ae",
+      "targetSHA256": "d28f52426631fb0b02f6a13cddc7319f0089282a9778bf3c4cfee49b883a2c87",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupAnnouncementDrawer.tsx",
+      "originalSHA256": "9f8368bbc778d6ff14fbbd7ea0303e8ce4988df4626414ab10fe680be3257d45",
+      "targetSHA256": "fe1704458cd863ae18086f7f7aaa4da676813cf56bfce58e4e741908dc34b529",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo",
+        "setGroupInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/index.tsx",
+      "originalSHA256": "21ce6e8996e81e38fc02cbcebf3f713e711a65936910168f2e46ad20a4407aa0",
+      "targetSHA256": "011082ccdf557d05df09fbff0bcff9e7b4b4097c5fcb66ab9716e7286f34a274",
+      "sdkMethods": [
+        "setConversationDraft"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MediaPreview.tsx",
+      "originalSHA256": "44e6632cd177c9da0e2fffd1d66c355fd379ed6771557ec3820a1abe9fb23583",
+      "targetSHA256": "c3d6a190ad0bcfe7cc0ed1a066d3b8598c46b3146ccb93dbb00401f2f0441465",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MsgDestructSetting.tsx",
+      "originalSHA256": "3d42b77110a0c6733d0947bfbb1bf4c06ab83c45fbfbee7dba0c1cfab2a046d6",
+      "targetSHA256": "b28a7b709e93003e878b95b1a96fcf68e78d6c1e01d392084f5853d7883439e7",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/NotificationMessage.tsx",
+      "originalSHA256": "e870986c192f67e8627a792b17027bc3239c0621eb6589d8e6d32d0a0a329e9f",
+      "targetSHA256": "eef7b2b927f2705ebc072812aa2bb965e0e59172dff13c0cab6e38beba8af65b",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SystemNotification.tsx",
+      "originalSHA256": "e3342b49a8b33bc0f652957bfe4df4f2620ece6d07be945b965222f163bf5c64",
+      "targetSHA256": "24799a2870ab4adca6c52a1407eb5a19d066f3b524108246adafc7df062da730",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/UnreadMessageSlider.tsx",
+      "originalSHA256": "df90bd95799ec1d276cf67f0cfc2ac9c6a0c0afcc6bc920f1a79df44f7018093",
+      "targetSHA256": "8995fec35f101b06c0e3fdbfb8f92efcda8aac5880d2dfeaa3603e469a780108",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/useConversationState.ts",
+      "originalSHA256": "5ec8024b74ea545cd4813874f2f64b8cfe67bc219d307717e479b7c766adafa6",
+      "targetSHA256": "c0e181845b8c173abe6d35153c8e74e486ca0fe3b6ca3fc24a8f20fbb5cb0191",
+      "sdkMethods": [
+        "markConversationMessageAsRead",
+        "resetConversationGroupAtType"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/useDropAndPaste.tsx",
+      "originalSHA256": "45ab16613865261001648f57f3ba3ceef5b51d7aba4e68e0958e9d4e8dcdd062",
+      "targetSHA256": "714b50cb443a610b491cdfc903a7d89afb2cae8f7d439928b5f9ab50bb686ab3",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/useMessageReceipt.ts",
+      "originalSHA256": "38cf319765cf22ca575e5d29f29da15c6d44cd089a1da357eaa7c818237f4b13",
+      "targetSHA256": "98d8ffbcb2bd93c70b5d69b0e1ae2131d86369287d57add7a8216980cb381e58",
+      "sdkMethods": [
+        "off",
+        "on"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/AtSearchPanel.tsx",
+      "originalSHA256": "4647d876cb1f312207e19bcaea34ee2c2843085f4334c42ad5e5499bb8f97141",
+      "targetSHA256": "0733840fdfb7408f1a78aa1a832a0ed9b86e8e178e650d30eeda5dc9abbf54aa",
+      "sdkMethods": [
+        "getGroupMemberList",
+        "searchGroupMembers"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/index.tsx",
+      "originalSHA256": "d3545545314be3a62f01a4a1abe49a783a43ccee457dde3cd9bc639c60084f40",
+      "targetSHA256": "285f12e38811983214e1e110f99546682c9bd7d5b8f9e36ca81110aa81e668dd",
+      "sdkMethods": [
+        "createQuoteMessage",
+        "createTextAtMessage",
+        "createTextMessage",
+        "setConversationDraft",
+        "typingStatusUpdate"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/MultipleActionBar.tsx",
+      "originalSHA256": "44d9f9030342ce7e0e328c52737ffd1228ee358f949b1ce4b7951d04c5e9a399",
+      "targetSHA256": "da404f7e9948c29421369531dbea287ee762f0ffed252ba66d2ca96e641c0d0a",
+      "sdkMethods": [
+        "deleteMessage",
+        "deleteMessageFromLocalStorage"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/useDropDomOnly.tsx",
+      "originalSHA256": "b8b7da243864ba1e3c5a73ae29247b4a467bd137993ae31911834585b37c97b1",
+      "targetSHA256": "4767174fee2d4fee9f9b4a0fe9a41e3b8b422ad9b376794610448c6607d4cc37",
+      "sdkMethods": [
+        "createForwardMessage"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/useSendMessage.ts",
+      "originalSHA256": "23150eaf9ff7cf73dd9bcb2cdedc7bcf0c6c3d316bb40570f709316522f68e39",
+      "targetSHA256": "0171e4a93eb98a77bdd911f4bfa9f4f9202f5f3212da219c798aef5f371f398c",
+      "sdkMethods": [
+        "sendMessage"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatHeader/GroupAnnouncementCard.tsx",
+      "originalSHA256": "98c055ade4188e56fe51775dd08cbd4449fef3d7c942b658cfe605c594702ed0",
+      "targetSHA256": "e4c1aee4600d754c207318f85b4277a6d74e09d17cc4936f99b521a206b04347",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo",
+        "resetConversationGroupAtType"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatHeader/GroupCallingCard.tsx",
+      "originalSHA256": "2c43e13b086f4c5448dd6de17906b705f6fec55ccb80594128d6ebeb04bcf490",
+      "targetSHA256": "6a1a15a92c0324e4452cb3acb6e64011d7661b2a594f04a3d1e860241bcb5233",
+      "sdkMethods": [
+        "getSpecifiedGroupMembersInfo",
+        "signalingGetRoomByGroupID"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatHeader/index.tsx",
+      "originalSHA256": "0fe87ea306571aa9eeca2fd1de5fb871a0dd75dc6c3bbab27ed9140d0d07d1fa",
+      "targetSHA256": "d96eb2cbe0760c793e9b557b6c194fce373c561cde4bcceada09da42c62b4db1",
+      "sdkMethods": [
+        "off",
+        "on",
+        "subscribeUsersStatus",
+        "unsubscribeUsersStatus"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/GroupMemberList.tsx",
+      "originalSHA256": "828c5080f7c3f1568e7225c30f150a95b49e4f7e8413bfc69ebf42a0b3e29512",
+      "targetSHA256": "f46a54d80001bec425975391dc11f0155222cf8090e582a537ea46f082b923b0",
+      "sdkMethods": [
+        "changeGroupMemberMute",
+        "kickGroupMember",
+        "setGroupMemberInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/GroupMemberListHeader.tsx",
+      "originalSHA256": "bf1caedc1657ec99f41f8fb66f8d6645705819b6e90f657e5a4abead42e64ae4",
+      "targetSHA256": "33f17450f699c15c013f9b39f46b5124e76a0c42c07be02df433204b4b97dc45",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/GroupMemberRow.tsx",
+      "originalSHA256": "548ed008b96f262ad04b8ab02b7ad700efcea43c31eb5772b5def2186a035b98",
+      "targetSHA256": "859540b2b0206b54f97b216c4c39c34211db6074dbf0b9c9acec525fca9f1fa2",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/GroupSettings.tsx",
+      "originalSHA256": "03da24f408f4060eb2beda2777faf1de24a1e852926b72d9d75916321317e67a",
+      "targetSHA256": "30c701bd9252fecf3c42bbd7ebff4b6f9d0646b3801bab82cd9fa5f4b232c9b8",
+      "sdkMethods": [
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/index.tsx",
+      "originalSHA256": "fa6593b9c0290f8b3830c5c368c2b952758a497e3b98a60b93dcc30fc7cc51ed",
+      "targetSHA256": "6936fe5fd6626cbdbaa0e4c9a42f821845c5b17eff4b4db5b3587289891b9f3d",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/MemberPermissionSelectContent.tsx",
+      "originalSHA256": "9af868c6e148c048595bbb85a14cd15a2a665be76b80b4c4fb35165227cb04b4",
+      "targetSHA256": "95c32a04d650c3c6d8d6f74d33a6aef3027cc44cb6f2d5de0ccebb052ff9ba07",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/useGroupSettings.tsx",
+      "originalSHA256": "2c9b98d183e5c121fd3f4772627a8a2780e4a98c4f7e62dde08eb702501958f7",
+      "targetSHA256": "b1dd6690080e5f9a10f7e1ae1e502528b7b9cf210ce5dfb889065f7959a4d48e",
+      "sdkMethods": [
+        "changeGroupMute",
+        "dismissGroup",
+        "quitGroup",
+        "setGroupInfo",
+        "setGroupMemberInfo"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/GroupSetting/VerificationSelectContent.tsx",
+      "originalSHA256": "d27665ae60f53d5ab684fff5bffe62247c401a5800f981b91cf327e28aa5d7c8",
+      "targetSHA256": "011202bdc803773f6707ea6514330760f11facd8407cdbe63b5d97086ab39066",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/AnnouncementRender.tsx",
+      "originalSHA256": "eee9f997e4a53f4abc48770cf042eafa7c3909f602dfda49edd03305eac0312d",
+      "targetSHA256": "e566010846c20147c36e34f3fb375b1fc0062acc93e19a78d95c3e506ecedf93",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/CardMessageRenderer.tsx",
+      "originalSHA256": "524317bd7fe491214f6337a17f0b90ac13eb4df0c062f203b1707a1fd0475863",
+      "targetSHA256": "efe89c334b76c1668671abfa7cc3ce9a0b51e6b6075ad2f5db246682e19f3777",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/CatchMsgRenderer.tsx",
+      "originalSHA256": "af21eb57e048757210dbacf1ecfb59f8def0f8d52d496256097e0411ed290c2d",
+      "targetSHA256": "e4f48d1426842b8cc9a18949a70b945c521337d178c4102aabfe9444edf379f2",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/CustomMessageSwitcher.tsx",
+      "originalSHA256": "4a772e5ffeac9deaea11449103176975b6d0a60380462598171a923e3c0cb3bc",
+      "targetSHA256": "38e059b281135d489527a14e3e8f08ff166f9618856dbc1a467e9b27f34d15fc",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/FaceMessageRender.tsx",
+      "originalSHA256": "4c4655243ecb520755bae4fe5009a4bdd225ca9189a8a3f627a204299f85b3aa",
+      "targetSHA256": "74178e3fc783ad06576e031582f9e63b6a9bb8e58966448bdf2e2844323f2817",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/FileMessageRenderer.tsx",
+      "originalSHA256": "22decf4a443ac1b38e685a3d48c0e2f793157edea1079ea1da82155eb9e58147",
+      "targetSHA256": "06c34fa439ebf2614da545a5d0c342f11802441567ec9054b470a57edfe83aac",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/index.tsx",
+      "originalSHA256": "86653fb7fe10180730a5d439ab7df793803bcae7312d3ae003d29f5bc248a338",
+      "targetSHA256": "39f8e192995270565993eca41fa885fa85067fb2e5f90ae96099367ceb30b35f",
+      "sdkMethods": [
+        "sendGroupMessageReadReceipt"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/LocationMessageRenderer.tsx",
+      "originalSHA256": "a0ab1972f258d643a37be371399b3df73753c93e6f5764670ffc67c50e99e960",
+      "targetSHA256": "21dbb37041587e251f11b3f370cc305aecbd707e581129c07403015818e025c0",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MassMessageRenderer.tsx",
+      "originalSHA256": "46bb85415678f3d8888a87c386585afa4bf79e0fdd865e67a7bc995ef71148e9",
+      "targetSHA256": "0043a798e846369cef6a1dd41920639a6a606e022791f584c4ca05b91f7c07c4",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MediaMessageRender.tsx",
+      "originalSHA256": "5b4f7991ecde3eb8cbc7bdc265976b2b383689d5f0c1eeaf25665a427e83a97d",
+      "targetSHA256": "d9d9116ba4d5d4a4874c3707584568d2b0e8daa44696d813b0b1b8c14fa7d327",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MeetingMessageRender.tsx",
+      "originalSHA256": "5dc501227859f4f02b8326db4a5759f5584a8ed3c29c671941814e8fc92ec69f",
+      "targetSHA256": "69990f09d4b9b4a2956bc71164ae047176e224d5476cd07d6c912806e5f21bb5",
+      "sdkMethods": [
+        "signalingJoinMeeting"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MergeMessageRenderer.tsx",
+      "originalSHA256": "7b278f4d34369e2224ad795c4b1c533ee37d47acdedd79048c249aa172d60bf8",
+      "targetSHA256": "4bc5a6ac27f53d5de7a326c2bd14b941d4137130afccd1376e32c48d849f881e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MessageItemErrorBoundary.tsx",
+      "originalSHA256": "63c56b7b8babf73dc09b2170a42ea0ce0338ef5067f609c760951134e0e84413",
+      "targetSHA256": "c4a968accc99c0a52c0bcb9c150ca1e38bb2d03b8885e81ec06157344b8ff959",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MessageMenuContent.tsx",
+      "originalSHA256": "854f5eadd558b6fd8c45d441a6eea66f081f9c62b5744dce6eebca164fd4e173",
+      "targetSHA256": "c8484b346991b60aedd9f458d34e96a302661adb8fbddc557c94f92812543f5b",
+      "sdkMethods": [
+        "deleteMessage",
+        "revokeMessage"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MessageReadState.tsx",
+      "originalSHA256": "23b8ff603c677d4d47601ac5ca04eb193aa56da54e4f73a311c0e030f28ed315",
+      "targetSHA256": "63cf4acb538835860a6f6517f52968b2efed58dfbf4393ab6fcffbcc4dfdd40e",
+      "sdkMethods": [
+        "getGroupMessageReaderList",
+        "off",
+        "on"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/MessageSuffix.tsx",
+      "originalSHA256": "a1000b4d3853d47fc2916b9c2f9ff71474fb68c0fcfd9d91596eef1d0b65642d",
+      "targetSHA256": "d094dd7c2c6ab5fe6945adf240511878df617a62916846df5a9b451eeb278995",
+      "sdkMethods": [
+        "deleteMessage",
+        "fileMapSet"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/QuoteMessageRenderer.tsx",
+      "originalSHA256": "f246d938414acaf7378d225996abdd1116e0b433fcbd8533fbf9c5c76c7d830a",
+      "targetSHA256": "9ffb399e12890d00fa6220f8d63312493fdac723018bb8efa9352e86063162e0",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/RtcMessageRender.tsx",
+      "originalSHA256": "951830250f163ce3b36cd64ddff43a6dbd4127d119de6b90b8f5e32ddaf42bac",
+      "targetSHA256": "e7abe28fd54e8eb9891c376e6439e2205916bc1a392a7f449dd6e98a352e5472",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/TextMessageRender.tsx",
+      "originalSHA256": "b37d88c60ab54d201d00691927ae9fa70b4afae46e6b3d43eb97814c04c2847b",
+      "targetSHA256": "f9e1c36f9b0705e792d9ca9be48753d8c01ea2e7f88a7ba54a8032e25b0667f5",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/useMessageUploadProgress.tsx",
+      "originalSHA256": "90eaae8f3d764d4df7cdd2db7039dc88f204f33914a27137f06077453289b6f3",
+      "targetSHA256": "98238b280de095c5b931b2e04a52ff8c24b180d0f752e36b874556ddad665fbc",
+      "sdkMethods": [
+        "off",
+        "on"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/MessageItem/VoiceMessageRender.tsx",
+      "originalSHA256": "50d38bbb4a9238bca24d26dfe7f897cb0f02058b240198145343e3a9cce9fec7",
+      "targetSHA256": "d31e855f0fb5356757f29f0dd26b91deb0d44dee0c4ed133fe96eb89dc560098",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SearchMessageDrawer/FileMessagePane.tsx",
+      "originalSHA256": "6faeaf01dde198207c0453af54b43a6bb357d007ce98cb8bd49cdb5463303298",
+      "targetSHA256": "a0cbf55efd70eb1b57a624aeb3f0ccc10a7fa2e1d5db73b6dcb426b472424311",
+      "sdkMethods": [
+        "searchLocalMessages"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SearchMessageDrawer/index.tsx",
+      "originalSHA256": "5cccfdccfcfbe2b5bfeb636d4fb45209a07d0c5fa3c9c7ca1e34a2fb979c77fc",
+      "targetSHA256": "f2687cc3b1a0d4c424d14495d0bca1fe3b42bcb705564ba1eef627510afe40e1",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SearchMessageDrawer/MediaMessagePane.tsx",
+      "originalSHA256": "d82044b36aca12b05f2ed44ae7a9ea654d86d4345aa35ff76d047efe25244127",
+      "targetSHA256": "204864dc87077084e2e042e4b338c0bfa264d5224ff16dc27542abb29b953913",
+      "sdkMethods": [
+        "searchLocalMessages"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SearchMessageDrawer/MessageSearchBar.tsx",
+      "originalSHA256": "e73bc7f61f1377be66fdb8023311fb78c52b4d3eeee039b1d8974d0c658c182e",
+      "targetSHA256": "73e8a0dbfe932880e6b9ba82c87e51293282adef77c064b6f99e85468819dc76",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SearchMessageDrawer/NomalMessagePane.tsx",
+      "originalSHA256": "080f146301e0f7c312c5e3465cecba8566e8afa2a52498ebc28c8844788c9adb",
+      "targetSHA256": "22608d39b12fa5b63ca34696679c7e9d473fc6273abf26f8ad947bb69fa7e79d",
+      "sdkMethods": [
+        "searchLocalMessages"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/SingleSetting/index.tsx",
+      "originalSHA256": "f68b80fb2a41ede12ee0db3d5d6e69330037ffb9708f7c7746f62d21ca96ae5c",
+      "targetSHA256": "5b08a50b27086ded6e2097c8e678a8c1be20650517d7135dab51fd81b27140f5",
+      "sdkMethods": [
+        "deleteFriend"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/SendActionBar/CallPopContent.tsx",
+      "originalSHA256": "8358a8e43c4e933cb5636f1a21e26b6c2e6de273fe80865e5d69cea73cec2e16",
+      "targetSHA256": "b1082972d004f1d6a4d311352eb28eb8a3281e9e196e826a6fc98ac8e635ed50",
+      "sdkMethods": [
+        "signalingGetRoomByGroupID"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/SendActionBar/CutPopContent.tsx",
+      "originalSHA256": "48587111a3bc9f82a785b0b8b57c6f38de203e4fba4cef508069455d365b5b90",
+      "targetSHA256": "27dd7fb8f4bcc220f2ee2e6de16521454018d00c0a01cb98a8d3c737bfbefc89",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/SendActionBar/EmojiPopContent.tsx",
+      "originalSHA256": "ca6e8053d8f5a5e830e7e1f89109ad69a89da9e0fca33994a1f21c4ae0eff02b",
+      "targetSHA256": "34b8bf28952fdf7c7e571b1304aa6796886bae8c6f878fa261e2948b4bcbfec7",
+      "sdkMethods": [
+        "createFaceMessage",
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/SendActionBar/index.tsx",
+      "originalSHA256": "3cc87f5cdec94f9fdb6b8fb678ae01077cad529561efe4234cb57a3881f18fd6",
+      "targetSHA256": "8b4a97685ef65aaeb6922cf202e87a0ff41a524e18a1eace0f05cebdb2dd3960",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/pages/chat/queryChat/ChatFooter/SendActionBar/useFileMessage.ts",
+      "originalSHA256": "0a583dd95e46619c81f365a30a9b6d5acbcff93dff4190d8c7b8a41ac9094a53",
+      "targetSHA256": "75bbd2c0535e22e9fad01c80f28ffe6defe44dfd739705d82f2f3babd66094d4",
+      "sdkMethods": [
+        "createFileMessageByFile",
+        "createImageMessageByFile",
+        "createVideoMessageByFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/LeftNavBar/About.tsx",
+      "originalSHA256": "b333c5923f5d031e0e68ea9e0d8851fac6b19b32f2377c41ad5247a3d8839255",
+      "targetSHA256": "bfc8a9836dac80ddcdb897cca5d11a502dd80e7ab2488d3ee777dc6d55c5a642",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/LeftNavBar/BlackList.tsx",
+      "originalSHA256": "56ec51b3667cfe13f807a8368ed820be85eb980b650902884107f25b155b4afc",
+      "targetSHA256": "be8949bea57ed023580d64917cd83e08b9d72de8842b27e7e100612de806a856",
+      "sdkMethods": [
+        "removeBlack"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/LeftNavBar/ChangePassword.tsx",
+      "originalSHA256": "88716b0326f9ea065fd25d8b32f70967b1ccb0b024209aaa82f6b0b3b73e51b2",
+      "targetSHA256": "560684cee727ff09ccd09d44efff8b1738d732619d6e7c89360bbac88855d777",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/LeftNavBar/index.tsx",
+      "originalSHA256": "358a4ef74deac0b7d1c66823bbcbdb41583980cf6622dc4f5c88c43213315ddb",
+      "targetSHA256": "fe72fcab53d5b5171205dcbf3c11cfd96d9f890cda4d1126643e8fe652e59f12",
+      "sdkMethods": [
+        "uploadFile"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/LeftNavBar/PersonalSettings.tsx",
+      "originalSHA256": "9c8a6cc38963db6fa50bd84227f89a217920a6c0496e4db5025b085f1360ccfd",
+      "targetSHA256": "0cba4222f3414efd2194aa3eeda23b88184dde32da25d81b0e20008edb9980da",
+      "sdkMethods": [
+        "deleteAllMsgFromLocalAndSvr",
+        "setGlobalRecvMessageOpt"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/TopSearchBar/index.tsx",
+      "originalSHA256": "d4a78e0948bc1c4aba94a316ac38424f129981f5315fe4671edace956b0c548a",
+      "targetSHA256": "6c0c0d9e628f5b9927e3b2486301f5e1f6dfdaa27b74bf625d58aef9caf32848",
+      "sdkMethods": [
+        "off",
+        "on"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/layout/TopSearchBar/SearchUserOrGroup.tsx",
+      "originalSHA256": "baade807cf39f62a0689e2d11eb9ddb13a7dd9b50e9b74e694f104cddec4c320",
+      "targetSHA256": "60dfa970b4c25f06a23c014bb4d7f116c9a87c967c13540b7e655a16b75a86ea",
+      "sdkMethods": [
+        "getSpecifiedGroupsInfo",
+        "getUsersInfoWithCache"
+      ],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/ApplicationItem/index.tsx",
+      "originalSHA256": "a1c069b055d39dfc86c4580dc77b6f250c46f2f7dee925477fefdfa60dd8adf5",
+      "targetSHA256": "77eb8d7a45d526fd04a750b867c59db1d6545243b3f87cda2df11b1c92dbe244",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/CacheImage/index.tsx",
+      "originalSHA256": "78d356c68dbc0d962386d5e0c3bd6c394c676c6f3b643a904850ff9dc8cefdb7",
+      "targetSHA256": "48d33b0d6a0b0192a852f6024c0593668b4e195b0c8b414d73d059c4721b54b5",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/DraggableModalWrap/index.tsx",
+      "originalSHA256": "f5a67bbf958f50165fa24a637ff4616e02d8cd9b82a2dd78b3236514f77ac7d0",
+      "targetSHA256": "7d21c69cca71c1053ad074304d615ffa1bc86acc53e07f0cc87fdf3247668cad",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/EditableContent/index.tsx",
+      "originalSHA256": "ae5eccfd427add39200c916b9e1a9f62fc20954ff4074f273425b286a0a4f014",
+      "targetSHA256": "f157da35fea27f63bc3bffc7719583efedb3153e3b3017db90830383b672aed1",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/EditableDiv/index.tsx",
+      "originalSHA256": "a8e1360253ebefce74915368de559ed58e42fdb2cda2f06583f2c998d11ebe26",
+      "targetSHA256": "d07ada1e7bd0d54a59680c450d1d37e5d565174d66060642e3b1797dd308fad5",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/ErrorBoundary/index.tsx",
+      "originalSHA256": "71ba6a45bf01a1cb09d14f086eb5d159b5847b936915198186c7ab8cf725bfd9",
+      "targetSHA256": "a0ae8bc0b7439fafa5ae83615d9f40a4a559918c3a799dfa817308c802e79e95",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/FlexibleSider/index.tsx",
+      "originalSHA256": "f9d4c1b9d52058178d2bf544411cc8eb5978f77bf4ec29c5efec5c07d6cb7d4f",
+      "targetSHA256": "6130c88f61459c437741387048bc89d7b23c6b8bbbd0ea1fc4ebd16bfb19839d",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/JumpToMessageWrap/index.tsx",
+      "originalSHA256": "0c47789c9712c9a46e131d240818213e2386ccb0815b1f3277189386ba87947a",
+      "targetSHA256": "bb677789b5baee69e7c88cd16608ed25ff3ee834f284a510fd856724552ce7b2",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/OIMAvatar/index.tsx",
+      "originalSHA256": "978d17f51c47aad9738028b03ecfd25e0fc04934a6f5921e4ebb72cc9f730ecf",
+      "targetSHA256": "89c544efb4f962e940df485276ab567ff62bef0a048b6746f33e162b93aa74ff",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/PreviewToolsBar/index.tsx",
+      "originalSHA256": "6dc6ea0650a41077607efb3f6585170867d083ed6fc4d6779e2916e48ca7e3ce",
+      "targetSHA256": "da85e08788228c5f88648b5c4a143aa6560e69709a7b5d9c87096604b9856630",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/SettingRow/index.tsx",
+      "originalSHA256": "2c6e45223533caeb82e1245af06d9c83239cdeb9a0aaf64700e6b5b9ada6078e",
+      "targetSHA256": "0e8d014f4ce76aefe40a237bfffd27672aea3cd1876d462f547a7478644a3dc3",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/Twemoji/index.tsx",
+      "originalSHA256": "754dac475aab67a34e76538cfa7e0aa4f23b4faa17fd10d91771975010dd3fc0",
+      "targetSHA256": "8a0bf03f3977b12594c4f8077bc131de3679a5ac19d91082a9b53a374ffc714e",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/Twemoji/type.d.ts",
+      "originalSHA256": "1e0e7c5c263a744acd077c951e3fdd6c4e656193e160d6a03e5e68cd0c6f2ace",
+      "targetSHA256": "5cc358ef16c460f3a1de5a3bcf974db29f3a178d1da284565c3d4a6487f3dc5b",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/VideoPlayer/index.tsx",
+      "originalSHA256": "e598d9d25bd425a44a88dc782b7233ca0d416c8262e88e5795b9d4be039568c8",
+      "targetSHA256": "9b341465659bdc7d20344c807f5d3722eaf3f0cd14bb2972f9d1aa03d3ab3921",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    },
+    {
+      "source": "src/components/WindowControlBar/index.tsx",
+      "originalSHA256": "80be800eac5882531a4295378a50859ca9a8ca399a17b97fe951ac49ecd26b08",
+      "targetSHA256": "10a71512f331dfc1bd257858280761b9bf663309732821b5a92128b84a21c18f",
+      "sdkMethods": [],
+      "apiPaths": [],
+      "runtimeAcceptance": "see feature-level evidence; no per-file runtime claim"
+    }
+  ],
+  "featureEvidence": [
+    "../../tests/web-desktop/meeting-client.json",
+    "../../tests/web-desktop/seq-client.json",
+    "../../tests/web-desktop/enterprise-data-client.json",
+    "../../tests/web-desktop/windows-logout-source-3.8.5.json",
+    "../../tests/web-desktop/android-cross-client.json",
+    "../../tests/web-desktop/social-client.json",
+    "../../tests/web-desktop/update-gate.json"
+  ],
+  "applicationVersion": "3.8.5",
+  "build": 380501
+}

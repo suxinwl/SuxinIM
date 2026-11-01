@@ -1,0 +1,800 @@
+// Copyright 2023 LiveKit, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package service
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"maps"
+	"math/rand"
+	"net/http"
+	"os"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
+	"go.uber.org/atomic"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/logger"
+	"github.com/livekit/psrpc"
+
+	"github.com/livekit/livekit-server/pkg/config"
+	"github.com/livekit/livekit-server/pkg/routing"
+	"github.com/livekit/livekit-server/pkg/rtc"
+	"github.com/livekit/livekit-server/pkg/telemetry"
+	"github.com/livekit/livekit-server/pkg/telemetry/prometheus"
+	"github.com/livekit/livekit-server/pkg/utils"
+)
+
+const (
+	// how long the response source is drained after the request direction is gone,
+	// applies only when the source is not closed by the relay, i. e. when there is
+	// no way to tell that everything pending has been read
+	responseFlushTimeout = 250 * time.Millisecond
+
+	// how long the response pump is given to stop, a bit more than the drain deadline
+	// so that it can finish the write it is in when that deadline expires
+	responsePumpDoneTimeout = 2 * responseFlushTimeout
+)
+
+type RTCService struct {
+	router        routing.MessageRouter
+	roomAllocator RoomAllocator
+	upgrader      websocket.Upgrader
+	config        *config.Config
+	isDev         bool
+	limits        config.LimitConfig
+	telemetry     telemetry.TelemetryService
+
+	mu          sync.Mutex
+	connections map[*websocket.Conn]struct{}
+}
+
+func NewRTCService(
+	conf *config.Config,
+	ra RoomAllocator,
+	router routing.MessageRouter,
+	telemetry telemetry.TelemetryService,
+) *RTCService {
+	s := &RTCService{
+		router:        router,
+		roomAllocator: ra,
+		config:        conf,
+		isDev:         conf.Development,
+		limits:        conf.Limit,
+		telemetry:     telemetry,
+		connections:   map[*websocket.Conn]struct{}{},
+	}
+
+	s.upgrader = websocket.Upgrader{
+		EnableCompression: true,
+
+		// allow connections from any origin, since script may be hosted anywhere
+		// security is enforced by access tokens
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+	return s
+}
+
+func (s *RTCService) SetupRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/rtc", s.v0)
+	mux.HandleFunc("/rtc/validate", s.v0Validate)
+	mux.HandleFunc("/rtc/v1", s.v1)
+	mux.HandleFunc("/rtc/v1/validate", s.v1Validate)
+}
+
+func (s *RTCService) v0Validate(w http.ResponseWriter, r *http.Request) {
+	lgr := utils.GetLogger(r.Context())
+	_, _, code, err := s.validateInternal(lgr, r, false, true)
+	if err != nil {
+		HandleError(w, r, code, err)
+		return
+	}
+	_, _ = w.Write([]byte("success"))
+}
+
+func (s *RTCService) v1Validate(w http.ResponseWriter, r *http.Request) {
+	lgr := utils.GetLogger(r.Context())
+	_, _, code, err := s.validateInternal(lgr, r, true, true)
+	if err != nil {
+		HandleError(w, r, code, err)
+		return
+	}
+	_, _ = w.Write([]byte("success"))
+}
+
+func decodeAttributes(str string) (map[string]string, error) {
+	data, err := base64.URLEncoding.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+	var attrs map[string]string
+	if err := json.Unmarshal(data, &attrs); err != nil {
+		return nil, err
+	}
+	return attrs, nil
+}
+
+var errJoinRequestTooLarge = errors.New("join request too large")
+
+func (s *RTCService) validateInternal(
+	lgr logger.Logger,
+	r *http.Request,
+	needsJoinRequest bool,
+	strict bool,
+) (livekit.RoomName, routing.ParticipantInit, int, error) {
+	if claims := GetGrants(r.Context()); claims == nil || claims.Video == nil {
+		return "", routing.ParticipantInit{}, http.StatusUnauthorized, rtc.ErrPermissionDenied
+	}
+
+	var params ValidateConnectRequestParams
+	useSinglePeerConnection := false
+	joinRequest := &livekit.JoinRequest{}
+
+	wrappedJoinRequestBase64 := r.FormValue("join_request")
+	if wrappedJoinRequestBase64 == "" {
+		if needsJoinRequest {
+			return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("join_request is required")
+		}
+
+		params.publish = r.FormValue("publish")
+
+		attributesStrParam := r.FormValue("attributes")
+		if attributesStrParam != "" {
+			attrs, err := decodeAttributes(attributesStrParam)
+			if err != nil {
+				if strict {
+					return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("cannot decode attributes")
+				}
+				lgr.Debugw("failed to decode attributes", "error", err)
+				// attrs will be empty here, so just proceed
+			}
+			params.attributes = attrs
+		}
+	} else {
+		useSinglePeerConnection = true
+		if wrappedProtoBytes, err := base64.URLEncoding.DecodeString(wrappedJoinRequestBase64); err != nil {
+			return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("cannot base64 decode wrapped join request")
+		} else {
+			wrappedJoinRequest := &livekit.WrappedJoinRequest{}
+			if err := proto.Unmarshal(wrappedProtoBytes, wrappedJoinRequest); err != nil {
+				return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("cannot unmarshal wrapped join request")
+			}
+
+			switch wrappedJoinRequest.Compression {
+			case livekit.WrappedJoinRequest_NONE:
+				if len(wrappedJoinRequest.JoinRequest) > http.DefaultMaxHeaderBytes {
+					return "", routing.ParticipantInit{}, http.StatusBadRequest, errJoinRequestTooLarge
+				}
+				if err := proto.Unmarshal(wrappedJoinRequest.JoinRequest, joinRequest); err != nil {
+					return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("cannot unmarshal join request")
+				}
+
+			case livekit.WrappedJoinRequest_GZIP:
+				protoBytes, err := DecompressGzip(wrappedJoinRequest.JoinRequest)
+				if err != nil {
+					switch {
+					case errors.Is(err, ErrGzipTooLarge):
+						err = errJoinRequestTooLarge
+					case errors.Is(err, ErrGzipReadFailed):
+						err = errors.New("cannot read decompressed join request")
+					}
+					return "", routing.ParticipantInit{}, http.StatusBadRequest, err
+				}
+
+				if err := proto.Unmarshal(protoBytes, joinRequest); err != nil {
+					return "", routing.ParticipantInit{}, http.StatusBadRequest, errors.New("cannot unmarshal join request")
+				}
+			}
+
+			params.metadata = joinRequest.Metadata
+			params.attributes = joinRequest.ParticipantAttributes
+		}
+	}
+
+	res, code, err := ValidateConnectRequest(
+		lgr,
+		r,
+		s.limits,
+		params,
+		s.router,
+		s.roomAllocator,
+	)
+	if err != nil {
+		return res.roomName, routing.ParticipantInit{}, code, err
+	}
+
+	pi := routing.ParticipantInit{
+		Identity:                livekit.ParticipantIdentity(res.grants.Identity),
+		Name:                    livekit.ParticipantName(res.grants.Name),
+		Grants:                  res.grants,
+		APIKey:                  GetAPIKey(r.Context()),
+		TokenExpiresAt:          res.tokenExpiresAt,
+		Region:                  res.region,
+		CreateRoom:              res.createRoomRequest,
+		UseSinglePeerConnection: useSinglePeerConnection,
+	}
+
+	if wrappedJoinRequestBase64 == "" {
+		pi.Reconnect = boolValue(r.FormValue("reconnect"))
+		pi.Client = ParseClientInfo(r)
+
+		pi.AutoSubscribe = true
+		if autoSubscribeParam := r.FormValue("auto_subscribe"); autoSubscribeParam != "" {
+			pi.AutoSubscribe = boolValue(autoSubscribeParam)
+		}
+
+		if autoSubscribeDataTrackParam := r.FormValue("auto_subscribe_data_track"); autoSubscribeDataTrackParam != "" {
+			autoSubscribeDataTrack := boolValue(autoSubscribeDataTrackParam)
+			pi.AutoSubscribeDataTrack = &autoSubscribeDataTrack
+		}
+
+		pi.AdaptiveStream = boolValue(r.FormValue("adaptive_stream"))
+		pi.DisableICELite = boolValue(r.FormValue("disable_ice_lite"))
+
+		reconnectReason, _ := strconv.Atoi(r.FormValue("reconnect_reason")) // 0 means unknown reason
+		pi.ReconnectReason = livekit.ReconnectReason(reconnectReason)
+
+		if pi.Reconnect {
+			pi.ID = livekit.ParticipantID(r.FormValue("sid"))
+		}
+
+		if subscriberAllowPauseParam := r.FormValue("subscriber_allow_pause"); subscriberAllowPauseParam != "" {
+			subscriberAllowPause := boolValue(subscriberAllowPauseParam)
+			pi.SubscriberAllowPause = &subscriberAllowPause
+		}
+	} else {
+		lgr.Debugw("processing join request", "joinRequest", logger.Proto(joinRequest))
+
+		if joinRequest.ClientInfo == nil {
+			joinRequest.ClientInfo = &livekit.ClientInfo{}
+		}
+		AugmentClientInfo(joinRequest.ClientInfo, r)
+		pi.Client = joinRequest.ClientInfo
+
+		pi.AutoSubscribe = joinRequest.GetConnectionSettings().GetAutoSubscribe()
+
+		autoSubscribeDataTrack := joinRequest.GetConnectionSettings().GetAutoSubscribeDataTrack()
+		pi.AutoSubscribeDataTrack = &autoSubscribeDataTrack
+
+		pi.AdaptiveStream = joinRequest.GetConnectionSettings().GetAdaptiveStream()
+		pi.DisableICELite = joinRequest.GetConnectionSettings().GetDisableIceLite()
+
+		if cs := joinRequest.GetConnectionSettings(); cs != nil && cs.SubscriberAllowPause != nil {
+			v := cs.GetSubscriberAllowPause()
+			pi.SubscriberAllowPause = &v
+		}
+
+		pi.AddTrackRequests = joinRequest.AddTrackRequests
+		pi.PublisherOffer = joinRequest.PublisherOffer
+
+		pi.Reconnect = joinRequest.Reconnect
+		pi.ReconnectReason = joinRequest.ReconnectReason
+		pi.ID = livekit.ParticipantID(joinRequest.ParticipantSid)
+	}
+
+	return res.roomName, pi, code, err
+}
+
+func (s *RTCService) v0(w http.ResponseWriter, r *http.Request) {
+	s.serve(w, r, false)
+}
+
+func (s *RTCService) v1(w http.ResponseWriter, r *http.Request) {
+	s.serve(w, r, true)
+}
+
+func (s *RTCService) serve(w http.ResponseWriter, r *http.Request, needsJoinRequest bool) {
+	// reject non websocket requests
+	if !websocket.IsWebSocketUpgrade(r) {
+		w.WriteHeader(404)
+		return
+	}
+
+	startedAt := time.Now()
+	var (
+		roomName            livekit.RoomName
+		roomID              livekit.RoomID
+		participantIdentity livekit.ParticipantIdentity
+		pID                 livekit.ParticipantID
+		joinDuration        time.Duration
+		loggerResolved      bool
+
+		pi   routing.ParticipantInit
+		code int
+		err  error
+	)
+
+	pLogger, loggerResolver := utils.GetLogger(r.Context()).WithDeferredValues()
+
+	getLoggerFields := func() []any {
+		return []any{
+			"room", roomName,
+			"roomID", roomID,
+			"participant", participantIdentity,
+			"participantID", pID,
+			"joinDuration", joinDuration,
+		}
+	}
+
+	resolveLogger := func(force bool) {
+		if loggerResolved {
+			return
+		}
+
+		if force {
+			if roomName == "" {
+				roomName = "unresolved"
+			}
+			if roomID == "" {
+				roomID = "unresolved"
+			}
+			if participantIdentity == "" {
+				participantIdentity = "unresolved"
+			}
+			if pID == "" {
+				pID = "unresolved"
+			}
+			if joinDuration == 0 {
+				joinDuration = time.Since(startedAt)
+			}
+		}
+
+		if roomName != "" && roomID != "" && participantIdentity != "" && pID != "" {
+			loggerResolved = true
+			loggerResolver.Resolve(getLoggerFields()...)
+		}
+	}
+
+	resetLogger := func() {
+		loggerResolver.Reset()
+
+		roomName = ""
+		roomID = ""
+		participantIdentity = ""
+		pID = ""
+		loggerResolved = false
+	}
+
+	roomName, pi, code, err = s.validateInternal(pLogger, r, needsJoinRequest, false)
+	if err != nil {
+		prometheus.IncrementParticipantJoinValidationFail(1)
+		resolveLogger(true)
+		HandleError(w, r, code, err, getLoggerFields()...)
+		return
+	}
+
+	participantIdentity = pi.Identity
+	if pi.ID != "" {
+		pID = pi.ID
+	}
+	pLogger.Debugw("join request validated", append(getLoggerFields(), "participantInit", &pi)...)
+
+	// give it a few attempts to start session
+	var cr connectionResult
+	var initialResponse *livekit.SignalResponse
+	for attempt := 0; attempt < s.config.SignalRelay.ConnectAttempts; attempt++ {
+		connectionTimeout := time.Duration(3+attempt) * time.Second
+		ctx := utils.ContextWithAttempt(r.Context(), attempt)
+		cr, initialResponse, err = s.startConnection(ctx, roomName, pi, connectionTimeout)
+		if err == nil || errors.Is(err, context.Canceled) {
+			break
+		}
+	}
+
+	if err != nil {
+		prometheus.IncrementParticipantJoinFail(1)
+		status := http.StatusInternalServerError
+		var psrpcErr psrpc.Error
+		if errors.As(err, &psrpcErr) {
+			status = psrpcErr.ToHttp()
+		}
+		resolveLogger(true)
+		HandleError(w, r, status, err, getLoggerFields()...)
+		return
+	}
+
+	pLogger = pLogger.WithValues("connID", cr.ConnectionID)
+	if !pi.Reconnect && initialResponse.GetJoin() != nil {
+		joinRoomID := livekit.RoomID(initialResponse.GetJoin().GetRoom().GetSid())
+		if joinRoomID != "" {
+			roomID = joinRoomID
+		}
+
+		pi.ID = livekit.ParticipantID(initialResponse.GetJoin().GetParticipant().GetSid())
+		pID = pi.ID
+
+		resolveLogger(false)
+	}
+
+	signalStats := rtc.NewBytesSignalStats(r.Context(), s.telemetry)
+	if join := initialResponse.GetJoin(); join != nil {
+		signalStats.ResolveRoom(join.GetRoom())
+		signalStats.ResolveParticipant(join.GetParticipant())
+	}
+	if pi.Reconnect && pi.ID != "" {
+		signalStats.ResolveParticipant(&livekit.ParticipantInfo{
+			Sid:      string(pi.ID),
+			Identity: string(pi.Identity),
+		})
+	}
+
+	closedByClient := atomic.NewBool(false)
+	done := make(chan struct{})
+	// closed by the response pump when it has stopped writing to the web socket
+	responsePumpDone := make(chan struct{})
+	responsePumpStarted := false
+	var sigConn *WSSignalConnection
+	// function exits when websocket terminates, it'll close the event reading off of request sink and response source as well
+	defer func() {
+		resolveLogger(true)
+		pLogger.Debugw("finishing WS connection", "closedByClient", closedByClient.Load())
+
+		// signal the response pump before anything else so that it can flush responses
+		// the participant queued on its way out, a leave request sent just before the
+		// signalling connection was closed (on migration for example) is dropped otherwise
+		close(done)
+		cr.RequestSink.Close()
+		if responsePumpStarted {
+			select {
+			case <-responsePumpDone:
+			case <-time.After(responsePumpDoneTimeout):
+				pLogger.Debugw("timed out waiting for response pump to finish")
+			}
+		}
+		cr.ResponseSource.Close()
+
+		// close the web socket on all paths, even when the response pump is wedged
+		// writing to an unresponsive client
+		if sigConn != nil {
+			sigConn.CloseWithReason("")
+		}
+
+		signalStats.Stop()
+	}()
+
+	// upgrade only once the basics are good to go
+	conn, err := s.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		prometheus.IncrementParticipantJoinUpgradeFail(1)
+		resolveLogger(true)
+		HandleError(w, r, http.StatusInternalServerError, err, getLoggerFields()...)
+		return
+	}
+	// bound the size of a single signalling frame so an oversized message is
+	// rejected by the transport before being fully buffered in memory. This limits
+	// the compressed bytes read off the wire; the decompressed size is bounded
+	// separately in WSSignalConnection below.
+	if s.limits.SignalMessageSizeLimit > 0 {
+		conn.SetReadLimit(s.limits.SignalMessageSizeLimit)
+	}
+
+	s.mu.Lock()
+	s.connections[conn] = struct{}{}
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		delete(s.connections, conn)
+		s.mu.Unlock()
+	}()
+
+	// websocket established
+	sigConn = NewWSSignalConnection(conn, s.limits.SignalMessageSizeLimit)
+	pLogger.Debugw("sending initial response", "response", logger.Proto(initialResponse))
+	count, err := sigConn.WriteResponse(initialResponse)
+	if err != nil {
+		prometheus.IncrementParticipantJoinWriteInitialResponseFail(1)
+		resolveLogger(true)
+		pLogger.Warnw("could not write initial response", err)
+		return
+	}
+	signalStats.AddBytes(uint64(count), true)
+
+	prometheus.IncrementParticipantJoin(1)
+	joinDuration = time.Since(startedAt)
+	prometheus.RecordSessionJoinLatency(int(pi.Client.GetProtocol()), joinDuration)
+
+	pLogger.Debugw(
+		"new client WS connected",
+		"reconnect", pi.Reconnect,
+		"reconnectReason", pi.ReconnectReason,
+		"adaptiveStream", pi.AdaptiveStream,
+		"selectedNodeID", cr.NodeID,
+		"nodeSelectionReason", cr.NodeSelectionReason,
+	)
+
+	// writes one response from the response source to the web socket,
+	// returns false if the response pump should stop
+	writeResponse := func(msg proto.Message) bool {
+		res, ok := msg.(*livekit.SignalResponse)
+		if !ok {
+			pLogger.Errorw(
+				"unexpected message type", nil,
+				"type", fmt.Sprintf("%T", msg),
+			)
+			return true
+		}
+
+		switch m := res.Message.(type) {
+		case *livekit.SignalResponse_Offer:
+			pLogger.Debugw("sending offer", "offer", logger.Proto(res))
+
+		case *livekit.SignalResponse_Answer:
+			pLogger.Debugw("sending answer", "answer", logger.Proto(res))
+
+		case *livekit.SignalResponse_Join:
+			pLogger.Debugw("sending join", "join", logger.Proto(res))
+			signalStats.ResolveRoom(m.Join.GetRoom())
+			signalStats.ResolveParticipant(m.Join.GetParticipant())
+
+		case *livekit.SignalResponse_RoomUpdate:
+			updateRoomID := livekit.RoomID(m.RoomUpdate.GetRoom().GetSid())
+			if updateRoomID != "" {
+				roomID = updateRoomID
+				resolveLogger(false)
+			}
+			pLogger.Debugw("sending room update", "roomUpdate", logger.Proto(res))
+			signalStats.ResolveRoom(m.RoomUpdate.GetRoom())
+
+		case *livekit.SignalResponse_Update:
+			pLogger.Debugw("sending participant update", "participantUpdate", logger.Proto(res))
+
+		case *livekit.SignalResponse_RoomMoved:
+			resetLogger()
+			signalStats.Reset()
+
+			roomName = livekit.RoomName(m.RoomMoved.GetRoom().GetName())
+			moveRoomID := livekit.RoomID(m.RoomMoved.GetRoom().GetSid())
+			if moveRoomID != "" {
+				roomID = moveRoomID
+			}
+			participantIdentity = livekit.ParticipantIdentity(m.RoomMoved.GetParticipant().GetIdentity())
+			pID = livekit.ParticipantID(m.RoomMoved.GetParticipant().GetSid())
+			resolveLogger(false)
+
+			signalStats.ResolveRoom(m.RoomMoved.GetRoom())
+			signalStats.ResolveParticipant(m.RoomMoved.GetParticipant())
+			pLogger.Debugw("sending room moved", "roomMoved", logger.Proto(res))
+
+		default:
+			pLogger.Debugw("sending signal response", "response", logger.Proto(res))
+		}
+
+		if count, err := sigConn.WriteResponse(res); err != nil {
+			pLogger.Warnw("error writing to websocket", err)
+			return false
+		} else {
+			signalStats.AddBytes(uint64(count), true)
+		}
+
+		return true
+	}
+
+	// handle responses
+	responsePumpStarted = true
+	go func() {
+		defer func() {
+			close(responsePumpDone)
+
+			// when the source is terminated, this means Participant.Close had been called and RTC connection is done
+			// we would terminate the signal connection as well
+			sigConn.CloseWithReason("")
+		}()
+		defer func() {
+			if r := rtc.Recover(pLogger); r != nil {
+				os.Exit(1)
+			}
+		}()
+		for {
+			select {
+			case <-done:
+				// the request direction is gone, flush what the participant queued on its
+				// way out unless the client is the one that went away
+				if !closedByClient.Load() {
+					if !drainMessageSource(cr.ResponseSource, responseFlushTimeout, writeResponse) {
+						pLogger.Debugw("could not drain response source fully")
+					}
+				}
+				return
+
+			case msg := <-cr.ResponseSource.ReadChan():
+				if msg == nil {
+					resolveLogger(true)
+					pLogger.Debugw("nothing to read from response source")
+					return
+				}
+				if !writeResponse(msg) {
+					return
+				}
+			}
+		}
+	}()
+
+	// handle incoming requests from websocket
+	for {
+		req, count, err := sigConn.ReadRequest()
+		if err != nil {
+			if IsWebSocketCloseError(err) {
+				closedByClient.Store(true)
+			} else {
+				pLogger.Errorw("error reading from websocket", err)
+			}
+			return
+		}
+		signalStats.AddBytes(uint64(count), false)
+
+		switch m := req.Message.(type) {
+		case *livekit.SignalRequest_Ping:
+			count, perr := sigConn.WriteResponse(&livekit.SignalResponse{
+				Message: &livekit.SignalResponse_Pong{
+					//
+					// Although this field is int64, some clients (like JS) cause overflow if nanosecond granularity is used.
+					// So. use UnixMillis().
+					//
+					Pong: time.Now().UnixMilli(),
+				},
+			})
+			if perr == nil {
+				signalStats.AddBytes(uint64(count), true)
+			}
+		case *livekit.SignalRequest_PingReq:
+			count, perr := sigConn.WriteResponse(&livekit.SignalResponse{
+				Message: &livekit.SignalResponse_PongResp{
+					PongResp: &livekit.Pong{
+						LastPingTimestamp: m.PingReq.Timestamp,
+						Timestamp:         time.Now().UnixMilli(),
+					},
+				},
+			})
+			if perr == nil {
+				signalStats.AddBytes(uint64(count), true)
+			}
+		}
+
+		switch req.Message.(type) {
+		case *livekit.SignalRequest_Offer:
+			pLogger.Debugw("received offer", "offer", logger.Proto(req))
+		case *livekit.SignalRequest_Answer:
+			pLogger.Debugw("received answer", "answer", logger.Proto(req))
+		default:
+			pLogger.Debugw("received signal request", "request", logger.Proto(req))
+		}
+
+		if err := cr.RequestSink.WriteMessage(req); err != nil {
+			pLogger.Warnw("error writing to request sink", err)
+			return
+		}
+	}
+}
+
+// drainMessageSource writes messages that are still queued in source using write.
+// It is used when tearing a signalling connection down, responses the participant queued
+// on its way out, a leave request on migration for example, would be dropped otherwise.
+//
+// The producer writes all pending messages into the source before closing it, so draining
+// till the source is closed is a complete flush. The deadline is a backstop for the cases
+// where the source is not closed, i. e. when there is no way to tell that everything
+// pending has been read. Returns true if the source was drained fully.
+func drainMessageSource(source routing.MessageSource, timeout time.Duration, write func(proto.Message) bool) bool {
+	deadline := time.NewTimer(timeout)
+	defer deadline.Stop()
+
+	for {
+		select {
+		case msg := <-source.ReadChan():
+			if msg == nil {
+				return true
+			}
+			if !write(msg) {
+				return false
+			}
+
+		case <-deadline.C:
+			return false
+		}
+	}
+}
+
+func (s *RTCService) DrainConnections(interval time.Duration, force bool) {
+	s.mu.Lock()
+	conns := maps.Clone(s.connections)
+	s.mu.Unlock()
+
+	if !force {
+		// jitter drain start
+		time.Sleep(time.Duration(rand.Int63n(int64(interval))))
+
+		t := time.NewTicker(interval)
+		defer t.Stop()
+
+		for c := range conns {
+			_ = c.Close()
+			<-t.C
+		}
+	} else {
+		// drain as quickly as possible when forced
+		for c := range conns {
+			_ = c.Close()
+		}
+	}
+}
+
+type connectionResult struct {
+	routing.StartParticipantSignalResults
+	Room *livekit.Room
+}
+
+func (s *RTCService) startConnection(
+	ctx context.Context,
+	roomName livekit.RoomName,
+	pi routing.ParticipantInit,
+	timeout time.Duration,
+) (connectionResult, *livekit.SignalResponse, error) {
+	var cr connectionResult
+	var err error
+
+	if err := s.roomAllocator.SelectRoomNode(ctx, roomName, ""); err != nil {
+		return cr, nil, err
+	}
+
+	// this needs to be started first *before* using router functions on this node
+	cr.StartParticipantSignalResults, err = s.router.StartParticipantSignal(ctx, roomName, pi)
+	if err != nil {
+		return cr, nil, err
+	}
+
+	// wait for the first message before upgrading to websocket. If no one is
+	// responding to our connection attempt, we should terminate the connection
+	// instead of waiting forever on the WebSocket
+	initialResponse, err := readInitialResponse(cr.ResponseSource, timeout)
+	if err != nil {
+		// close the connection to avoid leaking
+		cr.RequestSink.Close()
+		cr.ResponseSource.Close()
+		return cr, nil, err
+	}
+
+	return cr, initialResponse, nil
+}
+
+func readInitialResponse(source routing.MessageSource, timeout time.Duration) (*livekit.SignalResponse, error) {
+	responseTimer := time.NewTimer(timeout)
+	defer responseTimer.Stop()
+	for {
+		select {
+		case <-responseTimer.C:
+			return nil, errors.New("timed out while waiting for signal response")
+		case msg := <-source.ReadChan():
+			if msg == nil {
+				return nil, errors.New("connection closed by media")
+			}
+			res, ok := msg.(*livekit.SignalResponse)
+			if !ok {
+				return nil, fmt.Errorf("unexpected message type: %T", msg)
+			}
+			return res, nil
+		}
+	}
+}

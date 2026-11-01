@@ -1,0 +1,11 @@
+--- 110/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/CameraEventsHandler.java
++++ 111/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/CameraEventsHandler.java
+@@ -15,7 +15,7 @@
+         FREEZED
+     }
+     private final static String TAG = FlutterWebRTCPlugin.TAG;
+-    private CameraState state = CameraState.NEW;
++    private volatile CameraState state = CameraState.NEW;
+ 
+     public void waitForCameraOpen() {
+         Log.d(TAG, "CameraEventsHandler.waitForCameraOpen");

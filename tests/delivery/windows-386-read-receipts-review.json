@@ -1,0 +1,134 @@
+{
+  "createdUtc": "2026-11-01T16:39:34.289477+00:00",
+  "scope": "PC/Web automatic read receipts only; no server, Android, HRM, original-source or media testing changes",
+  "rootCause": [
+    "The mounted selected conversation marked all unread on every unreadCount update even when its Electron window was hidden.",
+    "The previous effect cleanup itself issued another read request.",
+    "Message intersections remained true in hidden/unfocused windows; group cache lookup could complete after a chat switch."
+  ],
+  "changes": [
+    "Foreground document visibility and focus are both required, with shared subscriptions and listener cleanup.",
+    "Conversation automatic reads require the matching route, loaded chat content, a 150ms foreground interval and current store state at execution.",
+    "Cleanup only cancels pending work.",
+    "Per-message append/read state is gated by visibility, focus and matching current conversation.",
+    "Group receipt cache lookup rechecks a cancellation lease before the enterprise request and never serializes the local guard function."
+  ],
+  "command": [
+    "O:\\tools\\node-v22.23.4-win-x64\\node.exe",
+    "--test",
+    "tests/read-receipt-gate.test.mjs",
+    "tests/read-receipt-facade.test.mjs"
+  ],
+  "exitCode": 0,
+  "tests": {
+    "pass": 19,
+    "fail": 0,
+    "skipped": 0,
+    "actualFacadeCases": 4,
+    "gateBehaviorCases": 15,
+    "publicTestAccountsUsed": false,
+    "networkCallsUsed": false,
+    "browserOrNativeUIValidation": "Not executed by this component task; parent performs build and application validation."
+  },
+  "inputsBefore": [
+    {
+      "path": "clients/web-desktop/src/im/read-receipt-gate.ts",
+      "bytes": 3710,
+      "sha256": "f94112e157c2c80b5d155d3941a79170b4c97227d578fa9560adfc371775ce6a"
+    },
+    {
+      "path": "clients/web-desktop/src/hooks/useReadActivity.ts",
+      "bytes": 391,
+      "sha256": "fa486500fc4c818a80b49e42808cc6d1260ad3374d2596dfb71c8e80d66082a3"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/useConversationState.ts",
+      "bytes": 2263,
+      "sha256": "d733aceb590b6e5cc32532d3efc9c1eefd25480ffb0be83a00e017034a196384"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/index.tsx",
+      "bytes": 4319,
+      "sha256": "f78353570991c0a77acde93baefe19c84f16c084e6d9d697e8204721aa18ff8a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/MessageItem/index.tsx",
+      "bytes": 12495,
+      "sha256": "b5322d67ef7e192971d46c282220a58be8407c58a09f32ee67bc58daf50d638e"
+    },
+    {
+      "path": "clients/web-desktop/src/im/ImFacade.ts",
+      "bytes": 16070,
+      "sha256": "8873cef5ad4ea828c3a1380e16eebfa6f9df8d03a5394923a0e27ead8f0efc5d"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-gate.test.mjs",
+      "bytes": 8356,
+      "sha256": "ca7a613bcbcd1ce0c9549767b2cca6dd1e1fd20587bf28d53cac92d858adb002"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-facade.test.mjs",
+      "bytes": 4266,
+      "sha256": "2006c302f6e9d9e3f82b553c340b6f883f1b5fce2da6d051bf8f8ab631bdb402"
+    }
+  ],
+  "inputsAfter": [
+    {
+      "path": "clients/web-desktop/src/im/read-receipt-gate.ts",
+      "bytes": 3710,
+      "sha256": "f94112e157c2c80b5d155d3941a79170b4c97227d578fa9560adfc371775ce6a"
+    },
+    {
+      "path": "clients/web-desktop/src/hooks/useReadActivity.ts",
+      "bytes": 391,
+      "sha256": "fa486500fc4c818a80b49e42808cc6d1260ad3374d2596dfb71c8e80d66082a3"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/useConversationState.ts",
+      "bytes": 2263,
+      "sha256": "d733aceb590b6e5cc32532d3efc9c1eefd25480ffb0be83a00e017034a196384"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/index.tsx",
+      "bytes": 4319,
+      "sha256": "f78353570991c0a77acde93baefe19c84f16c084e6d9d697e8204721aa18ff8a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/MessageItem/index.tsx",
+      "bytes": 12495,
+      "sha256": "b5322d67ef7e192971d46c282220a58be8407c58a09f32ee67bc58daf50d638e"
+    },
+    {
+      "path": "clients/web-desktop/src/im/ImFacade.ts",
+      "bytes": 16070,
+      "sha256": "8873cef5ad4ea828c3a1380e16eebfa6f9df8d03a5394923a0e27ead8f0efc5d"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-gate.test.mjs",
+      "bytes": 8356,
+      "sha256": "ca7a613bcbcd1ce0c9549767b2cca6dd1e1fd20587bf28d53cac92d858adb002"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-facade.test.mjs",
+      "bytes": 4266,
+      "sha256": "2006c302f6e9d9e3f82b553c340b6f883f1b5fce2da6d051bf8f8ab631bdb402"
+    }
+  ],
+  "inputsUnchangedDuringTests": true,
+  "beforeArchive": {
+    "path": "tests/delivery/windows-386-before/read-receipts/before-manifest.json",
+    "bytes": 1470,
+    "sha256": "022b7e2992a5ce140fd8b5a9a1ad270670e10e8d56910503cf18089f73f362c5"
+  },
+  "beforeArchiveBytesVerified": true,
+  "testLog": {
+    "path": "tests/delivery/windows-386-read-receipts-tests.log",
+    "bytes": 4570,
+    "sha256": "15e9bf738391f736f4de23ad52eac44d51807f5b30689dbe6dfc896a732363ec"
+  },
+  "limits": [
+    "Existing acknowledged read receipts cannot be reverted.",
+    "Deliberate conversation-menu Mark as read remains available.",
+    "No claim of final packaged EXE acceptance from these isolated behavior tests."
+  ]
+}

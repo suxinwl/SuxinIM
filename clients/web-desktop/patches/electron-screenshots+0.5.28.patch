@@ -1,0 +1,21 @@
+diff --git a/node_modules/electron-screenshots/lib/preload.js b/node_modules/electron-screenshots/lib/preload.js
+--- a/node_modules/electron-screenshots/lib/preload.js
++++ b/node_modules/electron-screenshots/lib/preload.js
+@@ -23,7 +23,7 @@ electron_1.contextBridge.exposeInMainWorld('screenshots', {
+     },
+     save: function (arrayBuffer, data) {
+         console.log('contextBridge save', arrayBuffer, data);
+-        electron_1.ipcRenderer.send('SCREENSHOTS:save', Buffer.from(arrayBuffer), data);
++        electron_1.ipcRenderer.send('SCREENSHOTS:save', new Uint8Array(arrayBuffer), data);
+     },
+     cancel: function () {
+         console.log('contextBridge cancel');
+@@ -31,7 +31,7 @@ electron_1.contextBridge.exposeInMainWorld('screenshots', {
+     },
+     ok: function (arrayBuffer, data) {
+         console.log('contextBridge ok', arrayBuffer, data);
+-        electron_1.ipcRenderer.send('SCREENSHOTS:ok', Buffer.from(arrayBuffer), data);
++        electron_1.ipcRenderer.send('SCREENSHOTS:ok', new Uint8Array(arrayBuffer), data);
+     },
+     on: function (channel, fn) {
+         var _a;

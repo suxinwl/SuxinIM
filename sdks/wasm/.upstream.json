@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/openimsdk/openim-sdk-js-wasm",
+  "tag": "v3.8.3-patch.15.1",
+  "commit": "615d327c78c5ecf9a01a053f6889d01cb9094639",
+  "path": "sdks/wasm",
+  "archiveUrl": "https://codeload.github.com/openimsdk/openim-sdk-js-wasm/tar.gz/615d327c78c5ecf9a01a053f6889d01cb9094639",
+  "archiveSha256": "fa8894443aec6e609070e57a0fe51fd075f2713e9f29f844e2ea26bd13513bf6"
+}

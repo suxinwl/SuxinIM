@@ -1,0 +1,247 @@
+// Copyright 2023 LiveKit, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package dependencydescriptor
+
+import (
+	"errors"
+	"fmt"
+	"math"
+	"strconv"
+)
+
+// DependencyDescriptorExtension is a extension payload format in
+// https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension
+
+// ErrBufferTooSmall is returned by MarshalTo when the caller's storage cannot
+// hold the marshaled extension.
+var ErrBufferTooSmall = errors.New("dependency descriptor buffer too small")
+
+func formatBitmask(b *uint32) string {
+	if b == nil {
+		return "-"
+	}
+	return strconv.FormatInt(int64(*b), 2)
+}
+
+// ------------------------------------------------------------------------------
+
+type DependencyDescriptorExtension struct {
+	Descriptor *DependencyDescriptor
+	Structure  *FrameDependencyStructure
+}
+
+func (d *DependencyDescriptorExtension) Marshal() ([]byte, error) {
+	return d.MarshalWithActiveChains(^uint32(0))
+}
+
+func (d *DependencyDescriptorExtension) MarshalWithActiveChains(activeChains uint32) ([]byte, error) {
+	writer, size, err := d.newWriter(activeChains)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := make([]byte, size)
+	writer = writer.withBuf(buf)
+	if err := writer.Write(); err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
+// MarshalTo marshals into caller owned storage and returns the number of bytes
+// written, or ErrBufferTooSmall, leaving buf untouched, if the extension does not fit.
+func (d *DependencyDescriptorExtension) MarshalTo(buf []byte) (int, error) {
+	writer, size, err := d.newWriter(^uint32(0))
+	if err != nil {
+		return 0, err
+	}
+	if len(buf) < size {
+		// bare sentinel, key frames take this path and formatting an error there would allocate
+		return 0, ErrBufferTooSmall
+	}
+
+	writer = writer.withBuf(buf[:size])
+	if err := writer.Write(); err != nil {
+		return 0, err
+	}
+	return size, nil
+}
+
+// newWriter returns a writer for the extension, by value so that it stays on the
+// caller's stack, along with the number of bytes the marshaled extension needs.
+func (d *DependencyDescriptorExtension) newWriter(activeChains uint32) (DependencyDescriptorWriter, int, error) {
+	writer := newDependencyDescriptorWriter(nil, d.Structure, activeChains, d.Descriptor)
+	if err := writer.findBestTemplate(); err != nil {
+		return writer, 0, err
+	}
+	return writer, int(math.Ceil(float64(writer.ValueSizeBits()) / 8)), nil
+}
+
+func (d *DependencyDescriptorExtension) Unmarshal(buf []byte) (int, error) {
+	reader := NewDependencyDescriptorReader(buf, d.Structure, d.Descriptor)
+	return reader.Parse()
+}
+
+// ------------------------------------------------------------------------------
+
+const (
+	MaxSpatialIds    = 4
+	MaxTemporalIds   = 8
+	MaxDecodeTargets = 32
+	MaxTemplates     = 64
+
+	// MaxInlineExtensionSize is the inline storage the forwarding path reserves for a marshaled extension, pion's one byte profile cap
+	MaxInlineExtensionSize = 16
+
+	AllChainsAreActive = uint32(0)
+
+	ExtensionURI = "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+)
+
+// ------------------------------------------------------------------------------
+
+type DependencyDescriptor struct {
+	FirstPacketInFrame bool
+	LastPacketInFrame  bool
+	FrameNumber        uint16
+	// Unmarshal writes into FrameDependencies and Resolution when they are set, else it allocates them
+	FrameDependencies          *FrameDependencyTemplate
+	Resolution                 *RenderResolution
+	ActiveDecodeTargetsBitmask *uint32
+	AttachedStructure          *FrameDependencyStructure
+}
+
+func (d *DependencyDescriptor) MarshalSize() (int, error) {
+	return d.MarshalSizeWithActiveChains(^uint32(0))
+}
+
+func (d *DependencyDescriptor) MarshalSizeWithActiveChains(activeChains uint32) (int, error) {
+	writer, err := NewDependencyDescriptorWriter(nil, d.AttachedStructure, activeChains, d)
+	if err != nil {
+		return 0, err
+	}
+	return int(math.Ceil(float64(writer.ValueSizeBits()) / 8)), nil
+}
+
+func (d *DependencyDescriptor) String() string {
+	resolution, dependencies := "-", "-"
+	if d.Resolution != nil {
+		resolution = fmt.Sprintf("%+v", *d.Resolution)
+	}
+	if d.FrameDependencies != nil {
+		dependencies = fmt.Sprintf("%+v", *d.FrameDependencies)
+	}
+	return fmt.Sprintf("DependencyDescriptor{FirstPacketInFrame: %v, LastPacketInFrame: %v, FrameNumber: %v, FrameDependencies: %s, Resolution: %s, ActiveDecodeTargetsBitmask: %v, AttachedStructure: %v}",
+		d.FirstPacketInFrame, d.LastPacketInFrame, d.FrameNumber, dependencies, resolution, formatBitmask(d.ActiveDecodeTargetsBitmask), d.AttachedStructure)
+}
+
+// ------------------------------------------------------------------------------
+
+// Relationship of a frame to a Decode target.
+type DecodeTargetIndication int
+
+const (
+	DecodeTargetNotPresent  DecodeTargetIndication = iota // DecodeTargetInfo symbol '-'
+	DecodeTargetDiscardable                               // DecodeTargetInfo symbol 'D'
+	DecodeTargetSwitch                                    // DecodeTargetInfo symbol 'S'
+	DecodeTargetRequired                                  // DecodeTargetInfo symbol 'R'
+)
+
+func (i DecodeTargetIndication) String() string {
+	switch i {
+	case DecodeTargetNotPresent:
+		return "-"
+	case DecodeTargetDiscardable:
+		return "D"
+	case DecodeTargetSwitch:
+		return "S"
+	case DecodeTargetRequired:
+		return "R"
+	default:
+		return "Unknown"
+	}
+}
+
+// ------------------------------------------------------------------------------
+
+type FrameDependencyTemplate struct {
+	SpatialId               int
+	TemporalId              int
+	DecodeTargetIndications []DecodeTargetIndication
+	FrameDiffs              []int
+	ChainDiffs              []int
+}
+
+func (t *FrameDependencyTemplate) Clone() *FrameDependencyTemplate {
+	t2 := &FrameDependencyTemplate{
+		SpatialId:  t.SpatialId,
+		TemporalId: t.TemporalId,
+	}
+
+	t2.DecodeTargetIndications = make([]DecodeTargetIndication, len(t.DecodeTargetIndications))
+	copy(t2.DecodeTargetIndications, t.DecodeTargetIndications)
+
+	t2.FrameDiffs = make([]int, len(t.FrameDiffs))
+	copy(t2.FrameDiffs, t.FrameDiffs)
+
+	t2.ChainDiffs = make([]int, len(t.ChainDiffs))
+	copy(t2.ChainDiffs, t.ChainDiffs)
+
+	return t2
+}
+
+// CopyInto copies t into dst and reuses the slices of dst
+func (t *FrameDependencyTemplate) CopyInto(dst *FrameDependencyTemplate) {
+	dst.SpatialId = t.SpatialId
+	dst.TemporalId = t.TemporalId
+	dst.DecodeTargetIndications = append(dst.DecodeTargetIndications[:0], t.DecodeTargetIndications...)
+	dst.FrameDiffs = append(dst.FrameDiffs[:0], t.FrameDiffs...)
+	dst.ChainDiffs = append(dst.ChainDiffs[:0], t.ChainDiffs...)
+}
+
+// ------------------------------------------------------------------------------
+
+type FrameDependencyStructure struct {
+	StructureId      int
+	NumDecodeTargets int
+	NumChains        int
+	// If chains are used (num_chains > 0), maps decode target index into index of
+	// the chain protecting that target.
+	DecodeTargetProtectedByChain []int
+	Resolutions                  []RenderResolution
+	Templates                    []*FrameDependencyTemplate
+}
+
+func (f *FrameDependencyStructure) String() string {
+	str := fmt.Sprintf("FrameDependencyStructure{StructureId: %v, NumDecodeTargets: %v, NumChains: %v, DecodeTargetProtectedByChain: %v, Resolutions: %+v, Templates: [",
+		f.StructureId, f.NumDecodeTargets, f.NumChains, f.DecodeTargetProtectedByChain, f.Resolutions)
+
+	// templates
+	for _, t := range f.Templates {
+		str += fmt.Sprintf("%+v, ", t)
+	}
+	str += "]}"
+
+	return str
+}
+
+// ------------------------------------------------------------------------------
+
+type RenderResolution struct {
+	Width  int
+	Height int
+}
+
+// ------------------------------------------------------------------------------

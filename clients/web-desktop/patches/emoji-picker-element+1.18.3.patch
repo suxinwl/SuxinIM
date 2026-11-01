@@ -1,0 +1,111 @@
+diff --git a/node_modules/emoji-picker-element/database.js b/node_modules/emoji-picker-element/database.js
+index ac983fb..a660165 100644
+--- a/node_modules/emoji-picker-element/database.js
++++ b/node_modules/emoji-picker-element/database.js
+@@ -861,12 +861,12 @@ class Database {
+     addOnCloseListener(this._dbName, this._clear);
+     const dataSource = this.dataSource;
+     const empty = await isEmpty(db);
+-
+     if (empty) {
+       await loadDataForFirstTime(db, dataSource);
+-    } else { // offline-first - do an update asynchronously
+-      this._lazyUpdate = checkForUpdates(db, dataSource);
+     } 
++    // else { // offline-first - do an update asynchronously
++    //   this._lazyUpdate = checkForUpdates(db, dataSource);
++    // }
+   }
+ 
+   async ready () {
+diff --git a/node_modules/emoji-picker-element/svelte.js b/node_modules/emoji-picker-element/svelte.js
+index 94388c8..d4b6705 100644
+--- a/node_modules/emoji-picker-element/svelte.js
++++ b/node_modules/emoji-picker-element/svelte.js
+@@ -402,7 +402,7 @@ function create_each_block_4(key_1, ctx) {
+ 
+ 			attr(div, "aria-selected", div_aria_selected_value = /*i*/ ctx[66] === /*activeSkinTone*/ ctx[20]);
+ 			attr(div, "role", "option");
+-			attr(div, "title", div_title_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]]);
++			// attr(div, "title", div_title_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]]);
+ 			attr(div, "aria-label", div_aria_label_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]]);
+ 			this.first = div;
+ 		},
+@@ -428,9 +428,9 @@ function create_each_block_4(key_1, ctx) {
+ 				attr(div, "aria-selected", div_aria_selected_value);
+ 			}
+ 
+-			if (dirty[0] & /*i18n, skinTones*/ 513 && div_title_value !== (div_title_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]])) {
+-				attr(div, "title", div_title_value);
+-			}
++			// if (dirty[0] & /*i18n, skinTones*/ 513 && div_title_value !== (div_title_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]])) {
++			// 	attr(div, "title", div_title_value);
++			// }
+ 
+ 			if (dirty[0] & /*i18n, skinTones*/ 513 && div_aria_label_value !== (div_aria_label_value = /*i18n*/ ctx[0].skinTones[/*i*/ ctx[66]])) {
+ 				attr(div, "aria-label", div_aria_label_value);
+@@ -472,7 +472,6 @@ function create_each_block_3(key_1, ctx) {
+ 			attr(button, "aria-controls", button_aria_controls_value = "tab-" + /*group*/ ctx[70].id);
+ 			attr(button, "aria-label", button_aria_label_value = /*i18n*/ ctx[0].categories[/*group*/ ctx[70].name]);
+ 			attr(button, "aria-selected", button_aria_selected_value = !/*searchMode*/ ctx[4] && /*currentGroup*/ ctx[13].id === /*group*/ ctx[70].id);
+-			attr(button, "title", button_title_value = /*i18n*/ ctx[0].categories[/*group*/ ctx[70].name]);
+ 			this.first = button;
+ 		},
+ 		m(target, anchor) {
+@@ -501,9 +500,9 @@ function create_each_block_3(key_1, ctx) {
+ 				attr(button, "aria-selected", button_aria_selected_value);
+ 			}
+ 
+-			if (dirty[0] & /*i18n, groups*/ 4097 && button_title_value !== (button_title_value = /*i18n*/ ctx[0].categories[/*group*/ ctx[70].name])) {
+-				attr(button, "title", button_title_value);
+-			}
++			// if (dirty[0] & /*i18n, groups*/ 4097 && button_title_value !== (button_title_value = /*i18n*/ ctx[0].categories[/*group*/ ctx[70].name])) {
++			// 	attr(button, "title", button_title_value);
++			// }
+ 		},
+ 		d(detaching) {
+ 			if (detaching) detach(button);
+@@ -592,7 +591,7 @@ function create_each_block_2(key_1, ctx) {
+ 			: '');
+ 
+ 			attr(button, "aria-label", button_aria_label_value = /*labelWithSkin*/ ctx[28](/*emoji*/ ctx[64], /*currentSkinTone*/ ctx[8]));
+-			attr(button, "title", button_title_value = /*emoji*/ ctx[64].title);
++			// attr(button, "title", button_title_value = /*emoji*/ ctx[64].title);
+ 
+ 			attr(button, "class", button_class_value = "emoji " + (/*searchMode*/ ctx[4] && /*i*/ ctx[66] === /*activeSearchItem*/ ctx[5]
+ 			? 'active'
+@@ -634,9 +633,9 @@ function create_each_block_2(key_1, ctx) {
+ 				attr(button, "aria-label", button_aria_label_value);
+ 			}
+ 
+-			if (dirty[0] & /*currentEmojisWithCategories*/ 32768 && button_title_value !== (button_title_value = /*emoji*/ ctx[64].title)) {
+-				attr(button, "title", button_title_value);
+-			}
++			// if (dirty[0] & /*currentEmojisWithCategories*/ 32768 && button_title_value !== (button_title_value = /*emoji*/ ctx[64].title)) {
++			// 	attr(button, "title", button_title_value);
++			// }
+ 
+ 			if (dirty[0] & /*searchMode, currentEmojisWithCategories, activeSearchItem*/ 32816 && button_class_value !== (button_class_value = "emoji " + (/*searchMode*/ ctx[4] && /*i*/ ctx[66] === /*activeSearchItem*/ ctx[5]
+ 			? 'active'
+@@ -841,7 +840,7 @@ function create_each_block(key_1, ctx) {
+ 			if_block.c();
+ 			attr(button, "role", "menuitem");
+ 			attr(button, "aria-label", button_aria_label_value = /*labelWithSkin*/ ctx[28](/*emoji*/ ctx[64], /*currentSkinTone*/ ctx[8]));
+-			attr(button, "title", button_title_value = /*emoji*/ ctx[64].title);
++			// attr(button, "title", button_title_value = /*emoji*/ ctx[64].title);
+ 			attr(button, "class", "emoji");
+ 			attr(button, "id", button_id_value = "fav-" + /*emoji*/ ctx[64].id);
+ 			this.first = button;
+@@ -869,9 +868,9 @@ function create_each_block(key_1, ctx) {
+ 				attr(button, "aria-label", button_aria_label_value);
+ 			}
+ 
+-			if (dirty[0] & /*currentFavorites*/ 1024 && button_title_value !== (button_title_value = /*emoji*/ ctx[64].title)) {
+-				attr(button, "title", button_title_value);
+-			}
++			// if (dirty[0] & /*currentFavorites*/ 1024 && button_title_value !== (button_title_value = /*emoji*/ ctx[64].title)) {
++			// 	attr(button, "title", button_title_value);
++			// }
+ 
+ 			if (dirty[0] & /*currentFavorites*/ 1024 && button_id_value !== (button_id_value = "fav-" + /*emoji*/ ctx[64].id)) {
+ 				attr(button, "id", button_id_value);

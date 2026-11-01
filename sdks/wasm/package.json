@@ -1,0 +1,110 @@
+{
+  "name": "@openim/wasm-client-sdk",
+  "version": "3.8.3-patch.15.1",
+  "description": "open im sdk for web",
+  "source": "src/index.ts",
+  "main": "lib/index.js",
+  "unpkg": "lib/index.umd.js",
+  "module": "lib/index.es.js",
+  "jsdelivr": "lib/index.umd.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.es.js",
+      "require": "./lib/index.js"
+    },
+    "./lib/types/*": {
+      "types": "./lib/types/*.d.ts"
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "assets/**/*"
+  ],
+  "scripts": {
+    "build": "rimraf lib && rollup -c && tsc-alias",
+    "cm": "cz",
+    "lint": "eslint ./src/ --fix",
+    "prepare": "husky install",
+    "semantic-release": "semantic-release",
+    "test:watch": "jest --watch --testPathIgnorePatterns=/tests/e2e/",
+    "test": "jest --coverage --passWithNoTests --testPathIgnorePatterns=/tests/e2e/",
+    "typecheck": "tsc --noEmit",
+    "check:contract": "node scripts/check-contract.mjs",
+    "check:wasm": "node scripts/check-wasm-runtime.mjs",
+    "check:db": "node scripts/check-db-search.mjs",
+    "check": "npm run check:contract && npm run check:db && npm run check:wasm && npm run typecheck",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:typecheck": "tsc --noEmit -p ./tests/e2e/tsconfig.json",
+    "test:e2e:contract": "node ./tests/e2e/run.mjs contract",
+    "test:e2e:database": "node ./tests/e2e/run.mjs database",
+    "test:e2e": "node ./tests/e2e/run.mjs all",
+    "test:package": "node scripts/check-packed-package.mjs",
+    "prepublishOnly": "npm run build && npm run test:package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenIMSDK/Open-IM-SDK-Web-Wasm.git"
+  },
+  "license": "AGPL-3.0-only",
+  "author": {
+    "name": "blooming",
+    "email": "blooming2477@gmail.com",
+    "url": "https://github.com/Bloomingg"
+  },
+  "engines": {
+    "node": ">=12.0"
+  },
+  "keywords": [
+    "openim"
+  ],
+  "bugs": {
+    "url": "https://github.com/OpenIMSDK/Open-IM-SDK-Web-Wasm/issues"
+  },
+  "homepage": "https://github.com/OpenIMSDK/Open-IM-SDK-Web-Wasm#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^16.2.4",
+    "@commitlint/config-conventional": "^16.2.4",
+    "@jlongster/sql.js": "^1.6.7",
+    "@playwright/test": "^1.62.0",
+    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^12.20.11",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "absurd-sql": "^0.0.53",
+    "absurd-sql-optimized": "^0.0.1",
+    "conventional-changelog-conventionalcommits": "^5.0.0",
+    "eslint": "^7.25.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "husky": "^6.0.0",
+    "jest": "^27.2.0",
+    "lint-staged": "^10.5.4",
+    "prettier": "^2.2.1",
+    "rollup": "^2.79.1",
+    "rollup-plugin-polyfill-node": "^0.13.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "rimraf": "^3.0.2",
+    "rpc-shooter": "^0.0.14",
+    "semantic-release": "^19.0.2",
+    "squel": "^5.13.0",
+    "tsc-alias": "^1.7.0",
+    "typescript": "^4.2.4",
+    "uuid": "^9.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/@commitlint/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "*.ts": "eslint --cache --cache-location .eslintcache --fix"
+  }
+}

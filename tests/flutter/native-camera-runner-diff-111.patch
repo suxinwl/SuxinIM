@@ -1,0 +1,17 @@
+--- 110/clients/flutter/scripts/test-native-java.ps1
++++ 111/clients/flutter/scripts/test-native-java.ps1
+@@ -55,3 +55,14 @@
+ if ($LASTEXITCODE) { throw 'Actual Surface lifecycle boundary tests did not compile.' }
+ & (Join-Path $Jdk 'bin/java.exe') -cp $surfaceClasses 'com.cloudwebrtc.webrtc.NativeSurfaceDeadlineTest'
+ if ($LASTEXITCODE) { throw 'Actual Surface lifecycle boundary test failed.' }
++
++# Actual production CameraEventsHandler; isolated Log/interface stubs.
++$cameraClasses = Join-Path $classes 'camera-state'
++New-Item -ItemType Directory -Force -Path $cameraClasses | Out-Null
++$cameraStubs = @(Get-ChildItem -LiteralPath (Join-Path $tests 'native-camera-state-stubs') -Filter '*.java' -File -Recurse | ForEach-Object { $_.FullName })
++& (Join-Path $Jdk 'bin/javac.exe') --release 8 -d $cameraClasses @cameraStubs `
++  (Join-Path $native 'CameraEventsHandler.java') `
++  (Join-Path $tests 'CameraStateBehaviorTest.java')
++if ($LASTEXITCODE) { throw 'Actual camera-state behavior tests did not compile.' }
++& (Join-Path $Jdk 'bin/java.exe') -cp $cameraClasses 'com.cloudwebrtc.webrtc.CameraStateBehaviorTest'
++if ($LASTEXITCODE) { throw 'Actual camera-state behavior test failed.' }

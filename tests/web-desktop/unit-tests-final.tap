@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: fixed Go WASM database close frames are recognized, ordinary page callers are preserved
+ok 1 - fixed Go WASM database close frames are recognized, ordinary page callers are preserved
+  ---
+  duration_ms: 2.526
+  type: 'test'
+  ...
+# Subtest: one database close is shared across automatic kick and explicit logout, then reset for a new login
+ok 2 - one database close is shared across automatic kick and explicit logout, then reset for a new login
+  ---
+  duration_ms: 2.3616
+  type: 'test'
+  ...
+# Subtest: missing SDK database bridge fails without closing the application
+ok 3 - missing SDK database bridge fails without closing the application
+  ---
+  duration_ms: 1.2878
+  type: 'test'
+  ...
+# Subtest: verified complete installer is the only file launched
+ok 4 - verified complete installer is the only file launched
+  ---
+  duration_ms: 56.3054
+  type: 'test'
+  ...
+# Subtest: tampered and truncated packages are removed without launching
+ok 5 - tampered and truncated packages are removed without launching
+  ---
+  duration_ms: 9.6664
+  type: 'test'
+  ...
+# Subtest: MZ header is checked even when package hash matches metadata
+ok 6 - MZ header is checked even when package hash matches metadata
+  ---
+  duration_ms: 5.8658
+  type: 'test'
+  ...
+# Subtest: renderer metadata cannot replace authoritative release
+ok 7 - renderer metadata cannot replace authoritative release
+  ---
+  duration_ms: 2.7649
+  type: 'test'
+  ...
+# Subtest: Windows Unicode cache paths preserve special characters
+ok 8 - Windows Unicode cache paths preserve special characters
+  ---
+  duration_ms: 1.8864
+  type: 'test'
+  ...
+# Subtest: remote attachment URLs are never treated as local cache
+ok 9 - remote attachment URLs are never treated as local cache
+  ---
+  duration_ms: 0.4219
+  type: 'test'
+  ...
+# Subtest: message conversion retains body and normalizes old UI scalar defaults
+ok 10 - message conversion retains body and normalizes old UI scalar defaults
+  ---
+  duration_ms: 2.1413
+  type: 'test'
+  ...
+# Subtest: quoted and merged messages are adapted recursively without replacing identities
+ok 11 - quoted and merged messages are adapted recursively without replacing identities
+  ---
+  duration_ms: 0.5321
+  type: 'test'
+  ...
+# Subtest: unknown enterprise summaries stay unknown
+ok 12 - unknown enterprise summaries stay unknown
+  ---
+  duration_ms: 0.4028
+  type: 'test'
+  ...
+# Subtest: enterprise transport hints never swallow original call business messages
+ok 13 - enterprise transport hints never swallow original call business messages
+  ---
+  duration_ms: 0.3624
+  type: 'test'
+  ...
+# Subtest: semantic versions use numeric ordering and prerelease precedence
+ok 14 - semantic versions use numeric ordering and prerelease precedence
+  ---
+  duration_ms: 2.1868
+  type: 'test'
+  ...
+# Subtest: a newer build never permits semantic version downgrade
+ok 15 - a newer build never permits semantic version downgrade
+  ---
+  duration_ms: 0.3541
+  type: 'test'
+  ...
+# Subtest: package must use HTTPS and complete integrity metadata
+ok 16 - package must use HTTPS and complete integrity metadata
+  ---
+  duration_ms: 1.0413
+  type: 'test'
+  ...
+# Subtest: invalid versions fail closed
+ok 17 - invalid versions fail closed
+  ---
+  duration_ms: 0.2848
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1391.6168

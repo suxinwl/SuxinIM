@@ -1,0 +1,152 @@
+{
+  "recordedAtUtc": "2026-11-01T16:51:30.8306187Z",
+  "status": "PASS for scoped screenshot fix; final NSIS build and installed-package regression owned by root",
+  "supersedes": "tests/delivery/windows-386-screenshot-fix-review.json (retained immutable 9-test pre-GUI review; current source/tests/dependency revision changed)",
+  "directRootCause": "Actual Electron 45.2.1 sandbox screenshot preload has no Buffer global. Original ok/save call Buffer.from(arrayBuffer), causing confirm Promise to throw before IPC; React resets selection locally, leaving capture overlay open.",
+  "observedOriginalFailure": "contextBridge ok [object ArrayBuffer] [object Object]; Uncaught (in promise) Error: Buffer is not defined",
+  "fix": "Change only the two preload Buffer.from(arrayBuffer) expressions to new Uint8Array(arrayBuffer). Keep sandbox/context isolation. Main process copies bytes into Buffer after overlay completion.",
+  "secondaryFix": "One active session, one async close/result, handle clipboard failures, Escape/close restoration, duplicate start/confirm/cancel guards and singleton backend.",
+  "checks": {
+    "nodeRunner": "22.23.4",
+    "unitCommand": "node --test tests/screenshot-session.test.mjs tests/screenshot-preload-tool.test.mjs",
+    "unitTests": 12,
+    "unitPassed": 12,
+    "unitFailed": 0,
+    "ensureFreshOriginalToPatched": "PASS in isolated copied-script/dependency fixture",
+    "ensureIdempotentBytesAndMtime": "PASS",
+    "ensureUnexpectedBytesAndVersionRefused": "PASS; original unexpected fixture bytes preserved",
+    "actualProjectPreloadUnchangedByToolTests": "PASS",
+    "patchReverseCheck": "git -c core.autocrlf=false apply --check --reverse patches/electron-screenshots+0.5.28.patch exited 0",
+    "actualGui": "PASS: Electron 45.2.1; actual region selection, actual confirm button DOM event, actual BrowserView sandbox preload IPC, actual main-window preload response; stale ok/cancel ignored, second capture and Escape cancellation",
+    "guiCaptureCalls": 2,
+    "guiImageResponses": 1,
+    "guiCanceledResponses": 1,
+    "guiOverlayVisibleAtResponse": false,
+    "guiMainFocusedAfterConfirm": true,
+    "guiMainFocusedAfterCancel": true,
+    "guiDesktopCaptureCalls": 0
+  },
+  "durability": "patches/electron-screenshots+0.5.28.patch is the reference patch; scripts/ensure-screenshot-preload.mjs accepts only exact original/patched hashes. build-electron.mjs imports it; root adds postinstall to generated package variants.",
+  "requiredPackagedPaths": [
+    "resources/app.asar: dist-electron/main/index.js (compiled manager/session)",
+    "resources/app.asar: node_modules/electron-screenshots/lib/preload.js (may be unpacked by builder; verify effective file SHA)",
+    "source: scripts/ensure-screenshot-preload.mjs, scripts/build-electron.mjs, patches/electron-screenshots+0.5.28.patch"
+  ],
+  "limits": [
+    "No real desktop capture",
+    "No business login or messages",
+    "No Android/media tests",
+    "No NSIS packaging/publishing by this agent",
+    "Actual Save file dialog not exercised; save transport and shared close covered by sandbox/actual dependency behavior tests"
+  ],
+  "files": [
+    {
+      "path": "clients/web-desktop/electron/main/screenshotsManage.ts",
+      "sha256": "d0299f1c95dd2b4d050849dd0255275aa19024259678aca102ef7e1def6229fc",
+      "bytes": 3412
+    },
+    {
+      "path": "clients/web-desktop/electron/main/screenshotSession.ts",
+      "sha256": "5c5f31dc1d14c24208d12dcb4184586947f133bd12907e0fc8828c297696dedd",
+      "bytes": 2266
+    },
+    {
+      "path": "clients/web-desktop/scripts/ensure-screenshot-preload.mjs",
+      "sha256": "7ea6f56070a3570875450857ca8a56a4c2997aec5329b04461ef0a440d1a6e54",
+      "bytes": 1512
+    },
+    {
+      "path": "clients/web-desktop/scripts/build-electron.mjs",
+      "sha256": "75d7ddba25b701030a6af05ba2f53d6f903cb715205419ec3ea1808679e2cbe1",
+      "bytes": 295
+    },
+    {
+      "path": "clients/web-desktop/patches/electron-screenshots+0.5.28.patch",
+      "sha256": "9210424d91ae34b6970bff6bc4e6f84fb8653e0c147cda6f7cdff811dbec50ba",
+      "bytes": 1103
+    },
+    {
+      "path": "clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "sha256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb",
+      "bytes": 2478
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshot-session.test.mjs",
+      "sha256": "b94b1774050d4637264eadf94b6c00ea515fcffbfa4f8593de6485f10a174008",
+      "bytes": 14638
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshot-preload-tool.test.mjs",
+      "sha256": "9dedec598ac5bb14611e4d1d888e76dbe5e50d298aba194dcb876cc5e1b8f47e",
+      "bytes": 2900
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshots-gui.mjs",
+      "sha256": "11694b644d27c435efb113167a84db1eecfeaba7fa3510f424ea2d673cc49d8d",
+      "bytes": 12736
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-tests-final.log",
+      "sha256": "239b55071c43db801829073a8448583d1a0e1e5eb1de0cb588e99c8031e619e6",
+      "bytes": 2977
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-fix-review.json",
+      "sha256": "d6d786be149b60e7dcae0ff105ac25d4fe5c4af6aee73b31683a6178efdd0cc4",
+      "bytes": 3483
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/manifest.json",
+      "sha256": "0dbb2de21f7787e0813413fef836d10d3391a09fbe6c654840f24a8b8ab9aebd",
+      "bytes": 273
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/manifest-final.json",
+      "sha256": "5a32412f7cc10a38c3a0f19f51aa0f3b84e06ce567aa23057bbc50867e7ef091",
+      "bytes": 664
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/clients/web-desktop/scripts/build-electron.mjs",
+      "sha256": "ab704e0a6635ce424c33f4e092434a129476059bc2898300b648e9f74c945420",
+      "bytes": 252
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "sha256": "c534e99a7707e1a7811e918f03f8d4b15176f08d26da768fe4e01828b328d710",
+      "bytes": 2472
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/result.json",
+      "sha256": "3f1a70c47b6d3929e64a298838a160d1f65e45b1ed5d5f4445d03e10d1fcf396",
+      "bytes": 41063
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/synthetic-overlay-before-confirm.png",
+      "sha256": "bae3ddc09b2a280f2645857d47ce0edf6d710ea64af12d44c7e9653e62621978",
+      "bytes": 11220
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/synthetic-main-after-cancel.png",
+      "sha256": "461d891e77549e6423b6e91f754c9e52272120d01bf6c7ab72d3fb50f2c1a354",
+      "bytes": 18795
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/fourth-real-preload-buffer-undefined.json",
+      "sha256": "88d07dffa3bbc7324bcfa411e460a828ed7f4758aa86ffd9cebd11a8330329e9",
+      "bytes": 18141
+    }
+  ],
+  "initialReviewReferenceResolution": [
+    {
+      "originalPath": "clients/web-desktop/tests/screenshot-session.test.mjs",
+      "archivedPath": "tests/delivery/windows-386-before/screenshots/initial-review-inputs/clients/web-desktop/tests/screenshot-session.test.mjs",
+      "sha256": "b66aeb9f7194ae053b17f77a281225188f37fea932af0d1fb90f21c99cb4c6c1",
+      "note": "Exact original 9-test source reconstructed by removing subsequent added sandbox preload tests; matches original review hash."
+    },
+    {
+      "originalPath": "clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "archivedPath": "tests/delivery/windows-386-before/screenshots/clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "sha256": "c534e99a7707e1a7811e918f03f8d4b15176f08d26da768fe4e01828b328d710"
+    }
+  ]
+}

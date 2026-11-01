@@ -1,0 +1,38 @@
+[
+  {
+    "path": "services/openim-server/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "path": "services/chat/LICENSE",
+    "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  {
+    "path": "services/livekit/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "path": "services/livekit/NOTICE",
+    "sha256": "6d0f7c5e0deb284362296c5da110dd353831da2e67ca77cb5abc051b951b0fac"
+  },
+  {
+    "path": "clients/web-desktop/LICENSE",
+    "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  {
+    "path": "sdks/wasm/LICENSE",
+    "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
+  },
+  {
+    "path": "sdks/android-java/LICENSE",
+    "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
+  },
+  {
+    "path": "sdks/ios-core/LICENSE",
+    "sha256": "288a64ed9feca4f611207b05e463f8f36d7811d31d3d0f9e71ad9a79f85ddcde"
+  },
+  {
+    "path": "sdks/flutter/LICENSE",
+    "sha256": "6f1e622c82a380075843bb084a7ec3b1f1d12a4a02526d75e78b0924a860aa75"
+  }
+]

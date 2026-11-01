@@ -1,0 +1,8 @@
+[
+  {
+    "component": "sdks/flutter",
+    "commit": "1b64cba2bdeace5e858b236b5e1b3deedd2760a0",
+    "localGitArchiveSHA256": "a111a87288a1815c369a5996c22cb29ac3c9bdb1f46e95e30a0a3e79bbdc866a",
+    "note": "Archive generated locally from the locked Git commit, not an upstream download hash."
+  }
+]

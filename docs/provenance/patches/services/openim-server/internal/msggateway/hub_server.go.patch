@@ -1,0 +1,31 @@
+--- upstream/internal/msggateway/hub_server.go
++++ merged/internal/msggateway/hub_server.go
+@@ -33,6 +33,7 @@
+ 	"github.com/openimsdk/tools/mq/memamq"
+ 	"github.com/openimsdk/tools/utils/datautil"
+ 	"google.golang.org/grpc"
++	"google.golang.org/grpc/metadata"
+ )
+ 
+ func (s *Server) InitServer(ctx context.Context, config *Config, disCov discovery.SvcDiscoveryRegistry, server *grpc.Server) error {
+@@ -218,6 +219,8 @@
+ }
+ 
+ func (s *Server) KickUserOffline(ctx context.Context, req *msggateway.KickUserOfflineReq) (*msggateway.KickUserOfflineResp, error) {
++	md, _ := metadata.FromIncomingContext(ctx)
++	exactTokens := md.Get("openim38-revoke-token")
+ 	for _, v := range req.KickUserIDList {
+ 		clients, _, ok := s.LongConnServer.GetUserPlatformCons(v, int(req.PlatformID))
+ 		if !ok {
+@@ -226,7 +229,10 @@
+ 		}
+ 
+ 		for _, client := range clients {
+-			log.ZDebug(ctx, "kick user offline", "userID", v, "platformID", req.PlatformID, "client", client)
++			if len(exactTokens) > 0 && (len(exactTokens) != 1 || exactTokens[0] != client.token) {
++				continue
++			}
++			log.ZDebug(ctx, "kick user offline", "userID", v, "platformID", req.PlatformID)
+ 			if err := client.longConnServer.KickUserConn(client); err != nil {
+ 				log.ZWarn(ctx, "kick user offline failed", err, "userID", v, "platformID", req.PlatformID)
+ 			}

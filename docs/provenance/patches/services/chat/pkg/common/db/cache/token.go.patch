@@ -1,0 +1,23 @@
+--- upstream/pkg/common/db/cache/token.go
++++ merged/pkg/common/db/cache/token.go
+@@ -34,6 +34,7 @@
+ 	SetTokenExpire(ctx context.Context, userID string, token string, expire time.Duration) error
+ 	GetTokensWithoutError(ctx context.Context, userID string) (map[string]int32, error)
+ 	DeleteTokenByUid(ctx context.Context, userID string) error
++	DeleteTokenValue(ctx context.Context, userID, token string) error
+ }
+ 
+ type TokenCacheRedis struct {
+@@ -62,6 +63,12 @@
+ func (t *TokenCacheRedis) DeleteTokenByUid(ctx context.Context, userID string) error {
+ 	key := chatToken + userID
+ 	return errs.Wrap(t.rdb.Del(ctx, key).Err())
++}
++
++// HDEL is atomic and idempotent. Never delete another device's or a newer
++// login's token when an older session completes its logout asynchronously.
++func (t *TokenCacheRedis) DeleteTokenValue(ctx context.Context, userID, token string) error {
++	return errs.Wrap(t.rdb.HDel(ctx, chatToken+userID, token).Err())
+ }
+ 
+ func (t *TokenCacheRedis) SetTokenExpire(ctx context.Context, userID string, token string, expire time.Duration) error {

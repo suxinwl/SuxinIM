@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/openimsdk/open-im-sdk-android",
+  "tag": "v3.8.3.5",
+  "commit": "486212ee1feed8ee5e79164a299ecc84b9f8fa2a",
+  "path": "sdks/android-java",
+  "archiveUrl": "https://codeload.github.com/openimsdk/open-im-sdk-android/tar.gz/486212ee1feed8ee5e79164a299ecc84b9f8fa2a",
+  "archiveSha256": "b6638afce19ed065bedbb863b9180062f7f8f47063e5bda5402c3bd4ee698c5b"
+}

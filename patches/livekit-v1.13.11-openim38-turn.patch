@@ -1,0 +1,159 @@
+--- a/pkg/config/config.go
++++ b/pkg/config/config.go
+@@ -312,16 +312,22 @@
+ }
+ 
+ type TURNConfig struct {
+-	Enabled             bool     `yaml:"enabled,omitempty"`
+-	Domain              string   `yaml:"domain,omitempty"`
+-	CertFile            string   `yaml:"cert_file,omitempty"`
+-	KeyFile             string   `yaml:"key_file,omitempty"`
+-	TLSPort             int      `yaml:"tls_port,omitempty"`
+-	UDPPort             int      `yaml:"udp_port,omitempty"`
+-	RelayPortRangeStart uint16   `yaml:"relay_range_start,omitempty"`
+-	RelayPortRangeEnd   uint16   `yaml:"relay_range_end,omitempty"`
+-	ExternalTLS         bool     `yaml:"external_tls,omitempty"`
+-	BindAddresses       []string `yaml:"bind_addresses,omitempty"`
++	Enabled  bool   `yaml:"enabled,omitempty"`
++	Domain   string `yaml:"domain,omitempty"`
++	CertFile string `yaml:"cert_file,omitempty"`
++	KeyFile  string `yaml:"key_file,omitempty"`
++	TLSPort  int    `yaml:"tls_port,omitempty"`
++	// OpenIM38 compatibility: public TLS port can differ from the listener.
++	// Zero preserves upstream's advertised port 443. uint16 bounds YAML input.
++	AdvertisedTLSPort uint16 `yaml:"advertised_tls_port,omitempty"`
++	// Permit only this embedded SFU's own interface/node IPs. The existing
++	// relay policy still restricts their destination ports to RTC media ports.
++	AllowLocalMediaPeers bool     `yaml:"allow_local_media_peers,omitempty"`
++	UDPPort              int      `yaml:"udp_port,omitempty"`
++	RelayPortRangeStart  uint16   `yaml:"relay_range_start,omitempty"`
++	RelayPortRangeEnd    uint16   `yaml:"relay_range_end,omitempty"`
++	ExternalTLS          bool     `yaml:"external_tls,omitempty"`
++	BindAddresses        []string `yaml:"bind_addresses,omitempty"`
+ 	// ProxyProtocol makes the TURN TCP listener require a PROXY protocol (v1 or v2)
+ 	// header on every connection and use the client address it carries. Needed when
+ 	// a proxy in front of TURN dials from its own address (a TLS-terminating L4
+--- a/pkg/service/roommanager.go
++++ b/pkg/service/roommanager.go
+@@ -1081,7 +1081,7 @@
+ 			}
+ 		}
+ 		if r.config.TURN.TLSPort > 0 {
+-			urls = append(urls, fmt.Sprintf("turns:%s:443?transport=tcp", r.config.TURN.Domain))
++			urls = append(urls, embeddedTURNTLSURL(r.config.TURN))
+ 		}
+ 		if len(urls) > 0 {
+ 			username, expiry := r.turnAuthHandler.CreateUsername(apiKey, participant.ID(), r.config.TURN.TTLSeconds)
+--- a/pkg/service/turn.go
++++ b/pkg/service/turn.go
+@@ -143,7 +143,7 @@
+ 		permissionHandler := func(_clientAddr net.Addr, peerIP net.IP) bool {
+ 			// restricted peer IP is denied by default, unless allowed by the allow list,
+ 			if isRestrictedPeerIP(peerIP) {
+-				allowed := false
++				allowed := allowTURNLocalMediaPeer(turnConf.AllowLocalMediaPeers, standalone, localIPs, peerIP)
+ 				for _, ipnet := range allowRestrictedPeerCIDRs {
+ 					if ipnet.Contains(peerIP) {
+ 						allowed = true
+--- /dev/null
++++ b/pkg/service/turn_openim38.go
+@@ -0,0 +1,36 @@
++// Copyright 2026 GoSuxin OpenIM upgrade contributors.
++// Licensed under the Apache License, Version 2.0.
++package service
++
++import (
++	"fmt"
++	"net"
++	"net/netip"
++	"strconv"
++
++	"github.com/livekit/livekit-server/pkg/config"
++)
++
++func embeddedTURNTLSURL(c config.TURNConfig) string {
++	port := int(c.AdvertisedTLSPort)
++	if port == 0 {
++		port = 443
++	}
++	return fmt.Sprintf("turns:%s?transport=tcp", net.JoinHostPort(c.Domain, strconv.Itoa(port)))
++}
++
++// No CIDR/subnet widening: only addresses discovered on this SFU are eligible.
++// newTURNRelayPolicy wraps the resulting socket and enforces RTC media ports,
++// so this permission cannot expose the HTTP/RPC/database ports on the host.
++// Standalone TURN deliberately keeps the unmodified upstream permission policy.
++func allowTURNLocalMediaPeer(enabled, standalone bool, localIPs map[netip.Addr]struct{}, peer net.IP) bool {
++	if !enabled || standalone {
++		return false
++	}
++	addr, ok := netip.AddrFromSlice(peer)
++	if !ok {
++		return false
++	}
++	_, ok = localIPs[addr.Unmap().WithZone("")]
++	return ok
++}
+--- /dev/null
++++ b/pkg/service/turn_openim38_test.go
+@@ -0,0 +1,60 @@
++package service
++
++import (
++	"net"
++	"net/netip"
++	"testing"
++
++	"github.com/livekit/livekit-server/pkg/config"
++	"gopkg.in/yaml.v3"
++)
++
++func TestOpenIM38TURNAdvertisedTLSPortPreservesDefaultAndUsesExplicitPort(t *testing.T) {
++	for _, tc := range []struct {
++		domain string
++		port   uint16
++		want   string
++	}{
++		{"192.168.10.11", 0, "turns:192.168.10.11:443?transport=tcp"},
++		{"192.168.10.11", 25349, "turns:192.168.10.11:25349?transport=tcp"},
++		{"kf.szputy.com", 25349, "turns:kf.szputy.com:25349?transport=tcp"},
++		{"2001:db8::1", 25349, "turns:[2001:db8::1]:25349?transport=tcp"},
++	} {
++		if got := embeddedTURNTLSURL(config.TURNConfig{Domain: tc.domain, AdvertisedTLSPort: tc.port}); got != tc.want {
++			t.Fatalf("wrong public TURN URL: %s", got)
++		}
++	}
++	for _, input := range []string{"advertised_tls_port: -1", "advertised_tls_port: 65536"} {
++		var c config.TURNConfig
++		if err := yaml.Unmarshal([]byte(input), &c); err == nil {
++			t.Fatal("invalid advertised port accepted")
++		}
++	}
++}
++
++func TestOpenIM38TURNLocalPeerExceptionIsExactAndRetainsMediaPortPolicy(t *testing.T) {
++	local := map[netip.Addr]struct{}{netip.MustParseAddr("172.20.0.3"): {}, netip.MustParseAddr("192.168.10.11"): {}}
++	for _, tc := range []struct {
++		enabled, standalone bool
++		peer                string
++		want                bool
++	}{
++		{false, false, "172.20.0.3", false}, {true, true, "172.20.0.3", false},
++		{true, false, "172.20.0.3", true}, {true, false, "::ffff:172.20.0.3", true},
++		{true, false, "172.20.0.4", false}, {true, false, "192.168.10.10", false},
++		{true, false, "127.0.0.1", false}, {true, false, "bad", false},
++	} {
++		if got := allowTURNLocalMediaPeer(tc.enabled, tc.standalone, local, net.ParseIP(tc.peer)); got != tc.want {
++			t.Fatalf("unexpected exception for %s", tc.peer)
++		}
++	}
++	policy := newTURNRelayPolicy(nil, local, []portRange{{27882, 27882}})
++	for _, port := range []int{22, 7880, 27017, 30200, 23478, 27900} {
++		if policy.allows(&net.UDPAddr{IP: net.ParseIP("172.20.0.3"), Port: port}) {
++			t.Fatalf("local non-media port %d exposed", port)
++		}
++	}
++	if !policy.allows(&net.UDPAddr{IP: net.ParseIP("172.20.0.3"), Port: 27882}) {
++		t.Fatal("own RTC media port rejected")
++	}
++}

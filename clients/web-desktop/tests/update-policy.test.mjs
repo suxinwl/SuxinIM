@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {build} from "esbuild";
+const result=await build({entryPoints:["src/im/update-policy.ts"],write:false,bundle:true,format:"esm",platform:"node"});
+const {compareVersions,shouldUpgrade,validateRelease}=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`);
+const release={version:"3.8.4",build:380400,url:"https://test.example/packages/openim.exe",sha256:"a".repeat(64),size:2000,force:true,platform:"windows"};
+test("semantic versions use numeric ordering and prerelease precedence",()=>{assert.equal(compareVersions("3.8.10","3.8.9"),1);assert.equal(compareVersions("3.8.3-alpha.2","3.8.3-alpha.10"),-1);assert.equal(compareVersions("3.8.3","3.8.3-alpha"),1);assert.equal(compareVersions("3.8.3+2","3.8.3+1"),0);});
+test("a newer build never permits semantic version downgrade",()=>{assert.equal(shouldUpgrade({...release,version:"3.8.2"},"3.8.3",380301),false);assert.equal(shouldUpgrade({...release,build:380300},"3.8.3",380301),false);assert.equal(shouldUpgrade(release,"3.8.3",380301),true);assert.equal(shouldUpgrade({...release,version:"3.8.3"},"3.8.3",380301),true);});
+test("package must use HTTPS and complete integrity metadata",()=>{assert.doesNotThrow(()=>validateRelease(release));for(const patch of [{url:"http://test/a.exe"},{sha256:""},{size:-1},{size:1.1},{platform:"android"}])assert.throws(()=>validateRelease({...release,...patch}));});
+test("invalid versions fail closed",()=>{assert.throws(()=>shouldUpgrade({...release,version:"latest"},"3.8.3",380301));assert.equal(shouldUpgrade({...release,build:NaN},"3.8.3",380301),false);});

@@ -1,0 +1,58 @@
+--- upstream/internal/api/chat/chat.go
++++ merged/internal/api/chat/chat.go
+@@ -32,6 +32,8 @@
+ 	"github.com/openimsdk/tools/apiresp"
+ 	"github.com/openimsdk/tools/errs"
+ 	"github.com/openimsdk/tools/log"
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/metadata"
+ )
+ 
+ func New(chatClient chatpb.ChatClient, adminClient admin.AdminClient, imApiCaller imapi.CallerInterface, api *util.Api) *Api {
+@@ -193,7 +195,31 @@
+ }
+ 
+ func (o *Api) ResetPassword(c *gin.Context) {
+-	a2r.Call(c, chatpb.ChatClient.ResetPassword, o.chatClient)
++	req, err := a2r.ParseRequest[chatpb.ResetPasswordReq](c)
++	if err != nil {
++		apiresp.GinError(c, err)
++		return
++	}
++	var header metadata.MD
++	resp, err := o.chatClient.ResetPassword(c, req, grpc.Header(&header))
++	if err != nil {
++		apiresp.GinError(c, err)
++		return
++	}
++	identity := header.Get("openim38-reset-user-id")
++	if len(identity) != 1 || identity[0] == "" {
++		apiresp.GinError(c, errs.ErrInternalServer.WrapMsg("password reset revocation identity missing"))
++		return
++	}
++	imToken, err := o.imApiCaller.ImAdminTokenWithDefaultAdmin(c)
++	if err == nil {
++		err = o.imApiCaller.ForceOffLine(mctx.WithApiToken(c, imToken), identity[0])
++	}
++	if err != nil {
++		apiresp.GinError(c, err)
++		return
++	}
++	apiresp.GinSuccess(c, resp)
+ }
+ 
+ func (o *Api) ChangePassword(c *gin.Context) {
+@@ -201,6 +227,13 @@
+ 	if err != nil {
+ 		apiresp.GinError(c, err)
+ 		return
++	}
++	if req.UserID == "" {
++		req.UserID, _, err = mctx.Check(c)
++		if err != nil {
++			apiresp.GinError(c, err)
++			return
++		}
+ 	}
+ 	resp, err := o.chatClient.ChangePassword(c, req)
+ 	if err != nil {

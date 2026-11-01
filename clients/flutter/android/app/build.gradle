@@ -1,0 +1,76 @@
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+def signingProperties = new Properties()
+def signingFile = rootProject.file("key.properties")
+if (signingFile.exists()) signingFile.withInputStream { signingProperties.load(it) }
+// Explicit x86_64 override is only for the separately named private AVD
+// validation artifact. The default phone delivery remains ARM64.
+def openimAbi = providers.gradleProperty('openimTestAbi').getOrElse('arm64-v8a')
+if (!(openimAbi in ['arm64-v8a', 'x86_64'])) throw new GradleException('Unsupported OpenIM ABI')
+android {
+    namespace "cn.rentsoft.flutter.openim.consumer"
+    compileSdk 35
+    buildToolsVersion "34.0.0"
+    ndkVersion flutter.ndkVersion
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+    buildFeatures { buildConfig true }
+    flavorDimensions "environment"
+    productFlavors {
+        development {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            buildConfigField "boolean", "TRUST_DEVELOPMENT_CA", "true"
+        }
+        production {
+            dimension "environment"
+            buildConfigField "boolean", "TRUST_DEVELOPMENT_CA", "false"
+        }
+    }
+    defaultConfig {
+        applicationId "io.openim.upgrade38.test"
+        minSdk 24
+        targetSdk 35
+        ndk { abiFilters openimAbi }
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        multiDexEnabled true
+        manifestPlaceholders = [GETUI_APPID:System.getenv('OPENIM_GETUI_APP_ID') ?: "",XIAOMI_APP_ID:"",XIAOMI_APP_KEY:"",MEIZU_APP_ID:"",MEIZU_APP_KEY:"",HUAWEI_APP_ID:"",OPPO_APP_KEY:"",OPPO_APP_SECRET:"",VIVO_APP_ID:"",VIVO_APP_KEY:"",HONOR_APP_ID:""]
+    }
+    signingConfigs {
+        release {
+            if (signingFile.exists()) {
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+                storeFile file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+            }
+        }
+    }
+    buildTypes {
+        release { signingConfig signingConfigs.release }
+    }
+    packagingOptions {
+        jniLibs { pickFirsts += ['**/libc++_shared.so'] }
+    }
+}
+flutter { source '../..' }
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'com.getui:gtsdk:3.2.14.0'
+}
+
+dependencyLocking {
+    lockFile = file(openimAbi == 'x86_64' ? 'gradle-x64-validation.lockfile' : 'gradle.lockfile')
+}
+configurations.matching { it.name == 'developmentReleaseRuntimeClasspath' }.configureEach {
+    resolutionStrategy.activateDependencyLocking()
+}

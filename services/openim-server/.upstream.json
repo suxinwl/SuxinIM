@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/openimsdk/open-im-server",
+  "tag": "v3.8.3-patch.18",
+  "commit": "120cee6d5783959a02ea1acfa414589fe5aae90f",
+  "path": "services/openim-server",
+  "archiveUrl": "https://codeload.github.com/openimsdk/open-im-server/tar.gz/120cee6d5783959a02ea1acfa414589fe5aae90f",
+  "archiveSha256": "ad60cf9e5280be03f63cc6a11b83d5759a1a8a67de2676093377d3f64fe437b3"
+}

@@ -1,0 +1,11 @@
+// This is a generated file; do not edit or check into version control.
+FLUTTER_ROOT=E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5\tools\flutter-3.32.8
+FLUTTER_APPLICATION_PATH=E:\PUTY_AI\OpenIM3.4-3.8\OpenIM3.8.3patch.18_1.8.4patch.5\clients\flutter
+COCOAPODS_PARALLEL_CODE_SIGN=true
+FLUTTER_BUILD_DIR=build
+FLUTTER_BUILD_NAME=3.8.3
+FLUTTER_BUILD_NUMBER=100
+DART_OBFUSCATION=false
+TRACK_WIDGET_CREATION=true
+TREE_SHAKE_ICONS=false
+PACKAGE_CONFIG=.dart_tool/package_config.json

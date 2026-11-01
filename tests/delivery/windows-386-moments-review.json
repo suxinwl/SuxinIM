@@ -1,0 +1,143 @@
+{
+  "schema": 1,
+  "utc": "2026-11-01T16:50:13.610155+00:00",
+  "status": "PASS",
+  "sourceFrozen": true,
+  "sourceFiles": [
+    {
+      "path": "clients/web-desktop/src/api/moments.ts",
+      "size": 4757,
+      "sha256": "d919f2308fb728d19308a908dae28bdf08c6e47dc3e1dc56352674ed60c89570"
+    },
+    {
+      "path": "clients/web-desktop/src/api/moments-cache.ts",
+      "size": 2638,
+      "sha256": "7c6f4971ded6679c2b03af78a2daf61654e620c74df2f2a64076e65a1d879334"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/index.tsx",
+      "size": 8959,
+      "sha256": "9816da6cc074b1046b384b431901fbffba3d45d142468a9a65084fa82a33ae85"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/index.tsx",
+      "size": 7464,
+      "sha256": "2566499334ed2c633f3d27ed60eeb5afd31415351c627659acbff0013f3c240a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentInput.tsx",
+      "size": 3338,
+      "sha256": "5ee13742b298c80916ea4509e9f42385f1b5ca8f5a38005786fe1fe0e4d5b851"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentRow.tsx",
+      "size": 2025,
+      "sha256": "665f33949e17a405232bf464ec655a6593cd9bbc0fa6cbf09f993e9f66446f31"
+    }
+  ],
+  "originalArchive": "tests/delivery/windows-386-before/moments/archive-manifest.json",
+  "rootCause": [
+    "Mutation success cache updates were commented out; list relied on legacy wm_ notifications and detail used a nonreactive copied route snapshot.",
+    "Bundled background.png is a literal dark loading-screen screenshot, not a dynamic cover.",
+    "Comment send button was outside click-away containment."
+  ],
+  "behaviorTests": {
+    "command": "node --test tests/moments-cache.test.mjs",
+    "nodeVersion": "v24.14.0",
+    "pass": 9,
+    "fail": 0,
+    "log": "tests/delivery/windows-386-moments-cache-test.log"
+  },
+  "ui": {
+    "report": "tests/delivery/windows-386-moments-ui/report.json",
+    "pass": 7,
+    "fail": 0,
+    "errors": 0,
+    "normalTLS": true,
+    "originalLoginForm": true,
+    "peerActions": "Second authenticated browser uses the existing enterprise API; first browser observes the original modal without manual refresh.",
+    "peerLikeMs": 252,
+    "unlikeDeleteMs": 5062,
+    "pollIntervalMs": 5000,
+    "cleanup": "Only the newly created synthetic moment was deleted.",
+    "startupFailuresRetained": [
+      "tests/delivery/windows-386-moments-ui/attempt-01-browser-unavailable.json",
+      "tests/delivery/windows-386-moments-ui/attempt-02-vite-startup-failure.json"
+    ]
+  },
+  "finitePublicTextCredentialScan": {
+    "fileCount": 12,
+    "bytes": 53186,
+    "findings": [],
+    "scope": "Only listed UTF-8 source/test/evidence files; no binary/OCR/full-project claim."
+  },
+  "files": [
+    {
+      "path": "clients/web-desktop/src/api/moments.ts",
+      "size": 4757,
+      "sha256": "d919f2308fb728d19308a908dae28bdf08c6e47dc3e1dc56352674ed60c89570"
+    },
+    {
+      "path": "clients/web-desktop/src/api/moments-cache.ts",
+      "size": 2638,
+      "sha256": "7c6f4971ded6679c2b03af78a2daf61654e620c74df2f2a64076e65a1d879334"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/index.tsx",
+      "size": 8959,
+      "sha256": "9816da6cc074b1046b384b431901fbffba3d45d142468a9a65084fa82a33ae85"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/index.tsx",
+      "size": 7464,
+      "sha256": "2566499334ed2c633f3d27ed60eeb5afd31415351c627659acbff0013f3c240a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentInput.tsx",
+      "size": 3338,
+      "sha256": "5ee13742b298c80916ea4509e9f42385f1b5ca8f5a38005786fe1fe0e4d5b851"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentRow.tsx",
+      "size": 2025,
+      "sha256": "665f33949e17a405232bf464ec655a6593cd9bbc0fa6cbf09f993e9f66446f31"
+    },
+    {
+      "path": "clients/web-desktop/tests/moments-cache.test.mjs",
+      "size": 7895,
+      "sha256": "248e581de2612db5e2d39adb0da65926364ce89f40043a59e5579d4496bc3f94"
+    },
+    {
+      "path": "clients/web-desktop/tests/moments-386-ui.mjs",
+      "size": 10769,
+      "sha256": "f8b05ab19855eb3efe2d5711908c017c331006220f0f9e259a8159e88e0396d4"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-ui/attempt-01-browser-unavailable.json",
+      "size": 1364,
+      "sha256": "f8aa778e9b64cf6442c035ccbe413af11d748ecadff9664002ce369f94a57b31"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-ui/attempt-02-vite-startup-failure.json",
+      "size": 706,
+      "sha256": "1d41aec0756816841c532f9da20e33363de5430332af1016bc1ae70129e7e13f"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-ui/report.json",
+      "size": 2175,
+      "sha256": "dba3ea44ab00af25eee4533efd1c02d6e8e1e87422c7e6e8fca852d5457a57a4"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-cache-test.log",
+      "size": 1096,
+      "sha256": "3cb4a9a52b7c39985f9772bcca974baeeeb93d627f185de151f60a7db60449a6"
+    }
+  ],
+  "restrictions": [
+    "No version or lockfile changes by this agent",
+    "No production/real-user data",
+    "No audio/video/meeting/Android tests",
+    "No background image deletion or branding replacement",
+    "Root owns unified pinned-runtime typecheck, packaging and release"
+  ]
+}

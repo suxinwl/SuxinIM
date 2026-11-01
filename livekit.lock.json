@@ -1,0 +1,59 @@
+{
+  "repository": "https://github.com/livekit/livekit",
+  "tag": "v1.13.11",
+  "commit": "385aa40f9292fe1db8caad87301e4b285b7c198a",
+  "archiveURL": "https://codeload.github.com/livekit/livekit/zip/385aa40f9292fe1db8caad87301e4b285b7c198a",
+  "archiveSHA256": "d23fcc500ad8c4ddb6a373290fff03e0c67a503dccc5fe72c74bb616451a3236",
+  "source": "services/livekit",
+  "license": "Apache-2.0",
+  "officialImage": "docker.io/livekit/livekit-server@sha256:04668840140552c7e5d7faf28959cbf2256fb04ea641c4fd23ea69cbf3d7d105",
+  "toolchain": {
+    "version": "go1.26.9",
+    "url": "https://go.dev/dl/go1.26.9.windows-amd64.zip",
+    "sha256": "d722201a9c0c086d1610e111c48203009af690892ed708072bd5ae20160e7a59",
+    "files": [
+      {
+        "filename": "go1.26.9.linux-amd64.tar.gz",
+        "os": "linux",
+        "arch": "amd64",
+        "version": "go1.26.9",
+        "sha256": "42d158b4d8f7b61ac0a830567c940a86098fb7aac52e467a5ebec03ef5cc2f8d",
+        "size": 66935201,
+        "kind": "archive"
+      },
+      {
+        "filename": "go1.26.9.windows-amd64.zip",
+        "os": "windows",
+        "arch": "amd64",
+        "version": "go1.26.9",
+        "sha256": "d722201a9c0c086d1610e111c48203009af690892ed708072bd5ae20160e7a59",
+        "size": 75002909,
+        "kind": "archive"
+      }
+    ]
+  },
+  "patch": "patches/livekit-v1.13.11-openim38-turn.patch",
+  "patchSHA256": "4641cb0f7004f8d6f06d7443ebc958a9a0974e6bea18d46d4593cfdfbc122804",
+  "modifiedFiles": [
+    {
+      "path": "pkg/config/config.go",
+      "sha256": "c4caa925304893b3a3eb21e0e1790016aaa6a419b03d80e05c972cae7585ec3a"
+    },
+    {
+      "path": "pkg/service/roommanager.go",
+      "sha256": "b044c9dc9f573431798e7436e6c80b58710d35be0e32ca43d8c5a30e63667061"
+    },
+    {
+      "path": "pkg/service/turn.go",
+      "sha256": "45472bae47558634f3fc1141df68d8da6fb4b1c7fd53fcbf3d38aa869e76299e"
+    },
+    {
+      "path": "pkg/service/turn_openim38.go",
+      "sha256": "3df9211dfa3120c703a9684bbea63887389996f44c8597908a7b937639c96fb0"
+    },
+    {
+      "path": "pkg/service/turn_openim38_test.go",
+      "sha256": "45b2c566f85c5b29555a81f6e50e966e5590dd5318e958a2c838617f4644db5c"
+    }
+  ]
+}

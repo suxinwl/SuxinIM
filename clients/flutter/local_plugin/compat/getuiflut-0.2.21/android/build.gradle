@@ -1,0 +1,47 @@
+group 'com.getui.getuiflut'
+version '1.0-SNAPSHOT'
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.3'
+    }
+}
+rootProject.allprojects {
+    repositories {
+        mavenCentral()
+        //Maven URL地址
+        maven {
+            url "https://mvn.getui.com/nexus/content/repositories/releases/"
+        }
+        mavenCentral()
+        google()
+    }
+}
+apply plugin: 'com.android.library'
+android {
+    namespace 'com.getui.getuiflut'
+    compileSdkVersion 35
+
+    defaultConfig {
+        minSdkVersion 17
+    }
+    
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+dependencies {
+
+     compileOnly('com.getui:gtsdk:3.2.14.0')
+
+}

@@ -1,0 +1,11 @@
+name: app_im
+version: 1.0.0
+publish_to: none
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_openim_sdk:
+    path: ../../../../sdks/flutter
+  dio: ^5.0.2

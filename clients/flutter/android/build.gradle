@@ -1,0 +1,38 @@
+allprojects {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        google()
+        mavenCentral()
+        maven { url 'https://mvn.gt.getui.com/nexus/content/repositories/releases/' }
+        maven { url 'https://developer.huawei.com/repo/' }
+    }
+}
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+gradle.projectsEvaluated {
+    subprojects {
+        def androidExtension = project.extensions.findByName('android')
+        if (androidExtension != null) {
+            // Older plugins leave Kotlin's JVM default at the build JDK (17),
+            // while their Java bytecode is 8/11. Keep each plugin internally consistent.
+            project.tasks.configureEach { task ->
+                if (task.name.startsWith('compile') && task.name.endsWith('Kotlin') && task.hasProperty('kotlinOptions')) {
+                    task.kotlinOptions.jvmTarget = androidExtension.compileOptions.targetCompatibility.toString()
+                }
+            }
+        }
+    }
+}
+tasks.register("clean", Delete) { delete rootProject.buildDir }
+tasks.register('checkNativeCompatibility') {
+    dependsOn {
+        subprojects.findAll { it.name != 'app' }.collectMany { item ->
+            ['compileReleaseKotlin', 'compileReleaseJavaWithJavac'].collect { item.tasks.findByName(it) }.findAll { it != null }
+        }
+    }
+}

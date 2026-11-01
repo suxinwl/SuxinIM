@@ -1,0 +1,39 @@
+{
+  "appId": "io.openim.enterprise.upgrade38",
+  "productName": "OpenIM38 Enterprise",
+  "asar": true,
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist-electron/**/*",
+    "dist/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "extraResources",
+      "to": "extraResources"
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "OpenIM38-Enterprise-${version}-win-x64.${ext}",
+    "icon": "public/icons/icon.ico",
+    "signExecutable": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "electronDist": "node_modules/electron/dist"
+}

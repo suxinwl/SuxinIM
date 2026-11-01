@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/openimsdk/openim-sdk-core-ios",
+  "tag": "3.8.3-hotfix.15",
+  "commit": "45cd9dcc80f3b41fcaa49664c768713d6b4976bb",
+  "path": "sdks/ios-core",
+  "archiveUrl": "https://codeload.github.com/openimsdk/openim-sdk-core-ios/tar.gz/45cd9dcc80f3b41fcaa49664c768713d6b4976bb",
+  "archiveSha256": "518938692dc270c1a749524616bf2ae05386d3204e108f98b571072fdeb21861"
+}

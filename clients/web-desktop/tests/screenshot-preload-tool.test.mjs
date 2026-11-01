@@ -1,0 +1,43 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { createHash } from "node:crypto";
+import { resolve } from "node:path";
+
+const exec = promisify(execFile);
+const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+test("actual preload ensure tool patches a fresh dependency, is idempotent and refuses unexpected bytes", async () => {
+  const fixture = resolve("../../.cache", `screenshot-preload-tool-${Date.now()}`);
+  const tool = resolve(fixture, "scripts/ensure-screenshot-preload.mjs");
+  const packageFile = resolve(fixture, "node_modules/electron-screenshots/package.json");
+  const preload = resolve(fixture, "node_modules/electron-screenshots/lib/preload.js");
+  const original = await readFile("../../tests/delivery/windows-386-before/screenshots/clients/web-desktop/node_modules/electron-screenshots/lib/preload.js");
+  const toolBytes = await readFile("scripts/ensure-screenshot-preload.mjs");
+  const actualBefore = await readFile("node_modules/electron-screenshots/lib/preload.js");
+  await mkdir(resolve(fixture, "scripts"), { recursive: true });
+  await mkdir(resolve(fixture, "node_modules/electron-screenshots/lib"), { recursive: true });
+  await writeFile(tool, toolBytes);
+  await writeFile(packageFile, JSON.stringify({ version: "0.5.28" }));
+  await writeFile(preload, original);
+  const first = await exec(process.execPath, [tool], { cwd: fixture });
+  assert.equal(first.stderr, "");
+  const patched = await readFile(preload);
+  assert.equal(hash(patched), "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb");
+  const beforeSecond = await stat(preload, { bigint: true });
+  await exec(process.execPath, [tool], { cwd: fixture });
+  const afterSecond = await stat(preload, { bigint: true });
+  assert.equal(afterSecond.mtimeNs, beforeSecond.mtimeNs);
+  assert.equal(hash(await readFile(preload)), hash(patched));
+  const unexpected = Buffer.concat([original, Buffer.from("\n// unexpected fixture bytes\n")]);
+  await writeFile(preload, unexpected);
+  await assert.rejects(exec(process.execPath, [tool], { cwd: fixture }), (error) => error.code === 1 && error.stderr.includes("refusing to overwrite local changes"));
+  assert.equal(hash(await readFile(preload)), hash(unexpected));
+  await writeFile(packageFile, JSON.stringify({ version: "0.5.29" }));
+  await assert.rejects(exec(process.execPath, [tool], { cwd: fixture }), (error) => error.code === 1 && error.stderr.includes("before changing electron-screenshots"));
+  assert.equal(hash(await readFile(preload)), hash(unexpected));
+  assert.equal(hash(await readFile("node_modules/electron-screenshots/lib/preload.js")), hash(actualBefore));
+  assert.equal(hash(await readFile(tool)), hash(toolBytes));
+});

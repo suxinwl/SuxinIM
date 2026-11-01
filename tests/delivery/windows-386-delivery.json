@@ -1,0 +1,369 @@
+{
+  "utc": "2026-11-01T17:11:05.397577+00:00",
+  "identity": "OpenIM original enterprise upgrade; four reported PC/Web fixes",
+  "application": {
+    "version": "3.8.6",
+    "build": 380601,
+    "sdk": "3.8.3-patch.15.1"
+  },
+  "status": "PASS_FOR_SCOPED_FOUR_FIXES",
+  "fullUpgradeAccepted": false,
+  "installer": {
+    "path": "clients/web-desktop/release/OpenIM38-Enterprise-3.8.6-win-x64.exe",
+    "bytes": 160967316,
+    "sha256": "b529a90986d4c70176922e3965c1c88d6ef69432743e71a09f7f991a7e0018c3"
+  },
+  "acceptance": {
+    "typeScript": "Passed during implementation/build verification",
+    "adapterTests": {
+      "passed": 57,
+      "failed": 0
+    },
+    "readReceipts": "Real WASM and normal Electron window: foreground read; two messages stay unread through tray-hidden sampling; restore reads both. Passed twice.",
+    "workCircle": "Seven original-UI cases passed, own mutations immediate; peer events and fallback verified (5062 ms observed).",
+    "screenshots": "Real Electron sandbox preload/IPC and selection toolbar with synthetic screenshot input; confirm/cancel, duplicate events and restore passed. Final ASAR patch verified.",
+    "packagedSmoke": "Actual final packaged executable: version, normal TLS, WASM/SQLite startup, managed local files and HTTP Range passed.",
+    "delivery": "New installer full HTTPS bytes/SHA verified and optional Windows update published; Web/resources/download page hashes match deployed content."
+  },
+  "normalTLSHttpChecks": [
+    {
+      "route": "/",
+      "bytes": 615,
+      "sha256": "050c199cdb5819ddcecb1b878f33c81a99cd65fa95f90b7ea28fae09e60cd71a",
+      "matchesLocal": "clients/web-desktop/dist-web/index.html"
+    },
+    {
+      "route": "/downloads/",
+      "bytes": 1978,
+      "sha256": "8f39654a4e7b625ee499962be693ad962ef3d3c37bf6553856c573d7531eda9c",
+      "matchesLocal": "artifacts/downloads/index.html"
+    },
+    {
+      "route": "/admin/",
+      "bytes": 473,
+      "sha256": "67b2abb3c08251e0cdd8a097c51fc0454b48aa9a0197b7fc24efcb18528c60e1",
+      "matchesLocal": null
+    },
+    {
+      "route": "/assets/index-305c900e.js",
+      "bytes": 2966878,
+      "sha256": "c3873469a23b711eb04cd6baad02540c87cc9c7144a3fa4952292561e466ba50",
+      "matchesLocal": "clients/web-desktop/dist-web/assets/index-305c900e.js"
+    },
+    {
+      "route": "/assets/index-19170498.css",
+      "bytes": 100847,
+      "sha256": "191704989c0101abc6078f076a492941263c81a31705ff37879960940b1b931d",
+      "matchesLocal": "clients/web-desktop/dist-web/assets/index-19170498.css"
+    },
+    {
+      "route": "/sdk-assets.json",
+      "bytes": 495,
+      "sha256": "1c2f8c8e2a95b44a78e6e339fda5f741c30b40b46b789b968ccb280a8486d54f",
+      "matchesLocal": "clients/web-desktop/dist-web/sdk-assets.json"
+    }
+  ],
+  "sourceAndDocumentationFrozenInputs": [
+    {
+      "path": "clients/web-desktop/src/im/read-receipt-gate.ts",
+      "bytes": 3710,
+      "sha256": "f94112e157c2c80b5d155d3941a79170b4c97227d578fa9560adfc371775ce6a"
+    },
+    {
+      "path": "clients/web-desktop/src/hooks/useReadActivity.ts",
+      "bytes": 391,
+      "sha256": "fa486500fc4c818a80b49e42808cc6d1260ad3374d2596dfb71c8e80d66082a3"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/useConversationState.ts",
+      "bytes": 2263,
+      "sha256": "d733aceb590b6e5cc32532d3efc9c1eefd25480ffb0be83a00e017034a196384"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/index.tsx",
+      "bytes": 4319,
+      "sha256": "f78353570991c0a77acde93baefe19c84f16c084e6d9d697e8204721aa18ff8a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/chat/queryChat/MessageItem/index.tsx",
+      "bytes": 12495,
+      "sha256": "b5322d67ef7e192971d46c282220a58be8407c58a09f32ee67bc58daf50d638e"
+    },
+    {
+      "path": "clients/web-desktop/src/im/ImFacade.ts",
+      "bytes": 16070,
+      "sha256": "8873cef5ad4ea828c3a1380e16eebfa6f9df8d03a5394923a0e27ead8f0efc5d"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-gate.test.mjs",
+      "bytes": 8356,
+      "sha256": "ca7a613bcbcd1ce0c9549767b2cca6dd1e1fd20587bf28d53cac92d858adb002"
+    },
+    {
+      "path": "clients/web-desktop/tests/read-receipt-facade.test.mjs",
+      "bytes": 4266,
+      "sha256": "2006c302f6e9d9e3f82b553c340b6f883f1b5fce2da6d051bf8f8ab631bdb402"
+    },
+    {
+      "path": "clients/web-desktop/src/api/moments.ts",
+      "bytes": 4757,
+      "sha256": "d919f2308fb728d19308a908dae28bdf08c6e47dc3e1dc56352674ed60c89570"
+    },
+    {
+      "path": "clients/web-desktop/src/api/moments-cache.ts",
+      "bytes": 2638,
+      "sha256": "7c6f4971ded6679c2b03af78a2daf61654e620c74df2f2a64076e65a1d879334"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/index.tsx",
+      "bytes": 8959,
+      "sha256": "9816da6cc074b1046b384b431901fbffba3d45d142468a9a65084fa82a33ae85"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/index.tsx",
+      "bytes": 7464,
+      "sha256": "2566499334ed2c633f3d27ed60eeb5afd31415351c627659acbff0013f3c240a"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentInput.tsx",
+      "bytes": 3338,
+      "sha256": "5ee13742b298c80916ea4509e9f42385f1b5ca8f5a38005786fe1fe0e4d5b851"
+    },
+    {
+      "path": "clients/web-desktop/src/pages/common/MomentsModal/MomentsItemRender/CommentRow.tsx",
+      "bytes": 2025,
+      "sha256": "665f33949e17a405232bf464ec655a6593cd9bbc0fa6cbf09f993e9f66446f31"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/screenshotsManage.ts",
+      "bytes": 3412,
+      "sha256": "d0299f1c95dd2b4d050849dd0255275aa19024259678aca102ef7e1def6229fc"
+    },
+    {
+      "path": "clients/web-desktop/electron/main/screenshotSession.ts",
+      "bytes": 2266,
+      "sha256": "5c5f31dc1d14c24208d12dcb4184586947f133bd12907e0fc8828c297696dedd"
+    },
+    {
+      "path": "clients/web-desktop/scripts/ensure-screenshot-preload.mjs",
+      "bytes": 1512,
+      "sha256": "7ea6f56070a3570875450857ca8a56a4c2997aec5329b04461ef0a440d1a6e54"
+    },
+    {
+      "path": "clients/web-desktop/scripts/build-electron.mjs",
+      "bytes": 295,
+      "sha256": "75d7ddba25b701030a6af05ba2f53d6f903cb715205419ec3ea1808679e2cbe1"
+    },
+    {
+      "path": "clients/web-desktop/patches/electron-screenshots+0.5.28.patch",
+      "bytes": 1103,
+      "sha256": "9210424d91ae34b6970bff6bc4e6f84fb8653e0c147cda6f7cdff811dbec50ba"
+    },
+    {
+      "path": "clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "bytes": 2478,
+      "sha256": "965acb7796bd2779198f8db6b3fbe9209841d1ef3e297ee9a5a768d350746bfb"
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshot-session.test.mjs",
+      "bytes": 14638,
+      "sha256": "b94b1774050d4637264eadf94b6c00ea515fcffbfa4f8593de6485f10a174008"
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshot-preload-tool.test.mjs",
+      "bytes": 2900,
+      "sha256": "9dedec598ac5bb14611e4d1d888e76dbe5e50d298aba194dcb876cc5e1b8f47e"
+    },
+    {
+      "path": "clients/web-desktop/tests/screenshots-gui.mjs",
+      "bytes": 12736,
+      "sha256": "11694b644d27c435efb113167a84db1eecfeaba7fa3510f424ea2d673cc49d8d"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-tests-final.log",
+      "bytes": 2977,
+      "sha256": "239b55071c43db801829073a8448583d1a0e1e5eb1de0cb588e99c8031e619e6"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-fix-review.json",
+      "bytes": 3483,
+      "sha256": "d6d786be149b60e7dcae0ff105ac25d4fe5c4af6aee73b31683a6178efdd0cc4"
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/manifest.json",
+      "bytes": 273,
+      "sha256": "0dbb2de21f7787e0813413fef836d10d3391a09fbe6c654840f24a8b8ab9aebd"
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/manifest-final.json",
+      "bytes": 664,
+      "sha256": "5a32412f7cc10a38c3a0f19f51aa0f3b84e06ce567aa23057bbc50867e7ef091"
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/clients/web-desktop/scripts/build-electron.mjs",
+      "bytes": 252,
+      "sha256": "ab704e0a6635ce424c33f4e092434a129476059bc2898300b648e9f74c945420"
+    },
+    {
+      "path": "tests/delivery/windows-386-before/screenshots/clients/web-desktop/node_modules/electron-screenshots/lib/preload.js",
+      "bytes": 2472,
+      "sha256": "c534e99a7707e1a7811e918f03f8d4b15176f08d26da768fe4e01828b328d710"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/result.json",
+      "bytes": 41063,
+      "sha256": "3f1a70c47b6d3929e64a298838a160d1f65e45b1ed5d5f4445d03e10d1fcf396"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/synthetic-overlay-before-confirm.png",
+      "bytes": 11220,
+      "sha256": "bae3ddc09b2a280f2645857d47ce0edf6d710ea64af12d44c7e9653e62621978"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/synthetic-main-after-cancel.png",
+      "bytes": 18795,
+      "sha256": "461d891e77549e6423b6e91f754c9e52272120d01bf6c7ab72d3fb50f2c1a354"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshots-gui/fourth-real-preload-buffer-undefined.json",
+      "bytes": 18141,
+      "sha256": "88d07dffa3bbc7324bcfa411e460a828ed7f4758aa86ffd9cebd11a8330329e9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 21979,
+      "sha256": "8522d26f66883c718bbd67863bdb785db3af4d02bb74cb614b4dd54b64eea5f6"
+    },
+    {
+      "path": "artifacts/manual/OpenIM38-原版升级使用说明.html",
+      "bytes": 27935,
+      "sha256": "7c22e0a9a2de4e2d023e19431d3630653bbe19337e8f5f19bdf47d4568651eb8"
+    },
+    {
+      "path": "artifacts/manual/SHA256SUMS.txt",
+      "bytes": 106,
+      "sha256": "0d7f79560359787fb6e705bf2702267840177aee2ff3ba799184625b5680cd45"
+    },
+    {
+      "path": "artifacts/downloads/index.html",
+      "bytes": 1978,
+      "sha256": "8f39654a4e7b625ee499962be693ad962ef3d3c37bf6553856c573d7531eda9c"
+    },
+    {
+      "path": "docs/web-desktop.md",
+      "bytes": 14352,
+      "sha256": "ee066f4c88cb920662d3fe86c41e18299bfd94d58761455f1a321630c3362d93"
+    },
+    {
+      "path": "docs/acceptance.md",
+      "bytes": 45954,
+      "sha256": "f5f8e91df5f3b24f1d089009575b050e20fd17a980deb873e84d0b40eed9fd66"
+    },
+    {
+      "path": "docs/feature-matrix.md",
+      "bytes": 8421,
+      "sha256": "a797cc345e10074bacd8e3647fb8e5b0e972c1021e7fb63af754f8a00ad5563d"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "tests/delivery/windows-386-final-adapter-tests.log",
+      "bytes": 13310,
+      "sha256": "07d04032cbcb38177c5f685774184f8e6dda11ec2dcbfc5d7e62ea7b3a68c4f6"
+    },
+    {
+      "path": "tests/delivery/windows-386-final-build.log",
+      "bytes": 6313,
+      "sha256": "ffc19433190b35152f8b57d3583824e211c4212010509659f39812b57fdb9ec0"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-receipts-review.json",
+      "bytes": 5489,
+      "sha256": "e6dd4e52dd5ffaf84ad82ca3b3063481aa61fee6d336fc2f58943fd31559ea42"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-review.json",
+      "bytes": 9943,
+      "sha256": "7608c36d39c773fc90b767e3ad2d8d3411878e89e9e7563d84f1a689fe0072a6"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-object-error-diagnostic-review.json",
+      "bytes": 4264,
+      "sha256": "c02645090ddd6231df30b47d310066e8ea165962a7e640af4c0272430f39f1c7"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-review.json",
+      "bytes": 5610,
+      "sha256": "0907cde25dfeb3dfc8cd0fd54c5d169c24e961ed6e588b9d3f9bee7ad618cd07"
+    },
+    {
+      "path": "tests/delivery/windows-386-moments-ui/report.json",
+      "bytes": 2175,
+      "sha256": "dba3ea44ab00af25eee4533efd1c02d6e8e1e87422c7e6e8fca852d5457a57a4"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-fix-review-final.json",
+      "bytes": 7937,
+      "sha256": "f5b815ed2376c467bb022598bfe81a9094592fc7e06d4ab12add24a582a3dadd"
+    },
+    {
+      "path": "tests/delivery/windows-386-screenshot-packaging-review.json",
+      "bytes": 3225,
+      "sha256": "7e2f67b30529856f2bdaed824ae7c59c9c635bf670562178b1246787bf908f76"
+    },
+    {
+      "path": "tests/delivery/windows-386-native-smoke.json",
+      "bytes": 594,
+      "sha256": "2cb2ce9857448158961332ae6bbb55d2eecd872931bc40db5c4b42adba48667e"
+    },
+    {
+      "path": "tests/delivery/windows-386-native-smoke-run.log",
+      "bytes": 488,
+      "sha256": "87c5262e7b432d07a619b2129c4347bc6d8907e375409aaab30ac6a6b37b4c41"
+    },
+    {
+      "path": "tests/delivery/windows-386-native-smoke-process.log",
+      "bytes": 221,
+      "sha256": "e17e608309969e7a65422726c9b5c12d35e1750c6e6c3ff1845730a73744342f"
+    },
+    {
+      "path": "tests/delivery/windows-386-installer-fixture-review.json",
+      "bytes": 3580,
+      "sha256": "3d4ce60c02246c1887dacf5351538ebbe8c53048ddfd099bda1287d468717b6e"
+    },
+    {
+      "path": "tests/delivery/windows-386-documentation-review.json",
+      "bytes": 3123,
+      "sha256": "e0cd683c696520486280d0e86f98675fc117fdb7f354579647b2558b8de1a64d"
+    },
+    {
+      "path": "tests/delivery/windows-386-web-bundle.json",
+      "bytes": 672944,
+      "sha256": "df583a473828b28d7cb853bdaaf83925a29a30af38e5f823d963b9883695520a"
+    },
+    {
+      "path": "tests/delivery/windows-386-deployment.json",
+      "bytes": 6842,
+      "sha256": "7701b25ad84daba4ed392ea09cd83d02148c9624663e51254d789d252190b084"
+    },
+    {
+      "path": "tests/release-downloads.json",
+      "bytes": 891,
+      "sha256": "ad605ebdd577875fb4e9fe1b8bbac36f1ba29802b72f486600bfb5717e185b90"
+    }
+  ],
+  "finitePublicTextCredentialScan": {
+    "fileCount": 59,
+    "bytes": 1091664,
+    "findings": [],
+    "scope": "Exactly the named UTF-8 inputs; no binary/OCR/full-project claim."
+  },
+  "limits": [
+    "Previously recorded read receipts cannot be rolled back; validate new messages.",
+    "Deliberate Mark as read remains available. Native minimize/unfocused cases have behavior coverage, not a separate final native GUI run.",
+    "One earlier Object pageerror remains unattributed. A single 30.357-second diagnostic rerun passed the same core flow with zero pageerrors/exceptions; this is not proof of a fix or harmlessness.",
+    "Read/work-circle UI tests used current source; screenshot GUI used synthetic input. Packaged smoke and ASAR verification are separate evidence, not full NSIS installed-login acceptance or all display hardware tests.",
+    "Windows test installer is unsigned. No in-place user-data upgrade acceptance was added in this task.",
+    "No Android or public release, no real business data migration. Audio/video/calls/meetings remain deferred per user instruction."
+  ]
+}

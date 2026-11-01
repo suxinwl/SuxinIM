@@ -1,0 +1,5 @@
+import {createServer} from 'node:http';
+import {readFile,stat} from 'node:fs/promises';
+import {resolve,extname,sep} from 'node:path';
+const root=resolve(process.argv[2] || 'static'),mime={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.json':'application/json'};
+createServer(async(req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),path=resolve(root,'.'+(pathname==='/'?'/load-host.html':pathname));if(!path.startsWith(root+sep)){res.writeHead(403).end();return;}const data=await readFile(path);res.writeHead(200,{'Content-Type':mime[extname(path)]||'application/octet-stream','Content-Length':data.length,'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin','Cache-Control':'no-store'});res.end(req.method==='HEAD'?undefined:data);}catch{res.writeHead(404).end();}}).listen(Number(process.env.LOAD_STATIC_PORT || 7778),'127.0.0.1',()=>console.log('Immutable SDK load host on 127.0.0.1:7778'));

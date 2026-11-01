@@ -1,0 +1,82 @@
+[
+  {
+    "package": "flutter_app_badger",
+    "version": "1.5.0",
+    "source": "https://pub.dev/api/archives/flutter_app_badger-1.5.0.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "flutter_keyboard_visibility",
+    "version": "5.4.1",
+    "source": "https://pub.dev/api/archives/flutter_keyboard_visibility-5.4.1.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "getuiflut",
+    "version": "0.2.21",
+    "source": "https://pub.dev/api/archives/getuiflut-0.2.21.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "image_gallery_saver",
+    "version": "2.0.3",
+    "source": "https://pub.dev/api/archives/image_gallery_saver-2.0.3.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "scan",
+    "version": "1.6.0",
+    "source": "https://pub.dev/api/archives/scan-1.6.0.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "sound_mode",
+    "version": "2.0.2",
+    "source": "https://pub.dev/api/archives/sound_mode-2.0.2.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "uri_to_file",
+    "version": "1.0.0",
+    "source": "https://pub.dev/api/archives/uri_to_file-1.0.0.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "vibration",
+    "version": "1.7.7",
+    "source": "https://pub.dev/api/archives/vibration-1.7.7.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "device_info_plus",
+    "version": "12.3.0",
+    "source": "https://pub.dev/api/archives/device_info_plus-12.3.0.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  },
+  {
+    "package": "connectivity_plus",
+    "version": "7.3.1",
+    "source": "https://pub.dev/api/archives/connectivity_plus-7.3.1.tar.gz",
+    "changes": [
+      "AGP 8 namespace / Flutter embedding v2 compatibility only"
+    ]
+  }
+]

@@ -1,0 +1,66 @@
+name: Publish to pub.dev
+
+# Triggered by pushing a version tag, e.g. v3.8.3+hotfix.14
+# Tag pattern on pub.dev Automated Publishing admin page must be: v{{version}}
+# See: https://dart.dev/tools/pub/automated-publishing
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*' # Matches v3.8.3+hotfix.14, v1.2.3, etc.
+
+jobs:
+  publish:
+    runs-on: macos-14
+    permissions:
+      id-token: write # Required for OIDC authentication with pub.dev
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # --- Pre-publish verification ---
+
+      - name: Verify Flutter / Dart
+        run: |
+          flutter pub get
+          flutter analyze
+
+      - name: Verify iOS Podspec
+        run: |
+          which pod || gem install cocoapods --no-document
+          pod lib lint ios/flutter_openim_sdk.podspec --allow-warnings --skip-tests
+
+      - name: Verify Android Gradle Build
+        run: |
+          cd example/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      # --- Publish to pub.dev via OIDC (keyless, no credentials required) ---
+      # Prerequisites (one-time, done on pub.dev):
+      #   1. Go to https://pub.dev/packages/flutter_openim_sdk/admin
+      #   2. Under "Automated publishing", click "Enable publishing from GitHub Actions"
+      #   3. Set repository: openimsdk/open-im-sdk-flutter
+      #   4. Set tag pattern: v{{version}}
+
+      - name: Set up Dart (configures OIDC auth for pub.dev)
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Publish to pub.dev
+        run: dart pub publish --force

@@ -1,0 +1,14 @@
+import buildVersion from "../../build-version.json";
+const origin = !/^https?:$/.test(window.location.protocol) ? "https://192.168.10.11:29880" : window.location.origin;
+export const WS_URL = `${origin.replace(/^http/, "ws")}/ws`;
+export const API_URL = `${origin}/api`;
+export const CHAT_URL = `${origin}/chat`;
+export const getWsUrl = () => localStorage.getItem("upgrade38:wsUrl") || import.meta.env.VITE_WS_URL || WS_URL;
+export const getApiUrl = () => localStorage.getItem("upgrade38:apiUrl") || import.meta.env.VITE_API_URL || API_URL;
+export const getChatUrl = () => localStorage.getItem("upgrade38:chatUrl") || import.meta.env.VITE_CHAT_URL || CHAT_URL;
+export const getEnterpriseUrl = () => localStorage.getItem("upgrade38:enterpriseUrl") || import.meta.env.VITE_ENTERPRISE_URL || `${new URL(getApiUrl()).origin}/enterprise/v1`;
+export const APP_VERSION = buildVersion.version;
+export const APP_VERSION_CODE = buildVersion.build;
+export const SDK_VERSION = "3.8.3-patch.15.1";
+export const CHECK_UPDATE_PREFIX = "";
+export const isSaveLog = true;

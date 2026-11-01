@@ -1,0 +1,217 @@
+{
+  "createdUtc": "2026-11-01T17:00:29.531501+00:00",
+  "status": "PASS_CORE_WITH_RECORDED_LIMITATIONS",
+  "acceptedCore": [
+    "Original sender and receiver email/password login after form guards and identity checks.",
+    "Foreground true native window observed and actual SDK isRead false-to-true plus original sender UI unread-to-read.",
+    "Real original close button hid to tray; two consecutive actual original UI sends remained SDK unread and original UI unread across 14 observations.",
+    "Restoring and focusing the same native window changed both pending messages to SDK true and original UI read."
+  ],
+  "scope": "Normal Electron 45.2.1 compiled main plus current Vite source renderer; this is not a claim of final NSIS installed-package acceptance.",
+  "testAccountIndexes": [
+    101,
+    102
+  ],
+  "focusEmulation": {
+    "command": "Emulation.setFocusEmulationEnabled",
+    "params": {
+      "enabled": false
+    },
+    "reason": "Playwright enables focus emulation by default; leaving it on invalidates native-hidden renderer focus checks."
+  },
+  "sourceModifiedForRuntimeTest": false,
+  "runtimeReport": {
+    "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/report.json",
+    "bytes": 11626,
+    "sha256": "9a0d8c7561938dc194ffb1cb3b18a795d8f7de8508d3f53a9f7072d770d2485e"
+  },
+  "runner": {
+    "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/harness-executed.mjs",
+    "bytes": 18546,
+    "sha256": "51ce292e6b55dabb1bd8fced018775db57f9c2d2b5f77ae9b14ec4a2502c0d96"
+  },
+  "screenshots": [
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/receiver-restored-conversation.png",
+      "bytes": 91003,
+      "sha256": "29db7b9e64459166937d8a197c449fe947712c75be7b9e4a9eddbda82b30010b"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/sender-final-all-read.png",
+      "bytes": 104602,
+      "sha256": "eb503dc2b206104573e0b06b27692d8604fbea7b16e71ed2b230d9699bd7e512"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/sender-foreground-read.png",
+      "bytes": 104975,
+      "sha256": "1f1f3fdcacac6e5be91c8f330aa6cf7f49be9601fe61d11501b4ca6362c096e9"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/sender-tray-hidden-unread.png",
+      "bytes": 104718,
+      "sha256": "de2193b81f3e6ee42a433b07870667a5a0cd9f44565f176f13e56a0f704624e3"
+    }
+  ],
+  "visualReview": "Viewed tray-hidden sender and restored native receiver pixels; synthetic chat UI visible and no credential form present. Other screenshots were gated by original logged-in/no-password-input checks.",
+  "observedPageErrors": [
+    {
+      "client": "windows-receiver",
+      "error": "Object",
+      "limitation": "One generic pageerror lacks sufficient detail to attribute; not a zero-error runtime claim. It did not prevent the core SDK/UI observations."
+    }
+  ],
+  "deferredRuntimeChecks": [
+    "Minimized and visible-unfocused native UI were omitted to honor the original 10 minute window; separate gate behavior tests cover those conditions."
+  ],
+  "failedHarnessHistory": [
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/harness-scope-clarification.json",
+      "bytes": 798,
+      "sha256": "31b79689a1ad5e06cd724d5dbaf4436935a98d14cd4dc612ca4b8987131ea93e"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/report.json",
+      "bytes": 2686,
+      "sha256": "d9a88edb2402bda993fac7f676ba4d2b16ee02a557495564bff92424a16dc4ff"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/harness-scope-clarification.json",
+      "bytes": 532,
+      "sha256": "49e30704548f8ca6c28fc18e1dd567de1e37432d70b9d5be2617b02d36934756"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/report.json",
+      "bytes": 2776,
+      "sha256": "46eaa6338f4c0aa686e172284de9d24e6c611082af991eaf01daa6d227d8b7a2"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/harness-scope-clarification.json",
+      "bytes": 497,
+      "sha256": "409a9f5a62a5c6994cd9c06a735d915deef0d99decf1c522702479e0408bb3bf"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/report.json",
+      "bytes": 2264,
+      "sha256": "6ad0ee08dbf4ada62c1922e414e3ec8b17f9fbed4b0164c2f2cb6529cf05b2e0"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/harness-scope-clarification.json",
+      "bytes": 675,
+      "sha256": "4bc48df840401aa9ad60cfa13b4d09fe24dd099f90e67dca682873977dbcc67a"
+    },
+    {
+      "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/report.json",
+      "bytes": 44748,
+      "sha256": "dabdf36552ddb0287f843ec43f125980b12fff2af0bb890513ba4b3351628d80"
+    }
+  ],
+  "credentialTextScan": {
+    "scope": "Only listed public UTF-8 runtime test reports/progress/runners. Exact currently available private fixture password/token strings, password MD5 variants and generic JWT patterns; no binary/OCR/all-project claim.",
+    "files": [
+      {
+        "path": "clients/web-desktop/tests/windows-read-receipts-386.mjs",
+        "bytes": 18546,
+        "sha256": "51ce292e6b55dabb1bd8fced018775db57f9c2d2b5f77ae9b14ec4a2502c0d96"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/harness-first-run.mjs",
+        "bytes": 16964,
+        "sha256": "219b39066ee438fa03976ebcf0e776bb16d114c5cdf13024d8dcb1e6390b2e61"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/harness-scope-clarification.json",
+        "bytes": 798,
+        "sha256": "31b79689a1ad5e06cd724d5dbaf4436935a98d14cd4dc612ca4b8987131ea93e"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/progress.json",
+        "bytes": 603,
+        "sha256": "cf42c3f715c31ad4dcaa18435e55b8accc55a3b257256a837aca95813b1a5c8a"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T164934956Z/report.json",
+        "bytes": 2686,
+        "sha256": "d9a88edb2402bda993fac7f676ba4d2b16ee02a557495564bff92424a16dc4ff"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/harness-scope-clarification.json",
+        "bytes": 532,
+        "sha256": "49e30704548f8ca6c28fc18e1dd567de1e37432d70b9d5be2617b02d36934756"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/harness-second-run.mjs",
+        "bytes": 17700,
+        "sha256": "0336f3baa7f17c0d38bdd3147e87854854fb96eb65b7f2e184fafc9f52dad7ab"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/progress.json",
+        "bytes": 672,
+        "sha256": "0b12e3b76527157952525c3a92393ae4dbba84e941946347fad2916d66c4d18a"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165231858Z/report.json",
+        "bytes": 2776,
+        "sha256": "46eaa6338f4c0aa686e172284de9d24e6c611082af991eaf01daa6d227d8b7a2"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/harness-scope-clarification.json",
+        "bytes": 497,
+        "sha256": "409a9f5a62a5c6994cd9c06a735d915deef0d99decf1c522702479e0408bb3bf"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/harness-third-run.mjs",
+        "bytes": 17911,
+        "sha256": "b89d4da0d85b7b94025b371cb79532af2985ae0c5e7ef460684ee19a99e53b65"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/progress.json",
+        "bytes": 697,
+        "sha256": "f82da1500512cd552fb483a5facea9326e5f18f05cd955973af6c8bf663ebb85"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165354937Z/report.json",
+        "bytes": 2264,
+        "sha256": "6ad0ee08dbf4ada62c1922e414e3ec8b17f9fbed4b0164c2f2cb6529cf05b2e0"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/harness-fourth-run.mjs",
+        "bytes": 17713,
+        "sha256": "180f611808d767af5846ef5660e58428ffcfc9383f86d93e6893b7affc5371b1"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/harness-scope-clarification.json",
+        "bytes": 675,
+        "sha256": "4bc48df840401aa9ad60cfa13b4d09fe24dd099f90e67dca682873977dbcc67a"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/progress.json",
+        "bytes": 692,
+        "sha256": "5b316ee45f20b28daf0ef60c5b49cb3834dc9d15aae5d73bb65fb5f22dc63322"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165611600Z/report.json",
+        "bytes": 44748,
+        "sha256": "dabdf36552ddb0287f843ec43f125980b12fff2af0bb890513ba4b3351628d80"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/harness-executed.mjs",
+        "bytes": 18546,
+        "sha256": "51ce292e6b55dabb1bd8fced018775db57f9c2d2b5f77ae9b14ec4a2502c0d96"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/progress.json",
+        "bytes": 610,
+        "sha256": "eea73008e3ebea1db69f62dfafec2b47bd46acb0787b6207b8c02fc9b42f395a"
+      },
+      {
+        "path": "tests/delivery/windows-386-read-runtime-20261101T165827243Z/report.json",
+        "bytes": 11626,
+        "sha256": "9a0d8c7561938dc194ffb1cb3b18a795d8f7de8508d3f53a9f7072d770d2485e"
+      }
+    ],
+    "fileCount": 20,
+    "byteCount": 177256,
+    "findings": [],
+    "binaryScreenshotsExcluded": 5
+  }
+}

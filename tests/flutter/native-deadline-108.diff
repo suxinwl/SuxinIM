@@ -1,0 +1,554 @@
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeMediaLifecycle.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeMediaLifecycle.java
+@@ -30,6 +30,49 @@
+   private static final ScheduledExecutorService DEADLINES = Executors.newSingleThreadScheduledExecutor(threads("OpenIMRtcMediaDeadline-"));
+   private static final AtomicInteger JOB_IDS = new AtomicInteger();
+ 
++  /** Caller deadlines retain their exact physical barrier, never a replacement job. */
++  static final class PhysicalDeadlines {
++    private final java.util.IdentityHashMap<CompletableFuture<Void>, Integer> pending = new java.util.IdentityHashMap<>();
++    private final Consumer<String> diagnostics;
++    private final Runnable onPhysicalFailure;
++    private final int limit;
++    PhysicalDeadlines(int limit, Consumer<String> diagnostics, Runnable onPhysicalFailure) {
++      this.limit = limit; this.diagnostics = diagnostics; this.onPhysicalFailure = onPhysicalFailure;
++    }
++    synchronized int pendingCount() { return pending.size(); }
++    void timedOut(CompletableFuture<Void> physical, String operation) {
++      final int id;
++      final boolean overflow;
++      synchronized (this) {
++        if (pending.containsKey(physical)) return;
++        overflow = pending.size() >= limit;
++        id = JOB_IDS.incrementAndGet();
++        if (!overflow) pending.put(physical, id);
++      }
++      final String label = safeLabel(operation);
++      if (overflow) {
++        onPhysicalFailure.run(); emit("deadline=" + id + " operation=" + label + " phase=deadlineOverflow"); return;
++      }
++      emit("deadline=" + id + " operation=" + label + " phase=callerTimeout physicalPending=" + !physical.isDone());
++      physical.whenComplete((unused, failure) -> {
++        // Publish permanent failure before removing the temporary barrier.
++        // No callback/continuation runs while the identity-map lock is held.
++        if (failure != null) onPhysicalFailure.run();
++        synchronized (this) { pending.remove(physical); }
++        emit("deadline=" + id + " operation=" + label + " phase=physicalOutcome outcome="
++          + (failure == null ? "success" : "failure") + " deadlinePending=" + pendingCount()
++          + (failure == null ? "" : " failure=" + unwrap(failure).getClass().getSimpleName()));
++      });
++    }
++    private void emit(String event) { try { diagnostics.accept(event); } catch (Throwable ignored) {} }
++  }
++
++  private static String safeLabel(String label) {
++    if (label == null) return "unspecified";
++    final String clean = label.replaceAll("[^A-Za-z0-9_.-]", "_");
++    return clean.substring(0, Math.min(64, clean.length()));
++  }
++
+   static final class Owner {
+     private final Executor workers;
+     private final Consumer<Runnable> exclusive;
+@@ -39,6 +82,8 @@
+     private boolean running;
+     private volatile boolean closing;
+     private volatile boolean quarantined;
++    private volatile String quarantineReason = "none";
++    private final PhysicalDeadlines deadlines;
+     private final java.util.Set<Lease> leases = java.util.concurrent.ConcurrentHashMap.newKeySet();
+     Owner() { this(WORKERS, Runnable::run, 8, unused -> {}); }
+     Owner(Consumer<Runnable> exclusive) { this(WORKERS, exclusive, 8, unused -> {}); }
+@@ -48,11 +93,23 @@
+     }
+     Owner(Executor workers, Consumer<Runnable> exclusive, int limit, Consumer<String> diagnostics) {
+       this.workers = workers; this.exclusive = exclusive; this.limit = limit; this.diagnostics = diagnostics;
++      this.deadlines = new PhysicalDeadlines(32, this::emitState, () -> quarantine("deadline_physical_failure"));
+     }
+     boolean isClosing() { return closing; }
+-    boolean isQuarantined() { return quarantined; }
+-    void closeForNewWork() { closing = true; }
+-    void quarantine() { quarantined = true; }
++    // Failure is published before its pending entry is removed. Read in the
++    // matching order so false(old hard) + zero(new pending) cannot admit work.
++    boolean isQuarantined() { return deadlines.pendingCount() != 0 || quarantined; }
++    boolean isPermanentlyQuarantined() { return quarantined; }
++    void closeForNewWork() { closing = true; emitState("phase=closing"); }
++    void quarantine() { quarantine("explicit_failure"); }
++    private void quarantine(String reason) { quarantineReason = reason; quarantined = true; emitState("phase=quarantine reason=" + reason); }
++    void callerTimedOut(CompletableFuture<Void> physical, String operation) { deadlines.timedOut(physical, operation); }
++    String stateSummary() {
++      final int nativePending;
++      synchronized (this) { nativePending = jobs.size() + (running ? 1 : 0); }
++      return "closing=" + closing + " permanentFailure=" + quarantined + " reason=" + quarantineReason
++        + " deadlinePending=" + deadlines.pendingCount() + " nativePending=" + nativePending;
++    }
+     void register(Lease lease) { leases.add(lease); }
+     void unregister(Lease lease) { leases.remove(lease); }
+     CompletableFuture<Void> detachAll() {
+@@ -67,14 +124,20 @@
+       return submit("media", action, cleanup);
+     }
+     CompletableFuture<Void> submit(String label, Runnable action, boolean cleanup) {
+-      Job job = new Job(label, action);
+-      boolean dispatch;
++      Job job = new Job(safeLabel(label), action);
++      boolean dispatch = false;
++      Failure rejected = null;
++      boolean queueFull = false;
+       synchronized (this) {
+-        if (!cleanup && (closing || quarantined)) return failed("RTC_MEDIA_UNAVAILABLE", "Native media owner is closing or quarantined");
+-        if (jobs.size() + (running ? 1 : 0) >= limit) {
+-          quarantine(); return failed("RTC_MEDIA_BUSY", "Bounded native media owner queue is occupied");
+-        }
+-        jobs.add(job); dispatch = !running; if (dispatch) running = true;
++        if (!cleanup && (closing || isQuarantined())) rejected = new Failure("RTC_MEDIA_UNAVAILABLE", "Native media owner is closing or quarantined");
++        else if (jobs.size() + (running ? 1 : 0) >= limit) {
++          quarantined = true; quarantineReason = "owner_queue_full"; queueFull = true;
++          rejected = new Failure("RTC_MEDIA_BUSY", "Bounded native media owner queue is occupied");
++        } else { jobs.add(job); dispatch = !running; if (dispatch) running = true; }
++      }
++      if (rejected != null) {
++        emitState("job=" + job.id + " operation=" + job.label + " phase=rejected reason=" + (queueFull ? "owner_queue_full" : "owner_unavailable"));
++        return failed(rejected.code, rejected.getMessage());
+       }
+       emit(job, "queued", 0, null);
+       if (dispatch) dispatch();
+@@ -95,13 +158,14 @@
+             try { job.action.run(); }
+             catch (Throwable error) { nativeFailure = error; throw error; }
+             finally { emit(job, "actionEnd", elapsed(started), nativeFailure); }
+-          }); } catch (Throwable error) { failure = error; quarantine(); }
++          }); } catch (Throwable error) { failure = error; quarantine("native_action_failure"); }
+           // All native locks are released before completion invokes continuations.
+           if (failure == null) job.physical.complete(null); else job.physical.completeExceptionally(failure);
++          emit(job, "physicalComplete", elapsed(job.queuedAt), failure);
+           dispatch();
+         });
+       } catch (RejectedExecutionException full) {
+-        quarantine(); job.physical.completeExceptionally(new Failure("RTC_MEDIA_BUSY", "Bounded native media worker queue is occupied"));
++        quarantine("worker_rejected"); job.physical.completeExceptionally(new Failure("RTC_MEDIA_BUSY", "Bounded native media worker queue is occupied"));
+         // Do not retry jobs against a full executor or grow a replacement pool.
+         final java.util.List<Job> rejected;
+         synchronized (this) {
+@@ -110,6 +174,10 @@
+         }
+         for (Job queued : rejected) queued.physical.completeExceptionally(new Failure("RTC_MEDIA_BUSY", "Native media dispatch was rejected"));
+       }
++    }
++    private void emitState(String event) {
++      try { diagnostics.accept(event + " " + stateSummary()); }
++      catch (Throwable ignored) { /* Diagnostics cannot change native lifetime. */ }
+     }
+     private void emit(Job job, String phase, long millis, Throwable failure) {
+       // Diagnostics are deliberately no-token metadata and never participate
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeRendererBinding.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeRendererBinding.java
+@@ -7,9 +7,16 @@
+ final class NativeRendererBinding {
+   interface Track { void attach(); void detach(); default Object key() { return this; } }
+   interface Output { void releaseEgl(); void releaseProducerOnMain(); }
++  static final class SetRequest {
++    final boolean accepted;
++    final CompletableFuture<Void> physical;
++    SetRequest(boolean accepted, CompletableFuture<Void> physical) { this.accepted = accepted; this.physical = physical; }
++  }
+   private final Executor main;
+   private final Output output;
+   private final NativeMediaLifecycle.Owner outputOwner;
++  private final java.util.function.Consumer<String> diagnostics;
++  private final NativeMediaLifecycle.PhysicalDeadlines deadlines;
+   private final java.util.Set<TrackLease> leases = java.util.concurrent.ConcurrentHashMap.newKeySet();
+   private CompletableFuture<Void> tail = CompletableFuture.completedFuture(null);
+   private CompletableFuture<Void> disposal;
+@@ -20,16 +27,26 @@
+   private int pending;
+   NativeRendererBinding(Executor main, Output output) { this(main, output, new NativeMediaLifecycle.Owner()); }
+   NativeRendererBinding(Executor main, Output output, NativeMediaLifecycle.Owner outputOwner) {
++    this(main, output, outputOwner, unused -> {});
++  }
++  NativeRendererBinding(Executor main, Output output, NativeMediaLifecycle.Owner outputOwner, java.util.function.Consumer<String> diagnostics) {
+     this.main = main; this.output = output; this.outputOwner = outputOwner;
++    this.diagnostics = diagnostics;
++    this.deadlines = new NativeMediaLifecycle.PhysicalDeadlines(32, this::emit, this::quarantine);
+   }
+ 
+   CompletableFuture<Void> set(NativeMediaLifecycle.Owner owner, Track track) {
++    return requestSet(owner, track).physical;
++  }
++  SetRequest requestSet(NativeMediaLifecycle.Owner owner, Track track) {
+     final CompletableFuture<Void> before, physical = new CompletableFuture<>();
+     final TrackLease previous, next;
+     final long requested;
+     synchronized (this) {
+-      if (closing || failed) return NativeMediaLifecycle.failed("RTC_RENDERER_UNAVAILABLE", "Renderer is closing or quarantined");
+-      if (pending >= 8) { failed = true; return NativeMediaLifecycle.failed("RTC_RENDERER_BUSY", "Bounded renderer request queue is occupied"); }
++      final boolean pendingDeadline = deadlines.pendingCount() != 0;
++      if (closing || failed) return new SetRequest(false, NativeMediaLifecycle.failed("RTC_RENDERER_UNAVAILABLE", "Renderer is closing or quarantined"));
++      if (track != null && pendingDeadline) return new SetRequest(false, NativeMediaLifecycle.failed("RTC_RENDERER_BUSY", "Renderer physical operation is still pending after caller deadline"));
++      if (pending >= 8) { failed = true; return new SetRequest(false, NativeMediaLifecycle.failed("RTC_RENDERER_BUSY", "Bounded renderer request queue is occupied")); }
+       requested = generation.incrementAndGet(); previous = current;
+       next = track == null ? null : new TrackLease(owner, track, requested);
+       current = next; before = tail; tail = physical; pending++;
+@@ -54,10 +71,22 @@
+         }
+       });
+     });
+-    physical.whenComplete((v, error) -> { synchronized (this) { pending--; if (error != null) failed = true; } });
+-    return physical;
++    physical.whenComplete((v, error) -> {
++      synchronized (this) { pending--; if (error != null) failed = true; }
++      emit("operation=renderer.set phase=physicalOutcome outcome=" + (error == null ? "success" : "failure")
++        + (error == null ? "" : " failure=" + NativeMediaLifecycle.unwrap(error).getClass().getSimpleName()));
++    });
++    return new SetRequest(true, physical);
+   }
+-  void quarantine() { failed = true; generation.incrementAndGet(); }
++  void quarantine() { failed = true; generation.incrementAndGet(); emit("phase=quarantine reason=physical_or_surface_failure"); }
++  void callerTimedOut(CompletableFuture<Void> physical, String operation) { deadlines.timedOut(physical, operation); }
++  private void emit(String event) {
++    final int pendingCount;
++    synchronized (this) { pendingCount = pending; }
++    try { diagnostics.accept(event + " generation=" + generation.get() + " closing=" + closing + " failed=" + failed
++      + " bindingPending=" + pendingCount + " deadlinePending=" + deadlines.pendingCount()); }
++    catch (Throwable ignored) { /* A diagnostic callback cannot own media. */ }
++  }
+   boolean isClosing() { return closing; }
+   NativeMediaLifecycle.Owner outputOwner() { return outputOwner; }
+   CompletableFuture<Void> dispose() {
+@@ -70,7 +99,7 @@
+     previous.whenComplete((v, earlierError) -> {
+       if (earlierError != null) { done.completeExceptionally(NativeMediaLifecycle.unwrap(earlierError)); return; }
+       CompletableFuture<Void> detached = CompletableFuture.allOf(leases.stream().map(TrackLease::release).toArray(CompletableFuture[]::new));
+-      detached.thenCompose(unused -> outputOwner.submit(output::releaseEgl, true)).whenComplete((unused, error) -> {
++      detached.thenCompose(unused -> outputOwner.submit("renderer.output.release", output::releaseEgl, true)).whenComplete((unused, error) -> {
+         if (error != null) { done.completeExceptionally(NativeMediaLifecycle.unwrap(error)); return; }
+         try {
+           main.execute(() -> {
+@@ -93,8 +122,21 @@
+     }
+     void skipAttach() { attachedBarrier.complete(null); }
+     void attach() {
+-      owner.submit(() -> {
+-        if (closing || failed || requested != generation.get() || owner.isClosing() || owner.isQuarantined()) return;
++      owner.submit("renderer.attach", () -> {
++        // Temporary deadlines reject new admissions. This job was already
++        // accepted and is physically serialized after its predecessor; a new
++        // soft deadline must not turn its actual attach into a fake success.
++        if (closing || failed || requested != generation.get()) return;
++        if (owner.isPermanentlyQuarantined()) {
++          emit("operation=renderer.attach phase=attachRejected reason=owner_hard_failure");
++          throw new NativeMediaLifecycle.Failure("RTC_MEDIA_UNAVAILABLE", "Track owner has a permanent physical failure");
++        }
++        if (owner.isClosing()) {
++          // Normal owner shutdown retires an accepted-but-not-started attach.
++          // Completing its no-JNI barrier lets detachAll release this lease.
++          emit("operation=renderer.attach phase=attachRetired reason=owner_closing");
++          return;
++        }
+         track.attach(); attached = true;
+       }, false).whenComplete((v, error) -> {
+         if (error == null) attachedBarrier.complete(null);
+@@ -111,7 +153,7 @@
+       }
+       attachedBarrier.whenComplete((v, attachError) -> {
+         if (attachError != null) { done.completeExceptionally(NativeMediaLifecycle.unwrap(attachError)); return; }
+-        owner.submit(() -> {
++        owner.submit("renderer.detach", () -> {
+           if (attached) { track.detach(); attached = false; }
+           owner.unregister(this); leases.remove(this);
+         }, true).whenComplete((unused, error) -> {
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/FlutterRTCVideoRenderer.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/FlutterRTCVideoRenderer.java
+@@ -33,7 +33,8 @@
+     private final OwnerResolver owners;
+     private final NativeRendererBinding binding;
+     private final Handler platform = new Handler(Looper.getMainLooper());
+-    private final NativeMediaLifecycle.Owner outputOwner = new NativeMediaLifecycle.Owner();
++    private final NativeMediaLifecycle.Owner outputOwner = new NativeMediaLifecycle.Owner(Runnable::run,
++        event -> Log.d(TAG, "[OpenIMRtcNative] rendererOutput#" + Integer.toHexString(System.identityHashCode(this)) + " " + event));
+ 
+     public void Dispose() {
+         Dispose(null, () -> {});
+@@ -41,7 +42,7 @@
+ 
+     void Dispose(Result result, Runnable onDisposed) {
+         surfaceTextureRenderer.beginFinalRelease();
+-        report(binding.dispose(), result, onDisposed);
++        report(binding.dispose(), result, onDisposed, "renderer.dispose");
+     }
+ 
+     /**
+@@ -126,7 +127,7 @@
+                 eventSink = null;
+                 producer.release();
+             }
+-        }, outputOwner);
++        }, outputOwner, event -> Log.d(TAG, "[OpenIMRtcNative] renderer#" + Integer.toHexString(System.identityHashCode(this)) + " " + event));
+         surfaceTextureRenderer.setCleanupFailureHandler(binding::quarantine);
+     }
+ 
+@@ -166,8 +167,6 @@
+     }
+     void setStream(MediaStream mediaStream, String ownerTag, Result result) {
+         VideoTrack videoTrack;
+-        this.mediaStreamId = mediaStream == null ? null : mediaStream.getId();
+-        this.ownerTag = ownerTag;
+         if (mediaStream == null) {
+             videoTrack = null;
+         } else {
+@@ -176,7 +175,7 @@
+             videoTrack = videoTracks.isEmpty() ? null : videoTracks.get(0);
+         }
+ 
+-        setVideoTrack(videoTrack, result);
++        setVideoTrack(videoTrack, mediaStream == null ? null : mediaStream.getId(), ownerTag, result);
+     }
+    /**
+      * Sets the {@code MediaStream} to be rendered by this {@code FlutterRTCVideoRenderer}.
+@@ -193,8 +192,6 @@
+     }
+     void setStream(MediaStream mediaStream,String trackId, String ownerTag, Result result) {
+         VideoTrack videoTrack;
+-        this.mediaStreamId = mediaStream == null ? null : mediaStream.getId();
+-        this.ownerTag = ownerTag;
+         if (mediaStream == null) {
+             videoTrack = null;
+         } else {
+@@ -209,7 +206,7 @@
+             }
+         }
+ 
+-        setVideoTrack(videoTrack, result);
++        setVideoTrack(videoTrack, mediaStream == null ? null : mediaStream.getId(), ownerTag, result);
+     }
+ 
+     /**
+@@ -224,9 +221,7 @@
+         setTrack(videoTrack, mediaStreamId, ownerTag, null);
+     }
+     void setTrack(VideoTrack videoTrack, String mediaStreamId, String ownerTag, Result result) {
+-        this.mediaStreamId = mediaStreamId;
+-        this.ownerTag = ownerTag;
+-        setVideoTrack(videoTrack, result);
++        setVideoTrack(videoTrack, mediaStreamId, ownerTag, result);
+     }
+ 
+     /**
+@@ -244,13 +239,14 @@
+      * all preconditions for the start of rendering are met.
+      */
+     private void setVideoTrack(VideoTrack next, Result result) {
+-        NativeMediaLifecycle.Owner owner = next == null ? null : owners.resolve(next, ownerTag);
++        setVideoTrack(next, mediaStreamId, ownerTag, result);
++    }
++    private void setVideoTrack(VideoTrack next, String requestedStream, String requestedOwner, Result result) {
++        NativeMediaLifecycle.Owner owner = next == null ? null : owners.resolve(next, requestedOwner);
+         if (next != null && owner == null) {
+             if (result != null) result.error("RTC_MEDIA_UNAVAILABLE", "Track owner is closing or unavailable", null);
+             return;
+         }
+-        this.videoTrack = next;
+-        this.videoTrackId = next == null ? null : next.id();
+         NativeRendererBinding.Track track = next == null ? null : new NativeRendererBinding.Track() {
+             public Object key() { return next; }
+             public void attach() {
+@@ -259,10 +255,15 @@
+             }
+             public void detach() { next.removeSink(surfaceTextureRenderer); }
+         };
+-        report(binding.set(owner, track), result, () -> {});
+-    }
+-
+-    private void report(java.util.concurrent.CompletableFuture<Void> physical, Result result, Runnable completed) {
++        NativeRendererBinding.SetRequest request = binding.requestSet(owner, track);
++        if (request.accepted) {
++            this.mediaStreamId = requestedStream; this.ownerTag = requestedOwner;
++            this.videoTrack = next; this.videoTrackId = next == null ? null : next.id();
++        }
++        report(request.physical, result, () -> {}, "renderer.set");
++    }
++
++    private void report(java.util.concurrent.CompletableFuture<Void> physical, Result result, Runnable completed, String operation) {
+         // Physical ownership is independent of the caller's deadline. A late,
+         // genuine completion must still remove the exact renderer tombstone.
+         physical.whenComplete((unused, failure) -> {
+@@ -273,9 +274,10 @@
+         NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
+             public void success() { platform.post(() -> { if (result != null) result.success(null); }); }
+             public void error(String code, String message) { platform.post(() -> {
+-                if (result != null) result.error(code, message, null); else Log.w(TAG, code + ": " + message);
++                Log.w(TAG, "[OpenIMRtcNative] operation=" + operation + " phase=callerError code=" + code);
++                if (result != null) result.error(code, message, null);
+             }); }
+-        }, binding::quarantine);
++        }, () -> binding.callerTimedOut(physical, operation));
+     }
+ 
+     public boolean checkMediaStream(String id, String ownerTag) {
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/MethodCallHandlerImpl.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/MethodCallHandlerImpl.java
+@@ -118,7 +118,8 @@
+   // Shared local owner also serializes cloned tracks that share a capturer.
+   // It remains reusable after successful track stop; only individual records
+   // are marked closing until their real physical cleanup completes.
+-  private final NativeMediaLifecycle.Owner localMediaOwner = new NativeMediaLifecycle.Owner();
++  private final NativeMediaLifecycle.Owner localMediaOwner = new NativeMediaLifecycle.Owner(Runnable::run,
++    event -> Log.d(TAG, "[OpenIMRtcNative] local " + event));
+   private final java.util.Set<MediaStreamTrack> closingLocalTracks = java.util.concurrent.ConcurrentHashMap.newKeySet();
+   private final java.util.Set<String> closingLocalStreams = java.util.concurrent.ConcurrentHashMap.newKeySet();
+   private final Map<String, java.util.concurrent.CompletableFuture<Void>> trackCleanup = new HashMap<>();
+@@ -216,7 +217,7 @@
+       final List<LocalTrack> tracks;
+       synchronized (localTracks) { tracks = new ArrayList<>(localTracks.values()); }
+       for (LocalTrack track : tracks) closingLocalTracks.add(track.track);
+-      return localMediaOwner.detachAll().thenCompose(unused -> localMediaOwner.submit(() -> {
++      return localMediaOwner.detachAll().thenCompose(unused -> localMediaOwner.submit("local.plugin.release", () -> {
+         final List<Runnable> operations = new ArrayList<>();
+         for (MediaStream stream : streams) operations.add(() -> localRelease.releaseStream(stream, streams, localReleaseOperations));
+         for (LocalTrack track : tracks) operations.add(() -> localRelease.releaseTrack(track.track, streams, localReleaseOperations));
+@@ -1853,18 +1854,22 @@
+     return peer == null || peer.isClosing() ? null : peer.mediaOwner();
+   }
+ 
+-  private void reportLocal(java.util.concurrent.CompletableFuture<Void> physical, Result result) {
++  private void reportLocal(java.util.concurrent.CompletableFuture<Void> physical, Result result, String operation) {
+     NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
+       public void success() { mainHandler.post(() -> { if (result != null) result.success(null); }); }
+       public void error(String code, String message) { mainHandler.post(() -> {
+-        if (result != null) result.error(code, message, null); else Log.w(TAG, code + ": " + message);
++        Log.w(TAG, "[OpenIMRtcNative] operation=" + operation + " phase=callerError code=" + code);
++        if (result != null) result.error(code, message, null);
+       }); }
+-    }, localMediaOwner::quarantine);
++    }, () -> localMediaOwner.callerTimedOut(physical, operation));
+   }
+ 
+   @Override public boolean isLocalMediaCleanupPending() {
+-    return localCleanupSequence.isPending() || localMediaOwner.isClosing() || localMediaOwner.isQuarantined()
++    final boolean busy = localCleanupSequence.isPending() || localMediaOwner.isClosing() || localMediaOwner.isQuarantined()
+       || !closingLocalTracks.isEmpty() || !closingLocalStreams.isEmpty();
++    if (busy) Log.d(TAG, "[OpenIMRtcNative] operation=local.admission phase=blocked " + localMediaOwner.stateSummary()
++      + " " + localCleanupSequence.stateSummary() + " closingTracks=" + closingLocalTracks.size() + " closingStreams=" + closingLocalStreams.size());
++    return busy;
+   }
+   @Override public long localMediaGeneration() { return localCreationGeneration.get(); }
+ 
+@@ -1879,10 +1884,10 @@
+     final boolean unpublishedEmpty = !localStreams.containsValue(stream) && tracks.isEmpty()
+       && localReleaseOperations.borrowedTracks(stream).isEmpty();
+     java.util.concurrent.CompletableFuture<Void> physical = unpublishedEmpty
+-      ? localMediaOwner.submit(() -> localRelease.releaseUnpublishedEmpty(stream, localReleaseOperations), true)
++      ? localMediaOwner.submit("local.unpublished.empty.release", () -> localRelease.releaseUnpublishedEmpty(stream, localReleaseOperations), true)
+       : localCleanupSequence.submit(() -> {
+           final List<MediaStream> streams = new ArrayList<>(localStreams.values()); streams.add(stream);
+-          return localMediaOwner.submit(() -> localRelease.releaseStream(stream, streams, localReleaseOperations), true);
++          return localMediaOwner.submit("local.unpublished.release", () -> localRelease.releaseStream(stream, streams, localReleaseOperations), true);
+         });
+     physical.whenComplete((unused, error) -> { if (error == null) mainHandler.post(() -> {
+       rejectedStreams.remove(stream); closingLocalTracks.removeAll(tracks);
+@@ -1891,12 +1896,12 @@
+     NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
+       public void success() { mainHandler.post(() -> result.error(code, message, null)); }
+       public void error(String failureCode, String failureMessage) { mainHandler.post(() -> result.error(failureCode, failureMessage, null)); }
+-    }, localMediaOwner::quarantine);
++    }, () -> localMediaOwner.callerTimedOut(physical, "local.unpublished.reject"));
+   }
+ 
+   private void disposeTrackAsync(String trackId, Result result) {
+     java.util.concurrent.CompletableFuture<Void> existing = trackCleanup.get(trackId);
+-    if (existing != null) { reportLocal(existing, result); return; }
++    if (existing != null) { reportLocal(existing, result, "local.track.dispose"); return; }
+     final LocalTrack track;
+     synchronized (localTracks) { track = localTracks.get(trackId); }
+     if (track == null) { if (result != null) result.success(null); return; }
+@@ -1907,7 +1912,7 @@
+     localCleanupSequence.submit(() -> {
+       final List<MediaStream> streams = new ArrayList<>(localStreams.values());
+       final java.util.concurrent.CompletableFuture<Void> physical = new java.util.concurrent.CompletableFuture<>();
+-      localMediaOwner.detachMatching(track.track).thenCompose(unused -> localMediaOwner.submit(() ->
++      localMediaOwner.detachMatching(track.track).thenCompose(unused -> localMediaOwner.submit("local.track.release", () ->
+         localRelease.releaseTrack(track.track, streams, localReleaseOperations), true))
+         .whenComplete((unused, error) -> mainHandler.post(() -> {
+           if (error == null) {
+@@ -1920,12 +1925,12 @@
+         }));
+       return physical;
+     }).whenComplete((unused, error) -> { if (error == null) done.complete(null); else done.completeExceptionally(NativeMediaLifecycle.unwrap(error)); });
+-    reportLocal(done, result);
++    reportLocal(done, result, "local.track.dispose");
+   }
+ 
+   private void disposeStreamAsync(String streamId, Result result) {
+     java.util.concurrent.CompletableFuture<Void> existing = streamCleanup.get(streamId);
+-    if (existing != null) { reportLocal(existing, result); return; }
++    if (existing != null) { reportLocal(existing, result, "local.stream.dispose"); return; }
+     final MediaStream stream = localStreams.get(streamId);
+     if (stream == null) { if (result != null) result.success(null); return; }
+     localCreationGeneration.incrementAndGet();
+@@ -1948,7 +1953,7 @@
+       }
+       final java.util.concurrent.CompletableFuture<Void> physical = new java.util.concurrent.CompletableFuture<>();
+       java.util.concurrent.CompletableFuture.allOf(detach.toArray(new java.util.concurrent.CompletableFuture[0]))
+-        .thenCompose(unused -> localMediaOwner.submit(() -> localRelease.releaseStream(stream, streams, localReleaseOperations), true))
++        .thenCompose(unused -> localMediaOwner.submit("local.stream.release", () -> localRelease.releaseStream(stream, streams, localReleaseOperations), true))
+         .whenComplete((unused, error) -> mainHandler.post(() -> {
+           if (error == null) {
+             if (localStreams.get(streamId) == stream) localStreams.remove(streamId);
+@@ -1960,7 +1965,7 @@
+         }));
+       return physical;
+     }).whenComplete((unused, error) -> { if (error == null) done.complete(null); else done.completeExceptionally(NativeMediaLifecycle.unwrap(error)); });
+-    reportLocal(done, result);
++    reportLocal(done, result, "local.stream.dispose");
+   }
+ 
+   public void mediaStreamTrackSetEnabled(final String id, final boolean enabled, String peerConnectionId) {
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeCleanupSequence.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/NativeCleanupSequence.java
+@@ -13,6 +13,7 @@
+   private CompletableFuture<Void> shutdown;
+   NativeCleanupSequence(Executor main) { this.main = main; }
+   synchronized boolean isPending() { return pending != 0 || tail.isCompletedExceptionally(); }
++  synchronized String stateSummary() { return "sequencePending=" + pending + " sequenceFailed=" + tail.isCompletedExceptionally() + " sequenceClosed=" + closed; }
+   CompletableFuture<Void> submit(Supplier<CompletableFuture<Void>> operation) {
+     return enqueue(operation, false);
+   }
+--- 107/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/SurfaceTextureRenderer.java
++++ 108/clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0/android/src/main/java/com/cloudwebrtc/webrtc/SurfaceTextureRenderer.java
+@@ -41,7 +41,7 @@
+   void setCleanupOwner(NativeMediaLifecycle.Owner owner) { cleanupOwner = owner; }
+   void setCleanupFailureHandler(Runnable handler) {
+     cleanupFailureHandler = handler;
+-    if (cleanupFailure != null || cleanupOwner.isQuarantined()) handler.run();
++    if (cleanupFailure != null || cleanupOwner.isPermanentlyQuarantined()) handler.run();
+   }
+   void throwIfCleanupFailed() { if (cleanupFailure != null) throw cleanupFailure; }
+   void beginFinalRelease() { finalRelease = true; }
+@@ -187,7 +187,7 @@
+     pendingSurfaceCleanup.incrementAndGet();
+     // The platform callback returns immediately. EGL waits happen only on the
+     // same bounded output owner used by final renderer release.
+-    java.util.concurrent.CompletableFuture<Void> physical = cleanupOwner.submit(() -> {
++    java.util.concurrent.CompletableFuture<Void> physical = cleanupOwner.submit("surface.cleanup", () -> {
+       synchronized (surfaceLock) {
+         final CountDownLatch completionLatch = new CountDownLatch(1);
+         releaseEglSurface(completionLatch::countDown);
+@@ -206,12 +206,11 @@
+     NativeMediaLifecycle.report(physical, new NativeMediaLifecycle.Response() {
+       public void success() {}
+       public void error(String code, String message) {
+-        // A caller deadline quarantines new attachment, but is not evidence
+-        // of physical failure. Late success may still safely release output.
+-        cleanupOwner.quarantine(); cleanupFailureHandler.run();
+-        android.util.Log.w("FlutterWebRTCPlugin", code + ": " + message);
+-      }
+-    }, cleanupOwner::quarantine);
++        // Only physical.whenComplete may report an actual native failure.
++        // A caller deadline keeps this exact output barrier temporarily held.
++        android.util.Log.w("FlutterWebRTCPlugin", "[OpenIMRtcNative] operation=surface.cleanup phase=callerError code=" + code);
++      }
++    }, () -> cleanupOwner.callerTimedOut(physical, "surface.cleanup"));
+   }
+ 
+   // Update frame dimensions and report any changes to |rendererEvents|.

@@ -1,0 +1,7 @@
+.action-popover {
+  :global(.ant-popover-arrow) {
+    &:before {
+      background: #313e52 !important;
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sdk": "3.8.3-patch.15.1",
+  "assets": [
+    {
+      "file": "openIM.wasm",
+      "sha256": "2e033aac58a72c3720dd2e1269df664a4af42967aa82bbb0a8f5ac7606c9cb1d",
+      "size": 37763413
+    },
+    {
+      "file": "sql-wasm.wasm",
+      "sha256": "806886f413da1a6acc1db373285adda1b6750c8d434c75a5a6042af0a65cbafd",
+      "size": 1105290
+    },
+    {
+      "file": "wasm_exec.js",
+      "sha256": "0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14",
+      "size": 16992
+    }
+  ]
+}

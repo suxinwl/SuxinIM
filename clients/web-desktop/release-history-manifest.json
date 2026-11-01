@@ -1,0 +1,47 @@
+{
+  "application": "OpenIM38 Enterprise",
+  "node": "v22.23.4",
+  "sdk": "3.8.3-patch.15.1",
+  "status": "withdrawn",
+  "artifacts": [
+    {
+      "file": "release/OpenIM38-Enterprise-3.8.3-win-x64.exe",
+      "size": 161091931,
+      "sha256": "b19617a6c8dc371ec62639f674cc0b7438faca0a8ca7e4d49772f82307d052a3",
+      "version": "3.8.3",
+      "build": 380301,
+      "platform": "windows",
+      "arch": "x64",
+      "applicationID": "io.openim.enterprise.upgrade38",
+      "codeSigned": false,
+      "status": "withdrawn",
+      "purpose": "Historical validation fixture; not part of the current delivery or recommended for installation"
+    },
+    {
+      "file": "release/OpenIM38-Enterprise-3.8.4-win-x64.exe",
+      "size": 161092606,
+      "sha256": "8ec38c13b27eec147b3bc1c40101f211116539c92b4c31ec6e88daa91a73b607",
+      "version": "3.8.4",
+      "build": 380401,
+      "platform": "windows",
+      "arch": "x64",
+      "applicationID": "io.openim.enterprise.upgrade38",
+      "codeSigned": false,
+      "status": "withdrawn",
+      "purpose": "Historical validation fixture; not part of the current delivery or recommended for installation"
+    },
+    {
+      "file": "release/OpenIM38-Enterprise-3.8.5-win-x64.exe",
+      "size": 161093683,
+      "sha256": "19e877dfc5a08734e23104efb718f3023de6039bfbbfd814572fb29bf87ac441",
+      "version": "3.8.5",
+      "build": 380501,
+      "platform": "windows",
+      "arch": "x64",
+      "applicationID": "io.openim.enterprise.upgrade38",
+      "codeSigned": false,
+      "status": "withdrawn",
+      "purpose": "Historical validation fixture; not part of the current delivery or recommended for installation"
+    }
+  ]
+}

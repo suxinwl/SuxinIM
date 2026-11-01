@@ -1,0 +1,1095 @@
+{
+  "policy": "Pinned Pub archives; local compatibility patches only, no changes to global Pub cache. AGP8.7.3/Kotlin2.1.0; numeric compile SDK >=35; WebRTC plugin36. Unused original camera_android excluded.",
+  "packages": [
+    {
+      "package": "android_path_provider-0.3.2",
+      "source": "https://pub.dev/api/archives/android_path_provider-0.3.2.tar.gz",
+      "pubArchiveSHA256": "e9fdc78e4df5ff93e3193c18ae100cf671b33e48feba3ade1d89d83e3eb8184e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "b09331196c618b3e7142f47f2870c0b025dba6ccfea516e142543988bfd0a6a5",
+          "upstreamSHA256": "73c9eba5bef5d308dc1f1b34f6cf84b5dfea77e24c52c48a325b075c0e3722ac"
+        }
+      ]
+    },
+    {
+      "package": "app_installer-1.3.1",
+      "source": "https://pub.dev/api/archives/app_installer-1.3.1.tar.gz",
+      "pubArchiveSHA256": "4c3a9268b53ead9a915ef79cd3988e28c72719fb78143867f9fed4bd4d8c1cfd",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "5f1a4d955db333a1f44901304bcca8c033950e26093fec7393bf36757de954a7",
+          "upstreamSHA256": "abe989e0f874e7e417669110a85529175f675ee9c33ceb632ef604e218a77b7d"
+        },
+        {
+          "path": "lib/app_installer.dart",
+          "sha256": "34648495023544677eecee039388606f87fced8c55e62ee96e82340ec9716abd",
+          "upstreamSHA256": "b3b83588063ad227fc031eb13f2328beb44b1363277c1f52c3ea1dc5d115b4fa"
+        }
+      ]
+    },
+    {
+      "package": "audio_session-0.1.25",
+      "source": "https://pub.dev/api/archives/audio_session-0.1.25.tar.gz",
+      "pubArchiveSHA256": "2b7fff16a552486d078bfc09a8cde19f426dc6d6329262b684182597bec5b1ac",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "cc2c5ec8aa6309bdbb8c9302b4d02d97e810bf2288207f9483eb6a51e0b00183",
+          "upstreamSHA256": "888f7f7dff9fc12f71bbfe4ae4cb0723c2048c27afab3578d95e2ac90ebb7910"
+        }
+      ]
+    },
+    {
+      "package": "camera_android_camerax-0.6.23+1",
+      "source": "https://pub.dev/api/archives/camera_android_camerax-0.6.23+1.tar.gz",
+      "pubArchiveSHA256": "2c0746d55f513bed55f52e0b5d9bda18c1533bb16bb89ea93d8033f3815e6cd8",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "95a3e4f216d4dbffa2875a1b1b087a1ead908e0a44661e7da91db61c23000f6d",
+          "upstreamSHA256": "fa63e1d0544cf7a668be792742aca033f6ee68ded3f562f2b4cbbd9ed4088a56"
+        }
+      ]
+    },
+    {
+      "package": "connectivity_plus-7.3.1",
+      "source": "https://pub.dev/api/archives/connectivity_plus-7.3.1.tar.gz",
+      "pubArchiveSHA256": "762c99f890ca8bf87f7337236f99edd42793843bc6c3631da294a76653a54bd0",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "665ac312522266e0a771cbc4b1966535c97d9db1c47cc788006abba2e3a215ca",
+          "upstreamSHA256": "e43e962b5f4e8975bcac35073840136ccd4a1a7a790e6f340f5863d2e110623b"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "27347c0686d8bd096392bd39ffb11b683cf51ba043da2bef6326966b39bd28db",
+          "upstreamSHA256": "4d7df9bfb6e657550efbd2016fd622635c0cd6339b2f69ca51d85513e583937d"
+        },
+        {
+          "path": "android/src/main/java/dev/fluttercommunity/plus/connectivity/Connectivity.java",
+          "sha256": "55ada0a1e4057786257fdb70f25252539daba0eb67a274107af513817dd36226",
+          "upstreamSHA256": "de838caa092fa9c4118f70fd85a9eca1c60c6186345e4ef60479da65333c5548"
+        },
+        {
+          "path": "android/src/main/java/dev/fluttercommunity/plus/connectivity/ConnectivityBroadcastReceiver.java",
+          "sha256": "bd2213965f174c255dfaa001842e0dafe32d51791d1640f203ce21c9078cf56a",
+          "upstreamSHA256": "c2352f7d6e7a8ef627d06bfa39777194805daaeed70ae8530e06dc5909b70cc2"
+        },
+        {
+          "path": "android/src/main/java/dev/fluttercommunity/plus/connectivity/ConnectivityMethodChannelHandler.java",
+          "sha256": "caa0cd493c2ac4ccbb1249a92f21baf1d84128a59db1aad5640ae46a268ae818",
+          "upstreamSHA256": "f8ec98e5e26cf63f034fa09fa90cc65144031f15128bf77660967c8c231e5aea"
+        },
+        {
+          "path": "android/src/main/java/dev/fluttercommunity/plus/connectivity/ConnectivityPlugin.java",
+          "sha256": "754da02e88f766d72ffdba57b35a55d063587ba64ed2888aa178b79bd0df45c3",
+          "upstreamSHA256": "977bae70e78680968db0b18cfe170df4135e3f5fb04ba0a2b7ee70fecd8a2b94"
+        }
+      ]
+    },
+    {
+      "package": "device_info_plus-12.3.0",
+      "source": "https://pub.dev/api/archives/device_info_plus-12.3.0.tar.gz",
+      "pubArchiveSHA256": "4df8babf73058181227e18b08e6ea3520cf5fc5d796888d33b7cb0f33f984b7c",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "388dd1ed3c23ced48d0767f5a20523ea766e38373b8ddacbbadf942b38c36d11",
+          "upstreamSHA256": "21a89e2e96af054d9fc95d9da5af2f8d779cf2704115c8342c51645dc2f23295"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "ebf6ecd61b54acc27594242f147611de0cae92213f0f037e8a2f734a95574376",
+          "upstreamSHA256": "3eb7c97a650161469eb5e1e4060e828d42a053c43afa7726912c0f216e7b5c04"
+        },
+        {
+          "path": "android/src/main/kotlin/dev/fluttercommunity/plus/device_info/DeviceInfoPlusPlugin.kt",
+          "sha256": "71b931a3b2fb8dedccf27c9ccefa936c38489007d320085e88f320c3fa73cbbe",
+          "upstreamSHA256": "fc51e8adc58094691370be45f9b1e472b1a57bbc93eda12080799ed81afb9197"
+        },
+        {
+          "path": "android/src/main/kotlin/dev/fluttercommunity/plus/device_info/MethodCallHandlerImpl.kt",
+          "sha256": "3f156aac1c602a29be8ad051134691a04a175abaef35e5d2a85c78a515b1a8ce",
+          "upstreamSHA256": "4622b7a0c75815164585f2f7279608caf7d02514d7d968a75d36c18221d40e25"
+        }
+      ]
+    },
+    {
+      "package": "emoji_picker_flutter-1.6.4",
+      "source": "https://pub.dev/api/archives/emoji_picker_flutter-1.6.4.tar.gz",
+      "pubArchiveSHA256": "8506341d62efd116d6fb1481450bffdbac659d3d90d46d9cc610bfae5f33cc54",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "5d894650f027cbaf0296e2fc8827bfa147c36843e6ef98192e93d53aec388805",
+          "upstreamSHA256": "ba250976cf856dd8e0262289f459c9db7b29726691bd0eb765cae4a796e91d45"
+        }
+      ]
+    },
+    {
+      "package": "file_picker-10.3.10",
+      "source": "https://pub.dev/api/archives/file_picker-10.3.10.tar.gz",
+      "pubArchiveSHA256": "57d9a1dd5063f85fa3107fb42d1faffda52fdc948cefd5fe5ea85267a5fc7343",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "b2dd39e1728645c6557bf3582037f2999b7a68cb4c67d5f13a1867e9520b8fed",
+          "upstreamSHA256": "79ce53fe53d18bfa809671f08828c5d5a6bfb62ce30af6e5c4a2496f0a0ad3ea"
+        }
+      ]
+    },
+    {
+      "package": "flutter_app_badger-1.5.0",
+      "source": "https://pub.dev/api/archives/flutter_app_badger-1.5.0.tar.gz",
+      "pubArchiveSHA256": "64d4a279bab862ed28850431b9b446b9820aaae0bf363322d51077419f930fa8",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "f7e46c9068444a3770909e863da29b832bd2f58554f34cb9454ff13de09ba63e",
+          "upstreamSHA256": "8d2bf5e3b6df1264fcbb3c79befca9fd09854b1e8a64a03b6da8ce1e45651ac4"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "8d2963c118350434793471929bc58424e77921e004ff55416e5c8fae1e505c71",
+          "upstreamSHA256": "1ae36e86ee9c4c1d23116ff9892ac5fcb9a5624977567cc0ed17312b869827e9"
+        },
+        {
+          "path": "android/src/main/java/fr/g123k/flutterappbadger/FlutterAppBadgerPlugin.java",
+          "sha256": "edabd7782453cd99b36d8cd1f1a2f75e83b037f1cd4538b973dbef4f140e0d71",
+          "upstreamSHA256": "b06752b1b05de447199d7a62181df61199e2d75cc130e1d17d9b974c55b9fe82"
+        }
+      ]
+    },
+    {
+      "package": "flutter_background-1.3.1",
+      "source": "https://pub.dev/api/archives/flutter_background-1.3.1.tar.gz",
+      "pubArchiveSHA256": "ee47be26beddc59875158a93eeaaad0c0b5f3b21afbdad3de73a2903be824f0e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "e61c5107d325145512d1238f7b78fe98e45a89128b3281380713dd5af9715bc8",
+          "upstreamSHA256": "129b378a72f0344aa56deeacd0cf1dd80cf14cdc232d4f8828818c0d05d2bd6a"
+        }
+      ]
+    },
+    {
+      "package": "flutter_bugly-1.1.1",
+      "source": "https://pub.dev/api/archives/flutter_bugly-1.1.1.tar.gz",
+      "pubArchiveSHA256": "ee8e8c2454e2a74a65dc28cf36b46d0bfe10353e4abfde73411bf03f90f05f08",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "067f9a90b9a2d247c9122abbcc1c7fcc4be8da648e009973ee1e5bba68a69819",
+          "upstreamSHA256": "197cd70dbb40329f4293056ebd2ccdbd13dd618910d34c9eb2690ef21b785876"
+        },
+        {
+          "path": "lib/src/flutter_bugly.dart",
+          "sha256": "1f3b23f9ca911a8c7e48833e363e4c225706063f898300a0d870cd7b8b969c39",
+          "upstreamSHA256": "4704d2f261c655bb1dfe9318550e6f0e735daf369cbedb9722c800e048ea0506"
+        }
+      ]
+    },
+    {
+      "package": "flutter_image_compress_common-1.1.1",
+      "source": "https://pub.dev/api/archives/flutter_image_compress_common-1.1.1.tar.gz",
+      "pubArchiveSHA256": "76869e4d5f3d65f3431e7edff0b2d8ad1eea68b49c6a37772fdb1ae6016da9ed",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "93418fabbcf55dfe6637cbbec2c51b7906e3378831fc5f0f018061bb25eb5433",
+          "upstreamSHA256": "54c3f11926469890d8f82da6773c359278306e59cbf55c5a0750d9b52ad95636"
+        }
+      ]
+    },
+    {
+      "package": "flutter_inappwebview_android-1.1.3",
+      "source": "https://pub.dev/api/archives/flutter_inappwebview_android-1.1.3.tar.gz",
+      "pubArchiveSHA256": "62557c15a5c2db5d195cb3892aab74fcaec266d7b86d59a6f0027abd672cddba",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "4bcc7f5cd27bfe7acbc864ce4f84b992f188115a080b9a67fc6e7129bf2c6854",
+          "upstreamSHA256": "82b483da0a2885adb5b5a5601bdad16289a0a68631b596ffb1001b6016fc0690"
+        }
+      ]
+    },
+    {
+      "package": "flutter_keyboard_visibility-5.4.1",
+      "source": "https://pub.dev/api/archives/flutter_keyboard_visibility-5.4.1.tar.gz",
+      "pubArchiveSHA256": "4983655c26ab5b959252ee204c2fffa4afeb4413cd030455194ec0caa3b8e7cb",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "9c4787d04da786e70d5531ef8f7043dd3392a5e477c32443c7f2d2c7a539ad49",
+          "upstreamSHA256": "040b8ed0d0308fd468cef6792db54c5aa9b0c07b96c3aa990f149ac244b91dd2"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "8d2963c118350434793471929bc58424e77921e004ff55416e5c8fae1e505c71",
+          "upstreamSHA256": "a8f2c8a0ba79bf26c2c73101b5c02c1bae58ca120ecf94ec9e1d3093d59d35f0"
+        },
+        {
+          "path": "android/src/main/java/com/jrai/flutter_keyboard_visibility/FlutterKeyboardVisibilityPlugin.java",
+          "sha256": "6e66219081971d3e10ee3be552a1ab317cd975d76effb38d876a45e974cc3d3a",
+          "upstreamSHA256": "d98f691951f32f7cdfb08d4d619821e82b906e52f8d89e2a4151c6fcfbae9431"
+        }
+      ]
+    },
+    {
+      "package": "flutter_local_notifications-16.3.3",
+      "source": "https://pub.dev/api/archives/flutter_local_notifications-16.3.3.tar.gz",
+      "pubArchiveSHA256": "55b9b229307a10974b26296ff29f2e132256ba4bd74266939118eaefa941cb00",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "8d585ecb9dcba5be6a4cd12218df352080920d83be88d874163df10a7dea02fe",
+          "upstreamSHA256": "61cd1c251235bd9582c7311cfa99479aca6189aaa8bd89f77447a743477fd5bb"
+        },
+        {
+          "path": "android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java",
+          "sha256": "1be06a8a9b2722f30849fd0a33c78ad70d3d765de204f8f4879073f12c68d709",
+          "upstreamSHA256": "8dacc4a830dfc4bc17f5b103a4601a7db67685ca12d4b96435031afe36b5a426"
+        }
+      ]
+    },
+    {
+      "package": "flutter_native_splash-2.4.4",
+      "source": "https://pub.dev/api/archives/flutter_native_splash-2.4.4.tar.gz",
+      "pubArchiveSHA256": "7062602e0dbd29141fb8eb19220b5871ca650be5197ab9c1f193a28b17537bc7",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "6ad984f156e49e7ed10a91fa1c0b83e9da1b28a7f7f6c0e35fda49f9be38e775",
+          "upstreamSHA256": "fd04a9680c629326b5a198d6a367dee63f1349346b10e3b8ec2d540ed412acdd"
+        }
+      ]
+    },
+    {
+      "package": "flutter_picker-2.1.0",
+      "source": "https://pub.dev/api/archives/flutter_picker-2.1.0.tar.gz",
+      "pubArchiveSHA256": "2f94c6eefba8697b07e3cd008b75f06b4ba7053cb26d23ae0fcd5932b7dc75af",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "lib/picker.dart",
+          "sha256": "d354f193c732d41ef140fe40d6ccae714ee856c04929b0adc1be22cde401d006",
+          "upstreamSHA256": "4f6c7576d23a4b543f003fa1f9c7a1d305078a997aaa882efa2c2361b32ff6a0"
+        }
+      ]
+    },
+    {
+      "package": "flutter_plugin_android_lifecycle-2.0.31",
+      "source": "https://pub.dev/api/archives/flutter_plugin_android_lifecycle-2.0.31.tar.gz",
+      "pubArchiveSHA256": "c2fe1001710127dfa7da89977a08d591398370d099aacdaa6d44da7eb14b8476",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "ffd31a2db36b81650e877fc2e8eb2301fd461bc94b7c901031c4e16003b4aa78",
+          "upstreamSHA256": "84d8c4374faabececb3cef1bc093b6159acafb51d4d7dea37d12e620772cc61a"
+        }
+      ]
+    },
+    {
+      "package": "flutter_webrtc-1.6.0",
+      "source": "https://pub.dev/api/archives/flutter_webrtc-1.6.0.tar.gz",
+      "pubArchiveSHA256": "e997161d7da3adedd3d430691b20931b0b4d96fa48bb60938d9ba0bf6fca98be",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "39c51f50ba737c1c77ef40a78f13d22d35c6ccc10ed6a3a36a319932f08ca157",
+          "upstreamSHA256": "88e98751759e607c3b9e00c62732bc8e28223e837ca8d75b08e887eb1a4c63f8"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/CameraEventsHandler.java",
+          "sha256": "4ff4617195a68db63da65c19d8a0c5e23068673b203ba9b64dcb9f9b1f3efaae",
+          "upstreamSHA256": "51490710a56a725cdb74b7bb51fbe12113ccaa41cba0cdaa1cefab0ae8d75578"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/FlutterRTCVideoRenderer.java",
+          "sha256": "ebb7ade4ed9496fd359101c5e605ed0f0c1a5412af4d2ef36183eaa490adbb12",
+          "upstreamSHA256": "4d704e44908f60d37dbe38605032cab7a82b37e32238dc73daa32a996813b667"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/GetUserMediaImpl.java",
+          "sha256": "84ffba08e0422cd8e5c21481d21bdb18951a666a986418c17c8e25057362e140",
+          "upstreamSHA256": "46ac02f61cafb9c122d1599aa45779e3ffe440d5fb9c4bdf3ded1e651c55868f"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/MethodCallHandlerImpl.java",
+          "sha256": "b8eb30449f33cae2a7ffb3908bea01d1d8699dc382b2c598b11da63bf0514624",
+          "upstreamSHA256": "e7cf885b3ee9036ffd3e577b76f9a9625add68de9a282ad67b4552294cfdac4e"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeCleanupSequence.java",
+          "sha256": "1fa3e0541d23405a3977593fc03d703e525bbec40d55d2271d67cf3d79ac4719",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeLocalMediaRelease.java",
+          "sha256": "a8b87d7df0a932e3e24cc04d54f7e3a215ce33bab9353ff067d6cb4fb566e1ee",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeMediaLifecycle.java",
+          "sha256": "cc9a9b0e3a0a1eca17dd1311142e18627675c677a9c7ed99097c9ca5f721d499",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativePeerLifecycle.java",
+          "sha256": "a95b7435842121e02115765944edb68fea4d342cd21c83eb11d7febc706bab89",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/NativeRendererBinding.java",
+          "sha256": "dbc22ebba32d36ab8d644f73866f71f59427bf18b41dea53caccb62a8989de36",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/PeerConnectionObserver.java",
+          "sha256": "83db21eba66bb09d8e70eb394a0c93dcad8b482938175a9ffa8144b96f240a02",
+          "upstreamSHA256": "aa37b343d93576340fdcb0355f2cbd0cc6551e0a0c8d4635d46e95040cf4f3af"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/RtcOperationGate.java",
+          "sha256": "a82cbdbc5cd6b325f6562703cbb091fe5bd737d3cf811d3b73d5271bb16c7158",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/StateProvider.java",
+          "sha256": "28d1650059aa989eba0c082d9faa61eef797f6356d8036946b32970be5ed0c52",
+          "upstreamSHA256": "0b288de21eef5b9dff2be2d6ad813b200d9233f8081f594bb679d8d72620c52a"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/SurfaceTextureRenderer.java",
+          "sha256": "f155cc7121a19e855d7529965ddc4ee66aded0b451a68a6f6d3616d39d35e952",
+          "upstreamSHA256": "654644bef6cad4e22b64d16a25772a5d772f662736a29d1c8f7c7d84b5524de7"
+        },
+        {
+          "path": "android/src/main/java/com/cloudwebrtc/webrtc/TrackStatsSelector.java",
+          "sha256": "d2fe35f9e09c98ea8ad00163413eee726c875cd5c9616d1ff71209bfb4a199d8",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "lib/src/native/mediadevices_impl.dart",
+          "sha256": "5baab72fc02417082b49922394ffb343042065a9b803f0bea99ec384f977cdda",
+          "upstreamSHA256": "6c824cfbf4cac96d724e678de8b27f487bf18a331d1a2d2d7210c74c5d4166c1"
+        },
+        {
+          "path": "lib/src/native/rtc_peerconnection_impl.dart",
+          "sha256": "598655139f2d5aba50e4d4fa7ad41e31e306c9e5f1ca25735f2ecf726efa7d4e",
+          "upstreamSHA256": "89dc0239a45d150bc1aeff282556cccf3cca851fe49f45b963bf34b7f9442e62"
+        },
+        {
+          "path": "lib/src/native/rtc_rtp_receiver_impl.dart",
+          "sha256": "013cc7671bd492ff0285195fd8da9d1bc7df01e5392e717e89a3da865c3d9379",
+          "upstreamSHA256": "8bf3c8872e226aec57df9da52dbf9ac32ae5eabf095fb72068cdb118b9d85c6e"
+        },
+        {
+          "path": "lib/src/native/rtc_rtp_sender_impl.dart",
+          "sha256": "edff485aa4130ef7cc1dc8cc065e9b0022095664031494dccb7ce3a853dce529",
+          "upstreamSHA256": "db2708b57579d0878a25897415c380af3f8a401de31dce7197c8a5fba846ef83"
+        },
+        {
+          "path": "lib/src/native/rtc_video_renderer_impl.dart",
+          "sha256": "515f30441659bc336c0b76e4026289b250beb8bf06ace1c6b5c8348c59215219",
+          "upstreamSHA256": "4d6a83898ac65e0c750a55fef466a9918b96499d2c0b1c687a8694045f8af263"
+        }
+      ]
+    },
+    {
+      "package": "getuiflut-0.2.21",
+      "source": "https://pub.dev/api/archives/getuiflut-0.2.21.tar.gz",
+      "pubArchiveSHA256": "a0cfffbfec45d74ae240716db54a644d16c7f6ac9d91399723595a3ec45bde81",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "1ed2bf922f18a1c466f6eeb9c7d71c27cb0b26d6e7bd1c4284fd0c3fb06d9ad2",
+          "upstreamSHA256": "6832a00fd3ffaa3aa8a19127b10f826e92b490c90b22759213826826541b5014"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "9b4298bf9e04295650fb493b4f5733daa264bc5fc7fd52770dfb4e408d24de45",
+          "upstreamSHA256": "c2d1fd67042c18c289219f14fec5a11b61bc505c4a887661fbde06d45f419bb3"
+        },
+        {
+          "path": "android/src/main/java/com/getui/getuiflut/FlutterIntentService.java",
+          "sha256": "5f2a07568bd750a98e8cf2536c65b7f138b416bc4bb81455c88ba0f614968453",
+          "upstreamSHA256": "027ccd9ea11f6747ccf378c000b6dc204282008e3bf1044c97d9826c2d53db9b"
+        },
+        {
+          "path": "android/src/main/java/com/getui/getuiflut/FlutterPushService.java",
+          "sha256": "b563138285c4e06fb1edeafe42844a752decfeb8d603e74f567435c49943ce2a",
+          "upstreamSHA256": "f8395bf4a33134b262ddef89a2eec17d3f0ac38938c21617a18fd0421736c79e"
+        },
+        {
+          "path": "android/src/main/java/com/getui/getuiflut/GetuiflutPlugin.java",
+          "sha256": "58d61f5c85a1063dd4a565ba8436c49e1fd1c1779c8b0ac067e898b448606329",
+          "upstreamSHA256": "fc7b6aedc10c60ec7f1d845ccc484d41f53430a4c37ffe60b64620b4e5f70ba5"
+        },
+        {
+          "path": "android/src/main/java/com/getui/getuiflut/GetuiPluginActivity.java",
+          "sha256": "5f952bd3da35b3006a81efd61affae3699af639bac2af8d368e01f9eae52d722",
+          "upstreamSHA256": "cbc8da194f59b8866c766f390c5b2dbcdc7fdd35705240233cb943117710f944"
+        }
+      ]
+    },
+    {
+      "package": "image_cropper-9.1.0",
+      "source": "https://pub.dev/api/archives/image_cropper-9.1.0.tar.gz",
+      "pubArchiveSHA256": "4e9c96c029eb5a23798da1b6af39787f964da6ffc78fd8447c140542a9f7c6fc",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "8de94638a3fccf583e93be0e21859b2b3f8765e4ec60838c8a2190e5c0f1a28c",
+          "upstreamSHA256": "4baa80908e551dfa3cfb03eca55f7efce01166637ae3e0d77c350ac3a1a6bde4"
+        }
+      ]
+    },
+    {
+      "package": "image_gallery_saver-2.0.3",
+      "source": "https://pub.dev/api/archives/image_gallery_saver-2.0.3.tar.gz",
+      "pubArchiveSHA256": "0aba74216a4d9b0561510cb968015d56b701ba1bd94aace26aacdd8ae5761816",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "b2d4c322249b777d32faeda08a3fc02512edfe46db3d32b093a73e522225ea80",
+          "upstreamSHA256": "efdf9f5be37d5e8d4c9485b21b6ead54265989c55c07baf0be42628a7045d83c"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "8d2963c118350434793471929bc58424e77921e004ff55416e5c8fae1e505c71",
+          "upstreamSHA256": "fbcb73027584657c7d84aeb1f2279e39531e4d24273614d3eb41b674ce14687e"
+        },
+        {
+          "path": "android/src/main/kotlin/com/example/imagegallerysaver/ImageGallerySaverPlugin.kt",
+          "sha256": "b7ac8ee3f0eb9495799580e7a88424f469ed5efcf1d196546f409515432e0214",
+          "upstreamSHA256": "0600b9f936bb3ce5fa18e6abe03f1c6f82468cb56afb54db30504c7c663959a3"
+        }
+      ]
+    },
+    {
+      "package": "image_picker_android-0.8.13+1",
+      "source": "https://pub.dev/api/archives/image_picker_android-0.8.13+1.tar.gz",
+      "pubArchiveSHA256": "28f3987ca0ec702d346eae1d90eda59603a2101b52f1e234ded62cff1d5cfa6e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "1191b20425919c74ecc4cff335899d2fddc355e30fb676c031607de1b1953c42",
+          "upstreamSHA256": "5e4cd5bd1a8775fd5cd09f3b2891a41d74459e464220f90dc532828acd77c03b"
+        }
+      ]
+    },
+    {
+      "package": "just_audio-0.9.46",
+      "source": "https://pub.dev/api/archives/just_audio-0.9.46.tar.gz",
+      "pubArchiveSHA256": "f978d5b4ccea08f267dae0232ec5405c1b05d3f3cd63f82097ea46c015d5c09e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "cd8e9a6dd47ff2cbbebf75bb398dc7716f24b3ae52ce1d03015a7f7c51c8456d",
+          "upstreamSHA256": "2c8d69444f387ba6725332be4d09314fa98372549d2887d5ffa4881274292542"
+        },
+        {
+          "path": "lib/just_audio.dart",
+          "sha256": "2959c57c0e97ab50dccd4fdc3c38c131299a1d8befecde5311b421616077e254",
+          "upstreamSHA256": "ea664d0dd36c751ad87d4178e7b52af8eec4db13e1c9841cb6078a9bac475d22"
+        }
+      ]
+    },
+    {
+      "package": "livekit_client-2.11.0",
+      "source": "https://pub.dev/api/archives/livekit_client-2.11.0.tar.gz",
+      "pubArchiveSHA256": "165d04b06d1d828ae85dc7ef5ffcbebf8d50f2cc7b02f3b8955fbeed96828c04",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "3c4e875570903ffb7262a6357b687df4335865c3a64a0217286e5756ad2d3805",
+          "upstreamSHA256": "4dcd64394c34a8be868753e5053e2aea6d76d64e278467fbd2c5b2eef2bd1a7c"
+        },
+        {
+          "path": "lib/src/core/engine.dart",
+          "sha256": "23fcc932fd60701ecd0b7595279ea64921874b2f986d01055da84cde6b1f6ace",
+          "upstreamSHA256": "fd73afd55055ab9add69224e36a0c93d4ac4ad865bc0fe16909269250720007c"
+        },
+        {
+          "path": "lib/src/core/room.dart",
+          "sha256": "888d0950aef3feb7d78a3faa3698a9437c164fe673dd7be82e6b154c962b1b88",
+          "upstreamSHA256": "144d02846fc55f38c232945b4fbdcb88d829a2e786d9362919caa92b40c9a81f"
+        },
+        {
+          "path": "lib/src/core/signal_client.dart",
+          "sha256": "bdbbaebab8835ece986132368386c0cb513bc6b9096688863008ef852ef0cad7",
+          "upstreamSHA256": "37a43d94d8d1b361a74e65ff8095cbc1afc045fea7b4973c7d010aa8f174bd59"
+        },
+        {
+          "path": "lib/src/core/transport.dart",
+          "sha256": "34084b0d92b6757595e251cad46518443feb727197da138ede17ace639824aed",
+          "upstreamSHA256": "4f2fa0f3e0d541b39952be87e71f5f3cc40f908a563893ad61a7fbcd30cf3195"
+        },
+        {
+          "path": "lib/src/events.dart",
+          "sha256": "8be63cb645f9639dbf6db859ab906b215b989f462b67a34bf03597e16aa56c1c",
+          "upstreamSHA256": "5ce5c38600946621304d08ebb9a714357b11c8d7989fd13c8de232b4f6c6c3e5"
+        },
+        {
+          "path": "lib/src/managers/event.dart",
+          "sha256": "a4e61b987a4b795d6e1c431d65d50b928b1c90b04c3e9fbfd5a68dd908d74120",
+          "upstreamSHA256": "75962d7089d1d6f1a318cabb84803ff086e331bc37bcab9fe135f60da1a6b503"
+        },
+        {
+          "path": "lib/src/participant/local.dart",
+          "sha256": "c510d6aa440e33833c5fff4d64aab163b459f3886c9eea85a9f8bbaa1d61fa95",
+          "upstreamSHA256": "41d7f90508ce1c5a8c7a0660c8458bf457ade57bf05d1037ebae09137af16953"
+        },
+        {
+          "path": "lib/src/participant/participant.dart",
+          "sha256": "bee0f9080002f282fe0d95584d18179c570b23c82061b29369832ce9ba841296",
+          "upstreamSHA256": "9311d60e6a98edd35627b15a6860bdc924ad6e042bf298c00d76674546f7a663"
+        },
+        {
+          "path": "lib/src/participant/remote.dart",
+          "sha256": "3544cf4b9126239962f2d86b7d46b8b203b1d5794e0b2a4dcb016a3fb071d435",
+          "upstreamSHA256": "fcf7c90c40b46eb62121f45b4b82573fe7b9d90f67d61fdefe2fad9666106588"
+        },
+        {
+          "path": "lib/src/publication/local.dart",
+          "sha256": "0abb57d687ed59180ed99229f8ba192bd117cf9045e9945b16c0f25464661363",
+          "upstreamSHA256": "18a255de8d1af368d48c03b569e04a4399d877f1262b3c670a215610dc610985"
+        },
+        {
+          "path": "lib/src/publication/remote.dart",
+          "sha256": "f0d42d7d1f341a2d09d101be739d12174a3a02bd435276a40bac5dc8eca346d8",
+          "upstreamSHA256": "826e5493e6f4f6b6d1d525df55b99ef9e0c7e22171dc3fb25c5d83b4b70770ca"
+        },
+        {
+          "path": "lib/src/publication/track_publication.dart",
+          "sha256": "4a2653afc34d70c96bc422ca7fc8732f4e8d7c7abbc397eea386f721918ee9dc",
+          "upstreamSHA256": "ba566abbfe95b681cc4c9f9a91b8c2d8e95b0b9ee24ed21ccc16027c9dbb59de"
+        },
+        {
+          "path": "lib/src/support/cleanup_sequence.dart",
+          "sha256": "a6ad5747e7b74c797fc6d6d5a1690e30707f923c4cd2f629afd9751abc77ddbf",
+          "upstreamSHA256": null
+        },
+        {
+          "path": "lib/src/support/websocket/io.dart",
+          "sha256": "4b703ae4a9994b494646f7996e3fb2c2148aaab013680b2b25e2a41b708813ef",
+          "upstreamSHA256": "56ecb5e001eb52e1682fbf889124c25a40dde51ba50e4d47f32bafa6188c8f35"
+        },
+        {
+          "path": "lib/src/support/websocket.dart",
+          "sha256": "56f5aa2936e4425ff5b1029bdf102257c8f043da4ca7bc7c77d5d2c28774a1f9",
+          "upstreamSHA256": "e7502d5c6ac1c64ff7d626af47dff91633053fc383255742d966355dba1eb075"
+        },
+        {
+          "path": "lib/src/track/local/audio.dart",
+          "sha256": "8d69680fa2ac0680e8366e84edd9560747c5a38b9c90e331eaa4fefebac02815",
+          "upstreamSHA256": "07d1c9a9502c9bb9f2e183feb9959eb30d16f3367efc93da93995bd1b782ee2c"
+        },
+        {
+          "path": "lib/src/track/local/local.dart",
+          "sha256": "297ae5b6aea090de8fe6c5ae1118fe8848f1edd1af1313da32479e5d8c214999",
+          "upstreamSHA256": "bc9e6527dd03b373aca3267be2a686eb26b4109e8e5fe8a10671c2a68db21ece"
+        },
+        {
+          "path": "lib/src/track/local/video.dart",
+          "sha256": "ae46978e1c5d83ea05d4dc56fcaaed965475bdd1a3d161ad6afac191be6ad1c1",
+          "upstreamSHA256": "361bdf88fdb77717e4fa27a80518dea905695ce79c44583a565548a190d6247e"
+        },
+        {
+          "path": "lib/src/track/remote/audio.dart",
+          "sha256": "a4a08035938da7e8cbf8364823d5fa1ddd715cc0f1e6729a30bfaf024f9e0787",
+          "upstreamSHA256": "b6d0fdc168cf72e8191b89b655ed5734be7eb983be547407907bc23a78295c23"
+        },
+        {
+          "path": "lib/src/track/remote/video.dart",
+          "sha256": "97ae8224f24adf7e167a40af0392854ae185ca0154ee2ddfe02562840e8d24eb",
+          "upstreamSHA256": "97befe4b1538944a1de879007dcf9df43979586b58ad734ceab3cfc8214472cb"
+        },
+        {
+          "path": "lib/src/track/track.dart",
+          "sha256": "28a1c61f18bd91dd2207a12566c6eb8747f686c06b64a46902ea29d888516840",
+          "upstreamSHA256": "b24a40b92b7c79bb39e37f546779b14e2cde47939a4da42aa082075596c85c6f"
+        },
+        {
+          "path": "lib/src/widgets/video_track_renderer.dart",
+          "sha256": "732009c2f79aacf7a948c425b2736130310d669d4d3065225af9a6d97aa599a3",
+          "upstreamSHA256": "6272037322914dbe2e3a41e3c7989c6c3bf31ecbcc476483b71f2d1f66b92c3e"
+        }
+      ]
+    },
+    {
+      "package": "local_auth_android-1.0.52",
+      "source": "https://pub.dev/api/archives/local_auth_android-1.0.52.tar.gz",
+      "pubArchiveSHA256": "48924f4a8b3cc45994ad5993e2e232d3b00788a305c1bf1c7db32cef281ce9a3",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "4b07ed4fd31f904bafe00aee0f0d8e508d10195e8df638983b608884c263edcb",
+          "upstreamSHA256": "0fbfff0b2f77edbfae31a5fb44d136bdd4e1e0b41ea1cb52e1857f29e526e464"
+        }
+      ]
+    },
+    {
+      "package": "map_launcher-3.5.0",
+      "source": "https://pub.dev/api/archives/map_launcher-3.5.0.tar.gz",
+      "pubArchiveSHA256": "7436d6ef9ae57ff15beafcedafe0a8f0604006cbecd2d26024c4cfb0158c2b9a",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "49b9d0122419f269f5d1665293e664113a645170fc60444bb8e0c93e06fda105",
+          "upstreamSHA256": "600d51634682abc3452e55751cdd2b919d728595ed1937055c8b58c5dc05c61e"
+        }
+      ]
+    },
+    {
+      "package": "mobile_scanner-3.5.7",
+      "source": "https://pub.dev/api/archives/mobile_scanner-3.5.7.tar.gz",
+      "pubArchiveSHA256": "1b60b8f9d4ce0cb0e7d7bc223c955d083a0737bee66fa1fcfe5de48225e0d5b3",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "b215bd45016a3f33c1f9cd0a670e1448103decd5dcc80882d88e5fac2827587a",
+          "upstreamSHA256": "70119269f27a75883952ea4e203eacddd80a4360aff40b9d72690044d7f9748c"
+        }
+      ]
+    },
+    {
+      "package": "open_filex-4.7.0",
+      "source": "https://pub.dev/api/archives/open_filex-4.7.0.tar.gz",
+      "pubArchiveSHA256": "9976da61b6a72302cf3b1efbce259200cd40232643a467aac7370addf94d6900",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "fa9407fcffcd322a34240263bba394bb46dbe66890d60b7765069523733dfa2d",
+          "upstreamSHA256": "89cc60097ab09c7d02e6ec38499d6437fcdbea7749576527637bbd25f26ff403"
+        }
+      ]
+    },
+    {
+      "package": "package_info_plus-4.2.0",
+      "source": "https://pub.dev/api/archives/package_info_plus-4.2.0.tar.gz",
+      "pubArchiveSHA256": "7e76fad405b3e4016cd39d08f455a4eb5199723cf594cd1b8916d47140d93017",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "821db4cef91b42abe0b8e5c1fc0302190f7e1f184c898e92d2a0f2721d292437",
+          "upstreamSHA256": "9b42d8c3b215a19f66c5a6352293230c756d52aa2bf94e9ea533dde7b9f2cd57"
+        },
+        {
+          "path": "android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt",
+          "sha256": "0b004559503240170a7af3fbfbe48af337306d87efa326ce1cb72dcda3640ceb",
+          "upstreamSHA256": "b54545c869b4d8b6b88ebcb8c02ff2318f5ab3c49b485318a3066acd85b525f6"
+        }
+      ]
+    },
+    {
+      "package": "path_provider_android-2.2.19",
+      "source": "https://pub.dev/api/archives/path_provider_android-2.2.19.tar.gz",
+      "pubArchiveSHA256": "3b4c1fc3aa55ddc9cd4aa6759984330d5c8e66aa7702a6223c61540dc6380c37",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "0e4df888c53cdae4aad857f1e983cb9feaece1f1a2dd7e162f9bbe0dcabf3123",
+          "upstreamSHA256": "a7bbf99ee2abd676075284a5d69cf60a796691cdda6b102f87a5262992260e8b"
+        }
+      ]
+    },
+    {
+      "package": "permission_handler_android-12.1.0",
+      "source": "https://pub.dev/api/archives/permission_handler_android-12.1.0.tar.gz",
+      "pubArchiveSHA256": "d3971dcdd76182a0c198c096b5db2f0884b0d4196723d21a866fc4cdea057ebc",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "61253abd06e5ab5901b2616b680546a13136ad4234c48f8b7344dfe6ce21423e",
+          "upstreamSHA256": "a7eb30be9254f9b4be2ab15d7ec4377432bf2906c65ea81ba2eb0bbda87ef967"
+        }
+      ]
+    },
+    {
+      "package": "photo_manager-3.7.1",
+      "source": "https://pub.dev/api/archives/photo_manager-3.7.1.tar.gz",
+      "pubArchiveSHA256": "a0d9a7a9bc35eda02d33766412bde6d883a8b0acb86bbe37dac5f691a0894e8a",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "372c3d67958ba0962c3a85eba270b9abf26458d9e8f374e4fa67e183faf5e56c",
+          "upstreamSHA256": "007f882e88011b5cf0b780178e77da46c1f27462f5168b6fe071e5a1e45d2a43"
+        }
+      ]
+    },
+    {
+      "package": "record_android-1.5.2",
+      "source": "https://pub.dev/api/archives/record_android-1.5.2.tar.gz",
+      "pubArchiveSHA256": "eb1732e42d0d2a1895b8db86e4fc917287e6d8491b6ed59918aea8bed6c69de4",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "3df4543d4bd87e09288d72a45a503f13fb8452ae98408900e6bbd16545955d3b",
+          "upstreamSHA256": "dcba04d15702fa261bf1b078b1e82aaa4d07e18c21f5a6677359a926861dce5a"
+        }
+      ]
+    },
+    {
+      "package": "scan-1.6.0",
+      "source": "https://pub.dev/api/archives/scan-1.6.0.tar.gz",
+      "pubArchiveSHA256": "b343ec36f863a88d41eb4c174b810c055c6bd1f1822b2188ab31aab684fb7cdb",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "215d66411a458e20945bbad9a2aaa17dcbe27e7450a2c06bd26dbbc9ddd10866",
+          "upstreamSHA256": "6ef08477d6150e1ea69cd695af6cd90082a048b21fa5bcb1c4ddace4dbeb75df"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "814d2e7144334eaaec7457eeb6ccf0233ca055e42953fce9704034328903bcec",
+          "upstreamSHA256": "070589dfdb3fe62da9813d6e13e35191a0dd1651d687f8d0e26d505a357c2716"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ParentView.java",
+          "sha256": "cbc152be73a46e457d769da454bcbb41138597205b5ef9b4209b6692a16d419f",
+          "upstreamSHA256": "2b715d292be4a5b9bd649c136a099e7659ca34506f85f929d087d0c4dff08aed"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/QRCodeDecoder.java",
+          "sha256": "04790d9a9374bad27ec313018bcbf3d0d4a6184d5bcf4910f38f7c9ec4263842",
+          "upstreamSHA256": "cfb2200f6b2dabd4b1dac21fe95f01af866395fd7ae887f4ecae2e67d5c5ff8a"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanDrawView.java",
+          "sha256": "f9ecfeea8d747dde6004985a7328385dcff4aae1d9184f57d4efff26b2ee2b49",
+          "upstreamSHA256": "29559970d4fce8a6be2047a88d1ddeee72299b23f2795138abd698ef5597b95a"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanPlatformView.java",
+          "sha256": "ec05e1f323bac3d73a211bde05e975afe6ba83e0f2033fd6560b4ace66d5550a",
+          "upstreamSHA256": "b300cb72faa18fa4754f73f6ffbfa3c5abbb3b12ba8f1ca56c74e5d60a0acc97"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanPlugin.java",
+          "sha256": "c364f84ec3c1d8d23a3e5ee79adfc1a6b7234c19950d53b59acd26b385d62a6d",
+          "upstreamSHA256": "1b9372993e2bd85b68658012ce8c2b2c55986678b6c11b4b1c9ad1615f71fb4d"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanView.java",
+          "sha256": "7ebf68c18113db5732da4e8082d9c596bdd9cffd829c8b820f6ed6bc079a7d4d",
+          "upstreamSHA256": "994e1a0d33d26fcb5dce4f280fab0e568a8fd573cf8e78e01e8b93876faf00b7"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanViewFactory.java",
+          "sha256": "45ef96bc0246f70a6fcfeaaf2a75aa533e58ec6f144d3cba36efdf7721bcfdf0",
+          "upstreamSHA256": "21a8e203c60573289ef2f80c8f7d21783be353fe09056219c68d605c88ac7df5"
+        },
+        {
+          "path": "android/src/main/java/com/chavesgu/scan/ScanViewNew.java",
+          "sha256": "7b7de47e5f39c98c73068833f58e58e4d7c6c0b3ecfc965742bd7baf0f179292",
+          "upstreamSHA256": "1460ea5c2e3ebed3624a8a884bc42b72e520c171ae20afe37f969fc72cea7068"
+        }
+      ]
+    },
+    {
+      "package": "sensors_plus-7.1.1",
+      "source": "https://pub.dev/api/archives/sensors_plus-7.1.1.tar.gz",
+      "pubArchiveSHA256": "50a01f66846bff68de947bd5df225c3627c923c467f758867f3916350be059ac",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle.kts",
+          "sha256": "fa6c70c5eb0bc86cd92986ad9cf6af9813f15a57b1a28fb85dce2ced6fb7f56e",
+          "upstreamSHA256": "14d1ba6b985cbcf60b5df244c2a75cfe3888452fe946cd659938fb8aac296953"
+        }
+      ]
+    },
+    {
+      "package": "shared_preferences_android-2.4.13",
+      "source": "https://pub.dev/api/archives/shared_preferences_android-2.4.13.tar.gz",
+      "pubArchiveSHA256": "bd14436108211b0d4ee5038689a56d4ae3620fd72fd6036e113bf1345bc74d9e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "633fe629501ea18dce2879dc0204e067325b2f6c8ab88d66b7effdd80bd28fd4",
+          "upstreamSHA256": "9bda7dd82c91eaf8de6ce4244296eb1bc250f3a2a412dc876821685b2fedb6c3"
+        }
+      ]
+    },
+    {
+      "package": "sound_mode-2.0.2",
+      "source": "https://pub.dev/api/archives/sound_mode-2.0.2.tar.gz",
+      "pubArchiveSHA256": "ec25dc16feea1876e9c767b615ee1e430331da6c0d0f7122c04cbc2233b175cb",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "830a93b9d02eb7d420a5e1748c40aab7acc7606d9e06bdcb12fd27cc7e3d5a55",
+          "upstreamSHA256": "2634eb0e1780db95d7877fc4365aa544594b2689fc53748c5a3569b11bf034ce"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "ebf6ecd61b54acc27594242f147611de0cae92213f0f037e8a2f734a95574376",
+          "upstreamSHA256": "a741051f93fae7e57dbfe1f98398c93cd973ddd8e066c4276a2645cb21372ae8"
+        },
+        {
+          "path": "android/src/main/java/com/tryingoutsomething/soundmode/sound_mode/SoundModePlugin.java",
+          "sha256": "91181bdf7d35e92da253e6aab7e67383fc30bcd0f5023a32750b18056d9f4c3a",
+          "upstreamSHA256": "0975ea1665517eabf5288277698746b6c191ded80b6e28384a01bb46aa658984"
+        }
+      ]
+    },
+    {
+      "package": "sqflite_android-2.4.1",
+      "source": "https://pub.dev/api/archives/sqflite_android-2.4.1.tar.gz",
+      "pubArchiveSHA256": "2b3070c5fa881839f8b402ee4a39c1b4d561704d4ebbbcfb808a119bc2a1701b",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "3df1bad102e1820662cdf91370e6141c7bed46763b605f96ef9042f4178b8664",
+          "upstreamSHA256": "881ac3e5fc6586f47fdc3cd5a4d2b45a77c61b71236e83ae0f21c93bff2ccc76"
+        }
+      ]
+    },
+    {
+      "package": "uri_to_file-1.0.0",
+      "source": "https://pub.dev/api/archives/uri_to_file-1.0.0.tar.gz",
+      "pubArchiveSHA256": "cbbb38f975d22311efacc9a53cdcb806708606666d8092314b81c5cb7983b700",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "2be6818b56d88dab5ae183cdf170448684edeeee1b3c0bc674e1f1b1927f8e21",
+          "upstreamSHA256": "bd0e99446d663fe555f0cc1fd8fe5432c3057b17a206d95e1d224e1e39d133d6"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "8d2963c118350434793471929bc58424e77921e004ff55416e5c8fae1e505c71",
+          "upstreamSHA256": "d4ee40d6fb3cf7717463d166ba97b45a8f1bcdf1f792761bd39c8f10b6e27583"
+        }
+      ]
+    },
+    {
+      "package": "url_launcher_android-6.3.20",
+      "source": "https://pub.dev/api/archives/url_launcher_android-6.3.20.tar.gz",
+      "pubArchiveSHA256": "81777b08c498a292d93ff2feead633174c386291e35612f8da438d6e92c4447e",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "5722b5c952353e3e3d2a388a9495498f8855eca1de2cfc7c45e25d6ef99e5a80",
+          "upstreamSHA256": "4b7afb7c9f2916f31c98f3ebfc13d80734bc4191daebe3fd39de825d9b40f4c3"
+        }
+      ]
+    },
+    {
+      "package": "vibration-1.7.7",
+      "source": "https://pub.dev/api/archives/vibration-1.7.7.tar.gz",
+      "pubArchiveSHA256": "2938d4bf4ecfdb1cdac6b8f20f40cd3e7b7783edd6ca551a46d144a134473626",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "24a08865be98310bc66813155d0cabca50e26be7af1c31c48baf9cea8f2be500",
+          "upstreamSHA256": "c80f776fb439029e9b9b433f0e61ba99feaaa28e7824642cb86d462ea79da036"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "sha256": "a93ee664aec7c30be685505d1ec7380e21297e899e2f0d73d83537da947a678f",
+          "upstreamSHA256": "d2976e0e18710ffa4edb1551fb37ce99ce635290aa76d337ca6f57c4591e47af"
+        },
+        {
+          "path": "android/src/main/java/com/benjaminabel/vibration/Vibration.java",
+          "sha256": "c3ebf1774c0331370554821a3b9c81675c71f22f7f8eeda4d4d2b8f5e87d7f27",
+          "upstreamSHA256": "727f427ffe6f970fd232cae6fab519e42c53f33582e1d9ac3b87da56aff08864"
+        },
+        {
+          "path": "android/src/main/java/com/benjaminabel/vibration/VibrationMethodChannelHandler.java",
+          "sha256": "b475c2a2519a6d86cd0db16acab4631cb67b8d1031fa7e6f77d9ac49475f2fcf",
+          "upstreamSHA256": "ba9b6a75715e3783af520fd794f14f1b067b101ea7a5d524058b01ff648448d3"
+        },
+        {
+          "path": "android/src/main/java/com/benjaminabel/vibration/VibrationPlugin.java",
+          "sha256": "37b01206b0a7d2aa13982e20f8b795ee97e3c086c6a2a11724d1e2499e7f68d5",
+          "upstreamSHA256": "3559dd9ca0fd4a13be480e53967298381ce64c9eb0113ece12781368720ab98f"
+        }
+      ]
+    },
+    {
+      "package": "video_compress-3.1.4",
+      "source": "https://pub.dev/api/archives/video_compress-3.1.4.tar.gz",
+      "pubArchiveSHA256": "31bc5cdb9a02ba666456e5e1907393c28e6e0e972980d7d8d619a7beda0d4f20",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "d2cd81bdb69eff612dcd80ea0718c265a2be50277ff7f304fc4cbcc58d47cf10",
+          "upstreamSHA256": "7e242ff91e86e67294493b66ba1be91accafaa98fb4bd6b60785e24fb8a678c0"
+        }
+      ]
+    },
+    {
+      "package": "video_player_android-2.8.15",
+      "source": "https://pub.dev/api/archives/video_player_android-2.8.15.tar.gz",
+      "pubArchiveSHA256": "a8dc4324f67705de057678372bedb66cd08572fe7c495605ac68c5f503324a39",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "e100307e50189642d7ba33d164972ebf105fe09983669167d00c708b3651ddf7",
+          "upstreamSHA256": "7079c3f11ce2212872b4a75cde35477953c0a7d969d6f083cdbb73d93695ee4e"
+        }
+      ]
+    },
+    {
+      "package": "wakelock_plus-1.1.4",
+      "source": "https://pub.dev/api/archives/wakelock_plus-1.1.4.tar.gz",
+      "pubArchiveSHA256": "f268ca2116db22e57577fb99d52515a24bdc1d570f12ac18bb762361d43b043d",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [
+        {
+          "path": "android/build.gradle",
+          "sha256": "be0e8914ca57a0504876ad254de818e5672c5cce27999234b8fce14d9f1237c8",
+          "upstreamSHA256": "71478f2828574d08ea29681d3d373d3dfcb2160de18e4774bcdae7ee0f510910"
+        }
+      ]
+    },
+    {
+      "package": "wakelock_plus_platform_interface-1.1.0",
+      "source": "https://pub.dev/api/archives/wakelock_plus_platform_interface-1.1.0.tar.gz",
+      "pubArchiveSHA256": "40fabed5da06caff0796dc638e1f07ee395fb18801fbff3255a2372db2d80385",
+      "licenses": [
+        "LICENSE"
+      ],
+      "modifiedFiles": [],
+      "reason": "Exact Pigeon10.1.0 channels and codec match vendored wakelock_plus1.1.4 native implementations; interface1.3.0 is wire incompatible."
+    }
+  ]
+}
