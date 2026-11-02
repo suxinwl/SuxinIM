@@ -15,6 +15,11 @@ clients/flutter/android/app/proguard/mapping.txt
 clients/flutter/android/app/proguard/seeds.txt
 clients/flutter/android/app/proguard/unused.txt
 **/build/
+# These upstream directories contain build source, rather than generated output.
+!services/chat/build/
+!services/chat/build/**
+!services/openim-server/build/
+!services/openim-server/build/**
 **/dist/
 **/dist-web/
 **/release/

@@ -1,3 +1,9 @@
+> 当前升级项目：参阅[完整源码导航](../../README.md#源码导航)、[仓库说明](../../REPOSITORY.md)和[当前 Flutter / Android / iOS 构建说明](../../docs/flutter.md)。Android 与 iOS 共用 lib，平台工程分别位于 android 和 ios。
+>
+> 下方保留原项目历史说明；其中 Flutter 3.7.12 不代表当前固定工具链。当前应用为 3.8.14+114，媒体状态 NOT_ACCEPTED；iOS 源码已纳入，但尚未完成 Xcode 构建或真机验收。
+
+---
+
 ### OpenIM
 A OpenIM flutter demo, only support android and ios.
 

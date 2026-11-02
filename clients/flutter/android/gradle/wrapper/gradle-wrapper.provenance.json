@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-02T01:10:24.158663+00:00",
+  "purpose": "Keep the exact existing Gradle bootstrap inputs available in a clean source checkout without copying SDK runtimes or caches.",
+  "source": {
+    "flutterSDKVersion": "3.32.8",
+    "flutterFrameworkRevision": "edada7c56edf4a183c1735310e123c7f923584f1",
+    "artifactReferenceFromPinnedSDK": "flutter_infra_release/gradle-wrapper/fd5c1f2c013565a3bea56ada6df9d2b8e96d56aa/gradle-wrapper.tgz",
+    "artifactURLDeclaredByPinnedSDK": "https://storage.googleapis.com/flutter_infra_release/gradle-wrapper/fd5c1f2c013565a3bea56ada6df9d2b8e96d56aa/gradle-wrapper.tgz",
+    "verification": "All three existing project files match the locally installed pinned Flutter SDK cached wrapper artifact byte for byte. Remote archive was not fetched by this audit.",
+    "nativeRuntimeBundled": false
+  },
+  "inputs": [
+    {
+      "path": "clients/flutter/android/gradlew",
+      "bytes": 4971,
+      "sha256": "ec56c02543666d92d9ac5ae7fcc48f88ce4de0deb8b7f9b39928ca46f68c1b2b",
+      "cachedFlutterArtifactSource": "tools/flutter-3.32.8/bin/cache/artifacts/gradle_wrapper/gradlew",
+      "cachedSourceSHA256": "ec56c02543666d92d9ac5ae7fcc48f88ce4de0deb8b7f9b39928ca46f68c1b2b",
+      "byteEqualToPinnedFlutterArtifact": true
+    },
+    {
+      "path": "clients/flutter/android/gradlew.bat",
+      "bytes": 2404,
+      "sha256": "c13c6e91b9a517783976de213d46398c661ea9e17651376d7301e839eaedcc62",
+      "cachedFlutterArtifactSource": "tools/flutter-3.32.8/bin/cache/artifacts/gradle_wrapper/gradlew.bat",
+      "cachedSourceSHA256": "c13c6e91b9a517783976de213d46398c661ea9e17651376d7301e839eaedcc62",
+      "byteEqualToPinnedFlutterArtifact": true
+    },
+    {
+      "path": "clients/flutter/android/gradle/wrapper/gradle-wrapper.jar",
+      "bytes": 53636,
+      "sha256": "16caeaf66d57a0d1d2087fef6a97efa62de8da69afa5b908f40db35afc4342da",
+      "cachedFlutterArtifactSource": "tools/flutter-3.32.8/bin/cache/artifacts/gradle_wrapper/gradle/wrapper/gradle-wrapper.jar",
+      "cachedSourceSHA256": "16caeaf66d57a0d1d2087fef6a97efa62de8da69afa5b908f40db35afc4342da",
+      "byteEqualToPinnedFlutterArtifact": true
+    }
+  ],
+  "wrapperJarImplementationVersion": "2.10",
+  "configuredDistribution": {
+    "url": "https://services.gradle.org/distributions/gradle-8.12-all.zip",
+    "sha256SumProperty": "7ebdac923867a3cec0098302416d1e3c6c0c729fc4e2e05c10637a8af33a76c5",
+    "propertiesFile": {
+      "path": "clients/flutter/android/gradle/wrapper/gradle-wrapper.properties",
+      "bytes": 296,
+      "sha256": "5e092318b3a024ffed73418564d9b8099fdb599e70c2c44d9f251d89d59249c0"
+    },
+    "note": "Wrapper bootstrap implementation version is distinct from the configured Gradle distribution version. The checksum value is recorded from project configuration; this audit does not execute the wrapper."
+  },
+  "bootstrapBehavior": {
+    "pinnedFlutterSource": "tools/flutter-3.32.8/packages/flutter_tools/lib/src/android/gradle_utils.dart",
+    "getExecutableInjectsMissingWrapper": true,
+    "directGradleInvocationsNeedTheseInputs": true,
+    "expectedGitModeForGradlew": "100755"
+  },
+  "scope": "No network, build, device, server, real-client or private-data operation."
+}

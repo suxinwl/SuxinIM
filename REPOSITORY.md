@@ -2,6 +2,25 @@
 
 本仓库保存原 3.5 企业项目合并官方固定版本后的独立 OpenIM38 开发源码。当前 Windows 应用为 **3.8.7 / 380701**；上游组件与 SDK 版本见 `upstream-sources.lock.json`、`runtimes.lock.json` 及各模块依赖锁。
 
+## 各端源码入口
+
+这是多端源码共用一个仓库的目录结构。GitHub 首页的 [README 源码导航](README.md#源码导航)可直接进入各端；不是仅有服务端代码，也不是只提供指向其他仓库的链接。
+
+| 平台或组件 | 仓库内目录 |
+|---|---|
+| Windows / Web 共用界面 | [clients/web-desktop/src](clients/web-desktop/src/) |
+| Windows Electron 主进程、预加载和本地文件处理 | [clients/web-desktop/electron](clients/web-desktop/electron/) |
+| Android / iOS 共用 Dart 业务 | [clients/flutter/lib](clients/flutter/lib/) |
+| Android 原生宿主工程 | [clients/flutter/android](clients/flutter/android/) |
+| iOS / Xcode 工程 | [clients/flutter/ios](clients/flutter/ios/) |
+| Flutter 适配层与兼容插件 | [clients/flutter/local_plugin](clients/flutter/local_plugin/) |
+| Flutter 固定 SDK | [sdks/flutter](sdks/flutter/) |
+| WASM、Android Java 参考与 iOS Core | [sdks/wasm](sdks/wasm/)；[sdks/android-java](sdks/android-java/)；[sdks/ios-core](sdks/ios-core/) |
+| IM、Chat、企业扩展与 LiveKit | [services](services/) |
+| 管理后台 | [clients/admin](clients/admin/) |
+
+iOS 工程和配套 Core 文件已纳入源码，当前没有 Xcode 构建或真机通过结论。Android114 媒体状态仍为 **NOT_ACCEPTED**。GitHub Releases 暂无安装包，下载页、源码树和本地候选包是不同交付位置；不能用 Releases 是否有附件判断源码是否存在。
+
 ## 源码范围
 
 - `services/`：IM、Chat、独立企业扩展及 LiveKit 服务源码。
@@ -16,11 +35,17 @@
 ## 克隆与构建
 
 ```powershell
-git clone https://github.com/suxinwl/SuxinIM.git
+git -c core.longpaths=true clone -c core.longpaths=true -c core.autocrlf=false https://github.com/suxinwl/SuxinIM.git
 cd SuxinIM
 ```
 
 各端使用独立工具链，不替换系统默认运行时；按 `docs/web-desktop.md`、`docs/flutter.md` 和部署文档执行。Web/Windows 的 `package-lock.json` 已纳入版本控制。`scripts/ensure-screenshot-preload.mjs` 会在安装依赖和构建 Electron 时校验并应用固定截图组件兼容补丁。
+
+Windows 建议克隆到较短路径。部分兼容插件路径较长，上面的配置同时启用长路径支持并保留仓库原始换行。可在原开发目录运行 [tools/verify_source_checkout.py](tools/verify_source_checkout.py)，传入 `--checkout` 指向另一个全新检出的目录，逐文件核对 Git 对象、文件内容和可执行标记，并执行 `git fsck`；验证报告默认保留在本地 `.cache/source-verification/`。
+
+整体入口为 [tools/build-all.ps1](tools/build-all.ps1)，Linux 服务端入口为 [deploy/build-linux.sh](deploy/build-linux.sh)，Android 入口为 [clients/flutter/scripts/build-android.ps1](clients/flutter/scripts/build-android.ps1)。工具链来源见 [runtimes.lock.json](runtimes.lock.json) 和 [Flutter 引导脚本](clients/flutter/scripts/bootstrap-flutter.ps1)，详细步骤见 [docs/build-and-run.md](docs/build-and-run.md)。
+
+依赖锁包括 [Web/Windows package-lock.json](clients/web-desktop/package-lock.json)、[后台 package-lock.json](clients/admin/package-lock.json)、[Flutter pubspec.lock](clients/flutter/pubspec.lock)、[Android ARM64 Gradle 锁](clients/flutter/android/app/gradle.lockfile)和[x64 验证锁](clients/flutter/android/app/gradle-x64-validation.lockfile)，各 Go 服务分别保留 go.mod/go.sum。固定 SDK、WASM 和 iOS Framework 已按普通目录纳入；Maven/Pub/npm 依赖下载缓存、工具链和开发签名私钥不属于可公开源码。新机器按锁文件恢复依赖，离线重建另需保留对应依赖载荷。
 
 SDK 内的 WASM 和 iOS Framework 属于固定依赖，不是本项目安装包；源码包含其来源及版本信息。各组件许可证以对应目录的 LICENSE、NOTICE 等文件为准。
 

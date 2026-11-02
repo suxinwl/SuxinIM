@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-02T01:10:24.238056+00:00",
+  "baseHEAD": "bc5c7eebb8be6e2ab91c97f0757e0a6755430b93",
+  "scope": [
+    "clients/web-desktop",
+    "clients/flutter",
+    "sdks/android-java",
+    "sdks/ios-core",
+    "sdks/flutter",
+    "sdks/wasm"
+  ],
+  "trackedCountsAtBaseIndex": {
+    "clients/web-desktop": 7935,
+    "clients/flutter": 3794,
+    "sdks/android-java": 195,
+    "sdks/ios-core": 25,
+    "sdks/flutter": 185,
+    "sdks/wasm": 115
+  },
+  "trackedClientFilesAtBaseIndex": 12249,
+  "allTrackedPathsPresentOnDisk": true,
+  "nestedGitMarkersOutsideGeneratedDependencyTrees": 0,
+  "gitlinksInScopes": 0,
+  "coreLongpaths": "true",
+  "maximumTrackedAbsoluteClientPathLength": 267,
+  "trackedPathsOver260Characters": [
+    "clients/flutter/local_plugin/compat/flutter_image_compress_common-1.1.1/ios/flutter_image_compress_common/Sources/flutter_image_compress_common/include/flutter_image_compress_common/CompressFileHandler.h",
+    "clients/flutter/local_plugin/compat/flutter_image_compress_common-1.1.1/ios/flutter_image_compress_common/Sources/flutter_image_compress_common/include/flutter_image_compress_common/CompressListHandler.h",
+    "clients/flutter/local_plugin/compat/flutter_image_compress_common-1.1.1/ios/flutter_image_compress_common/Sources/flutter_image_compress_common/include/flutter_image_compress_common/ImageCompressPlugin.h",
+    "clients/flutter/local_plugin/compat/flutter_inappwebview_android-1.1.3/android/src/main/java/com/pichillilorenzo/flutter_inappwebview_android/chrome_custom_tabs/ChromeCustomTabsActivitySingleInstance.java",
+    "clients/flutter/local_plugin/compat/flutter_inappwebview_android-1.1.3/android/src/main/java/com/pichillilorenzo/flutter_inappwebview_android/webview/in_app_webview/ThreadedInputConnectionProxyAdapterView.java"
+  ],
+  "primaryFlutterLocalPathDependencies": {
+    "count": 53,
+    "allTargetsExist": true,
+    "allTargetsHaveTrackedSource": true,
+    "appImAlsoUsesTrackedSDKFlutter": true
+  },
+  "keySubscopeTrackedCounts": {
+    "clients/flutter/android": 27,
+    "clients/flutter/ios": 52,
+    "clients/flutter/lib": 240,
+    "clients/flutter/local_plugin": 2987,
+    "clients/flutter/local_plugin/compat/flutter_webrtc-1.6.0": 349,
+    "clients/flutter/local_plugin/compat/livekit_client-2.11.0": 311
+  },
+  "customSourceOrRequiredAssetOmissionsFound": 0,
+  "cleanCheckoutBuildInputGapRepaired": {
+    "files": [
+      "clients/flutter/android/gradlew",
+      "clients/flutter/android/gradlew.bat",
+      "clients/flutter/android/gradle/wrapper/gradle-wrapper.jar"
+    ],
+    "previousReason": "Original Flutter android/.gitignore excluded both launchers and wrapper JAR. Flutter can recreate them, but direct Gradle validation uses them before that step.",
+    "repair": "Only three exact-path unignore rules added; original verified input bytes retained.",
+    "provenance": {
+      "path": "clients/flutter/android/gradle/wrapper/gradle-wrapper.provenance.json",
+      "bytes": 3304,
+      "sha256": "9a1ff4c6cc785d73ed19521beb3ad8bb73175f3573e1ebef918c27a0dd460425"
+    },
+    "pendingRootStageAndCommit": true,
+    "rootShouldStageGradlewAsExecutable": "git add --chmod=+x -- clients/flutter/android/gradlew"
+  },
+  "trackedRequiredBinaryAssets": [
+    {
+      "path": "clients/web-desktop/public/icons/empty_tray.png",
+      "bytes": 342,
+      "sha256": "dbbee8c6c31290e2c1e86098f9fa1eda33a136a8b4dd7a6ae6eba336d5d602fd"
+    },
+    {
+      "path": "clients/web-desktop/public/icons/icon.ico",
+      "bytes": 16129,
+      "sha256": "fd66e2a19052391c7219115a249941c32808f8d0d0a86c966c7822fc0f7fba2a"
+    },
+    {
+      "path": "clients/web-desktop/public/icons/icon.png",
+      "bytes": 59128,
+      "sha256": "7ac6ed592bc333922413c5d912d3abe063848c16e2bcff84618b4f65df3130f0"
+    },
+    {
+      "path": "clients/web-desktop/public/icons/tray.png",
+      "bytes": 1073,
+      "sha256": "d30d038f1c23709b3e357d45d9f6661b46d34bb1e1143529759c4a19b9d4fda8"
+    },
+    {
+      "path": "clients/web-desktop/public/icons/tray@2x.png",
+      "bytes": 1889,
+      "sha256": "377b834a4830b1cbad189ff38e79c55d70321f30b6d9a25f8a01a58a3dbd9713"
+    },
+    {
+      "path": "clients/web-desktop/public/openIM.wasm",
+      "bytes": 37763413,
+      "sha256": "2e033aac58a72c3720dd2e1269df664a4af42967aa82bbb0a8f5ac7606c9cb1d"
+    },
+    {
+      "path": "clients/web-desktop/public/sql-wasm.wasm",
+      "bytes": 1105290,
+      "sha256": "806886f413da1a6acc1db373285adda1b6750c8d434c75a5a6042af0a65cbafd"
+    },
+    {
+      "path": "clients/web-desktop/public/wasm_exec.js",
+      "bytes": 16992,
+      "sha256": "0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14"
+    },
+    {
+      "path": "sdks/ios-core/Framework/OpenIMCore.xcframework/ios-arm64/OpenIMCore.framework/OpenIMCore",
+      "bytes": 29326512,
+      "sha256": "771d72adbf15f69d1bc7f5a38240b2035042b147b66bb84ce74eb687e4e16adb"
+    },
+    {
+      "path": "sdks/ios-core/Framework/OpenIMCore.xcframework/ios-arm64_x86_64-simulator/OpenIMCore.framework/OpenIMCore",
+      "bytes": 57093688,
+      "sha256": "27391bc277080bb035bca1e6773259a9d1ea52a6b4835a77db29210c197c8a0d"
+    },
+    {
+      "path": "sdks/wasm/assets/openIM.wasm",
+      "bytes": 37763413,
+      "sha256": "2e033aac58a72c3720dd2e1269df664a4af42967aa82bbb0a8f5ac7606c9cb1d"
+    },
+    {
+      "path": "sdks/wasm/assets/sql-wasm.wasm",
+      "bytes": 1105290,
+      "sha256": "806886f413da1a6acc1db373285adda1b6750c8d434c75a5a6042af0a65cbafd"
+    },
+    {
+      "path": "sdks/wasm/assets/version",
+      "bytes": 16,
+      "sha256": "a9ea8c56d9b3b2eee6c798854107fd99ec08e601194c73fdc93df54d82f3e0e2"
+    },
+    {
+      "path": "sdks/wasm/assets/wasm_exec.js",
+      "bytes": 16992,
+      "sha256": "0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14"
+    }
+  ],
+  "trackedClientFilesOver100MiB": 0,
+  "notProjectSource": {
+    "regenerable": [
+      "node_modules",
+      "Flutter .dart_tool",
+      "Gradle caches and project .gradle/.cxx/.kotlin",
+      "build/dist/dist-web/dist-electron/release/out",
+      "GeneratedPluginRegistrant files",
+      "Flutter generated xcconfig/export/ephemeral files",
+      "Proguard mapping/seeds/unused outputs",
+      "IDE metadata and operating-system .DS_Store",
+      "runtime and test logs"
+    ],
+    "privateOrMachineLocalExcluded": {
+      "countWithinScannedNonGeneratedClientTree": 5,
+      "categories": [
+        "Android signing properties and keystore",
+        "Android SDK local.properties, including two plugin/example local paths"
+      ],
+      "valuesRead": false,
+      "mustNotPublishToGitHub": true
+    }
+  },
+  "thirdPartyBoundary": "Pinned Maven/native SDK artifacts and public iOS frameworks are build inputs or dependencies. This source-coverage audit does not claim that precompiled OpenIM/WebRTC engine binaries contain their upstream Go/C++ implementation source.",
+  "verificationBoundary": "Read-only disk/index metadata comparison excluding standard generated/dependency trees, plus byte/SHA verification and JAR CRC test for the wrapper repair. No client, server, device, dependency installation or application build executed."
+}

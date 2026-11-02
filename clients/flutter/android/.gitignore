@@ -11,3 +11,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Keep the exact Flutter SDK wrapper inputs for clean-checkout Gradle builds.
+!/gradlew
+!/gradlew.bat
+!/gradle/wrapper/gradle-wrapper.jar

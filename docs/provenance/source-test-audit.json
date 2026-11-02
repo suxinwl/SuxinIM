@@ -1,0 +1,162 @@
+{
+  "recordedAt": "2026-11-02T01:13:50.076650+00:00",
+  "scope": "Finite local source/index and relative-input audit; not a whole-repository freshness, privacy, build, runtime, or remote acceptance claim.",
+  "excludedFromTraversal": [
+    ".private",
+    ".cache",
+    "runtime",
+    "tools/go1.*",
+    "tools/node-v*",
+    "tools/flutter-*",
+    "node_modules",
+    "historical test source copies"
+  ],
+  "writesByThisReview": [
+    "tests/load-final/test_summary.py",
+    "docs/provenance/source-test-audit.json"
+  ],
+  "initialScopeInventory": {
+    "services/enterprise-service": {
+      "files": 30,
+      "ignoredFiles": 3,
+      "classification": "Only generated dist/linux-amd64 executables and SHA256SUMS; no missing source input."
+    },
+    "services/livekit": {
+      "files": 511,
+      "ignoredFiles": 0
+    },
+    "deploy": {
+      "files": 12,
+      "ignoredFiles": 0
+    },
+    "tools": {
+      "classification": "Runtime bundles and downloaded NDK archive intentionally excluded; no additional required source omission identified."
+    },
+    "docs/provenance/patches": {
+      "files": 10,
+      "ignoredFiles": 0
+    }
+  },
+  "upstreamBuildDirectoryFinding": {
+    "initialIgnoreRule": "**/build/",
+    "classification": "Eleven original upstream build/release inputs, not generated binaries. Custom direct Go builds do not require these scripts, but a complete upstream developer source tree should retain them.",
+    "resolutionOwner": "root agent owns .gitignore exception and staging",
+    "files": [
+      {
+        "path": "services/chat/build/build.sh",
+        "bytes": 3927,
+        "sha256": "43e4535ff4ec93eb662a7914b7387d88767691c871f125e259bfce8e4ae55bcb",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/chat/build/build_single.sh",
+        "bytes": 3620,
+        "sha256": "7be8f6723c6321c047e2c423f883db0a9067cc59a0532d1a118aad7404dc8418",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/chat/build/README.md",
+        "bytes": 1313,
+        "sha256": "985e518fdec00dd5a76d874ef1ea8b4f96cd83b5e7b5995b85329e20d2591544",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/chat/build/images/openim-chat/docker-compose.build.yml",
+        "bytes": 1057,
+        "sha256": "7798df5305077461d249013689ce6bec872a3cca8c0623467a5b32438abc0659",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/chat/build/images/openim-chat/Dockerfile",
+        "bytes": 670,
+        "sha256": "239dbf66c85b85e8cc66e0a7f6545d9382e68943225d0647400a41d4d106179f",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/build.sh",
+        "bytes": 3929,
+        "sha256": "24662c9486ded6db3453a01713bab9952aa4ba14609b3c92e5cae4c15a56bc90",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/build_single.sh",
+        "bytes": 2911,
+        "sha256": "f3144270e145d02c16daf4d7e6562f201274be614ec92c63d6cb7b89055a1a8b",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/goreleaser.yaml",
+        "bytes": 11706,
+        "sha256": "7a99b8b4da77cf269030b8b333cb3d9699638719be1d57c1584efa6e5a81d14d",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/README.md",
+        "bytes": 4574,
+        "sha256": "3458f7fcc14e7ff7a1fc8c7624e4b40ec51b8ae5e2c5b9a603568ce4fd2f93fd",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/images/openim-server/docker-compose.build.yml",
+        "bytes": 3294,
+        "sha256": "78334b36b0771ed970b33f8741e14f23842096290343e83660a6b5a8bee748ef",
+        "trackedAtReviewTime": true
+      },
+      {
+        "path": "services/openim-server/build/images/openim-server/Dockerfile",
+        "bytes": 610,
+        "sha256": "b6cf644a15c3fadae63bcebc9939881c1ec95ecfda6c862cc24d3f016b4e438f",
+        "trackedAtReviewTime": true
+      }
+    ]
+  },
+  "machineLauncherLockFinding": {
+    "path": "tests/load-final/launcher-lock.json",
+    "ignoredRule": "/tests/**/*.json",
+    "classification": "Instance-specific inspected container/image/binary identities, not a general public fixture. No existing lock/session contents copied into source.",
+    "consumers": [
+      "tests/start-final-load.py",
+      "tests/summarize-final-load.py"
+    ],
+    "deploymentRequirement": "Prepare and review a new isolated-instance launcher lock and synthetic sessions for that deployment before using integration entry points; do not reuse old machine evidence as new acceptance.",
+    "unitCorrection": {
+      "path": "tests/load-final/test_summary.py",
+      "bytes": 6518,
+      "sha256": "1d33afb6e35b7d049ba8fd8bee2aa5a2d2977d0a4c3cedb9e61cb94f42314576"
+    },
+    "behavior": "Generate eighteen synthetic binary identities, synthetic loader hashes, a fake launcher file and JSON lock in TemporaryDirectory; patch only analyzer ROOT for the test. Preserve incomplete/malformed/disconnection checks and also reject changed loader hash."
+  },
+  "verification": {
+    "repositoryUnitRun": {
+      "command": "python -m unittest discover -s tests/load-final -p test_summary.py -v",
+      "tests": 4,
+      "exitCode": 0
+    },
+    "sourceOnlyTemporaryCloneRun": {
+      "copiedSources": [
+        "tests/load-final/test_summary.py",
+        "tests/summarize-final-load.py",
+        "tests/start-final-load.py"
+      ],
+      "machineLauncherLockInitiallyPresent": false,
+      "privateCacheOrRuntimeCopied": false,
+      "tests": 4,
+      "exitCode": 0,
+      "capturedOutputSHA256": "d7e285233baec45e73b232bb2dd2913863337c2c8e98834d15c7cee1d641dd01"
+    },
+    "goEmbedInputsTracked": [
+      "services/chat/pkg/common/config/template.xlsx",
+      "services/chat/pkg/common/config/version",
+      "services/chat/version/version",
+      "services/openim-server/version/version"
+    ]
+  },
+  "classificationOfOtherIgnoredTestJSON": "Observed remaining references in scoped test/report helpers are generated run evidence, local source/ABI snapshots or explicitly private synthetic account/session fixtures; they are not automatically eligible for Git inclusion. No other static public JSON fixture omission identified in this finite review.",
+  "limits": [
+    "Client build/assets audit delegated separately; not repeated here.",
+    "No server/network/backup/service operation performed.",
+    "No full rebuild or 100-SDK load repeated.",
+    "No private account/session/key values included.",
+    "Root integration must confirm upstream build-file staging and final commit separately."
+  ]
+}

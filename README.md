@@ -1,4 +1,24 @@
-# OpenIM 原版升级使用说明
+# OpenIM38 升级项目源码与使用说明
+
+## 源码导航
+
+本仓库同时保存服务端、管理后台、Web、Windows、Android 和 iOS 的开发源码。Windows 与 Web 共用 React 界面，Windows 另有 Electron 主进程；Android 与 iOS 共用 Flutter/Dart 业务代码，分别保留各自平台工程。各端目录如下，不需要查找单独的 Android、Windows 或 iOS 仓库。
+
+| 部分 | 直接源码入口 | 构建说明 |
+|---|---|---|
+| Web | [React 界面与业务逻辑](clients/web-desktop/src/) | [Web / Windows 构建](docs/web-desktop.md) |
+| Windows | [Electron 主进程和预加载](clients/web-desktop/electron/)；[共用界面](clients/web-desktop/src/) | [构建脚本](clients/web-desktop/scripts/)；[打包配置](clients/web-desktop/electron-builder.json5) |
+| Android | [Android 平台工程](clients/flutter/android/)；[共用 Dart 代码](clients/flutter/lib/) | [Flutter / Android 构建](docs/flutter.md)；[Android 构建脚本](clients/flutter/scripts/build-android.ps1) |
+| iOS | [iOS / Xcode 平台工程](clients/flutter/ios/)；[共用 Dart 代码](clients/flutter/lib/)；[iOS Core](sdks/ios-core/) | [Flutter / iOS 构建说明](docs/flutter.md)；本期未完成 Xcode 构建验收 |
+| 客户端适配和本地插件 | [AppIm 适配层](clients/flutter/local_plugin/app_im/)；[固定本地兼容插件](clients/flutter/local_plugin/compat/) | [Flutter 依赖锁](clients/flutter/pubspec.lock) |
+| 固定 SDK | [Flutter SDK](sdks/flutter/)；[WASM SDK](sdks/wasm/)；[Android Java 参考源码](sdks/android-java/)；[iOS Core](sdks/ios-core/) | [上游版本锁](upstream-sources.lock.json) |
+| 服务端 | [IM](services/openim-server/)；[Chat](services/chat/)；[企业扩展](services/enterprise-service/)；[LiveKit](services/livekit/) | [构建与运行](docs/build-and-run.md)；[Linux 构建脚本](deploy/build-linux.sh) |
+| 管理后台 | [后台源码](clients/admin/) | [构建与运行](docs/build-and-run.md) |
+| 整体构建与部署 | [Windows 构建入口](tools/build-all.ps1)；[部署脚本](deploy/) | [工具链锁](runtimes.lock.json)；[LiveKit 锁](livekit.lock.json)；[镜像锁](deploy/images.lock.json) |
+
+源码直接保存在上述普通目录中，不依赖 Git 子模块。GitHub Releases 当前没有上传安装包，不代表这些客户端源码未上传；本地 EXE、APK、依赖缓存、构建输出及私有配置另行保存。克隆方法与源码范围见[仓库说明](REPOSITORY.md)。Android114 媒体仍为 **NOT_ACCEPTED**，iOS 源码存在不等于已完成 Xcode 或真机验收。
+
+## 使用说明
 
 本说明用于原 3.5 企业即时通讯项目合并升级后的 OpenIM38 开发版本，面向系统管理员和测试使用者。沿用原版账号登录、好友、群组及企业功能界面，管理后台沿用原 3.4 界面并适配新版接口。本文仅介绍这套升级项目的实际入口、安装包、账号管理及运行方法。
 

@@ -4,6 +4,7 @@ import json
 import pathlib
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location('final_summary', ROOT / 'tests/summarize-final-load.py')
@@ -48,9 +49,24 @@ class FinalSummaryTests(unittest.TestCase):
             self.assertIsNone(resource)
 
     def test_synthetic_complete_reports_recompute_and_a_disconnect_fails(self):
-        lock = json.loads((ROOT / 'tests/load-final/launcher-lock.json').read_text())
         with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory)
+            # The real launcher lock belongs to one inspected test host. Unit
+            # tests must not require its ignored reports or deployed binaries.
+            suite = pathlib.Path(directory) / 'synthetic-suite'
+            (suite / 'tests/load-final').mkdir(parents=True)
+            (suite / 'tests/start-final-load.py').write_text('# synthetic launcher identity only\n')
+            lock = {
+                'loadFilesSHA256': {'load-100.mjs': 'a' * 64, 'load-static-server.mjs': 'b' * 64,
+                                    'static/load-client.js': 'c' * 64},
+                'businessBinarySHA256': {'synthetic-service-' + str(index): format(index, '064x')
+                                         for index in range(18)},
+            }
+            (suite / 'tests/load-final/launcher-lock.json').write_text(json.dumps(lock))
+            fixture_root = patch.object(SUMMARY, 'ROOT', suite)
+            fixture_root.start()
+            self.addCleanup(fixture_root.stop)
+            path = pathlib.Path(directory) / 'synthetic-run'
+            path.mkdir()
             write = lambda name, value: (path / name).write_text(json.dumps(value))
             parts = [{'sharedRun': 'synthetic-unit-only', 'phase': 'complete', 'offset': offset, 'count': 50,
                       'clients': 50, 'connected': 50, 'elapsedSeconds': 1806, 'sent': 3000, 'received': 3000,
@@ -62,7 +78,7 @@ class FinalSummaryTests(unittest.TestCase):
                               'connectedBeforeBarrier': 100, 'partitions': [{'offset': 0, 'count': 50}, {'offset': 50, 'count': 50}],
                               'ownedLoadContainerStopped': True, 'resourceSamplerErrors': [], 'TLSBypass': False,
                               'oldEvidenceOverwritten': False, 'loaderSHA256': lock['loadFilesSHA256'],
-                              'launcherSHA256': SUMMARY.sha(ROOT / 'tests/start-final-load.py')})
+                              'launcherSHA256': SUMMARY.sha(suite / 'tests/start-final-load.py')})
             write('barrier.json', {'runID': 'synthetic-unit-only', 'startAt': 1793491200000,
                                   'connectedBeforeBarrier': 100, 'requiredSeconds': 1800})
             binary = {name: {'mountedSHA256': value, 'processSHA256': value} for name, value in lock['businessBinarySHA256'].items()}
@@ -78,6 +94,12 @@ class FinalSummaryTests(unittest.TestCase):
             result, _ = SUMMARY.analyze(path)
             self.assertFalse(result['passed'])
             self.assertFalse(result['checks']['noDisconnections'])
+            write('linux50a/summary.json', parts[0])
+            lock['loadFilesSHA256']['load-100.mjs'] = 'd' * 64
+            (suite / 'tests/load-final/launcher-lock.json').write_text(json.dumps(lock))
+            result, _ = SUMMARY.analyze(path)
+            self.assertFalse(result['passed'])
+            self.assertFalse(result['checks']['matchesLockedLoaderHashes'])
 
 
 if __name__ == '__main__':
