@@ -1,3 +1,4 @@
+import {attachmentSourceName,attachmentMessageSourceName} from "@/im/attachment-name";
 import { useLatest, useMount } from "ahooks";
 import { MessageType } from "@openim/wasm-client-sdk";
 import { ConversationItem } from "@/im/types";
@@ -15,6 +16,8 @@ export const getSourceData = (message: ExMessageItem) => {
       url: message.pictureElem.sourcePicture.url,
       path: message.pictureElem.sourcePath,
       saveType: "image",
+      fileName:attachmentMessageSourceName(message),
+      fileSize:message.pictureElem.sourcePicture.size,
     };
   }
   if (message.contentType === MessageType.VideoMessage) {
@@ -22,6 +25,8 @@ export const getSourceData = (message: ExMessageItem) => {
       url: message.videoElem.videoUrl,
       path: message.videoElem.videoPath,
       saveType: "video",
+      fileName:attachmentMessageSourceName(message),
+      fileSize:message.videoElem.videoSize,
     };
   }
   if (message.contentType === MessageType.OANotification) {
@@ -38,6 +43,8 @@ export const getSourceData = (message: ExMessageItem) => {
     url: message.fileElem.sourceUrl,
     path: message.fileElem.filePath,
     saveType: "file",
+    fileName:message.fileElem.fileName,
+    fileSize:message.fileElem.fileSize,
   };
 };
 
@@ -126,6 +133,7 @@ export function useMessageFileDownloadState(
 
     if (!latestCurrentTask.current) {
       const { url, saveType } = getSourceData(latestMessage.current);
+      const source=getSourceData(latestMessage.current);
       let conversationID =
         useConversationStore.getState().currentConversation?.conversationID;
       if (!conversationID) {
@@ -140,6 +148,8 @@ export function useMessageFileDownloadState(
         clientMsgID: latestMessage.current.clientMsgID,
         isMediaMessage: mediaTypes.includes(message.contentType),
         conversationID,
+        fileName:'fileName' in source?source.fileName:attachmentSourceName(undefined,source.path),
+        fileSize:'fileSize' in source?Number(source.fileSize):undefined,
       });
     }
   }, []);

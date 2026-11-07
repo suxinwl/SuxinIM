@@ -13,6 +13,11 @@ class GlobalSearchLogic extends CommonSearchLogic {
   final textMessageRefreshCtrl = RefreshController();
   final fileMessageRefreshCtrl = RefreshController();
   final contactsList = <UserInfo>[].obs;
+  final employees = <DirectoryPerson>[].obs;
+  final employeesLoading = false.obs;
+  final employeeError = ''.obs;
+  final employeeTotal = 0.obs;
+  int _employeePage = 1, _searchGeneration = 0;
   final groupList = <GroupInfo>[].obs;
   final textSearchResultItems = <SearchResultItems>[].obs;
 
@@ -37,6 +42,11 @@ class GlobalSearchLogic extends CommonSearchLogic {
 
   @override
   void clearList() {
+    _searchGeneration++;
+    employees.clear(); employeesLoading.value = false; employeeError.value = ''; employeeTotal.value = 0;
+    _clearLocalLists();
+  }
+  void _clearLocalLists() {
     contactsList.clear();
     groupList.clear();
     textSearchResultItems.clear();
@@ -44,9 +54,32 @@ class GlobalSearchLogic extends CommonSearchLogic {
   }
 
   bool get isSearchNotResult =>
-      searchKey.isNotEmpty && contactsList.isEmpty && groupList.isEmpty && textSearchResultItems.isEmpty && fileMessageList.isEmpty;
+      searchKey.isNotEmpty && !employeesLoading.value && employeeError.value.isEmpty && employees.isEmpty && contactsList.isEmpty && groupList.isEmpty && textSearchResultItems.isEmpty && fileMessageList.isEmpty;
+
+  Future<void> _searchEmployees(String keyword, int generation, {bool append = false}) async {
+    employeesLoading.value = true; employeeError.value = '';
+    if (!append) employees.clear();
+    final page = append ? _employeePage + 1 : 1;
+    try {
+      final result = await HrmDirectory.instance.list(keyword: keyword, page: page, pageSize: 20);
+      if (isClosed || generation != _searchGeneration || keyword != searchKey) return;
+      if (append) { employees.addAll(result.items); } else { employees.assignAll(result.items); }
+      employeeTotal.value = result.total; _employeePage = page;
+    } catch (_) {
+      if (!isClosed && generation == _searchGeneration) employeeError.value = '企业同事搜索暂不可用，请重试';
+    } finally {
+      if (!isClosed && generation == _searchGeneration) employeesLoading.value = false;
+    }
+  }
+  void loadMoreEmployees() { if (!employeesLoading.value) _searchEmployees(searchKey, _searchGeneration, append: true); }
+  void retryEmployees() => _searchEmployees(searchKey, _searchGeneration);
+  void viewDirectoryPerson(DirectoryPerson person) => AppNavigator.startUserProfilePane(userID: person.userID, nickname: person.nickname, faceURL: person.faceURL);
 
   search() async {
+    if (searchKey.isEmpty) { clearList(); return; }
+    final generation = ++_searchGeneration;
+    _clearLocalLists();
+    _searchEmployees(searchKey, generation);
     final result = await LoadingView.singleton.wrap(
         asyncFunction: () => Future.wait([
               searchFriend(),
@@ -61,13 +94,14 @@ class GlobalSearchLogic extends CommonSearchLogic {
                 count: count,
               ),
             ]));
+    if (isClosed || generation != _searchGeneration) return;
     final friendList = (result[0] as List<FriendInfo>).map((e) => UserInfo(userID: e.userID, nickname: e.nickname, faceURL: e.faceURL));
     // final deptMemberList = result[1] as List<DeptMemberInfo>;
     final gList = result[1] as List<GroupInfo>;
     final textMessageResult = (result[2] as SearchResult).searchResultItems;
     final fileMessageResult = (result[3] as SearchResult).searchResultItems;
 
-    clearList();
+    _clearLocalLists();
 
     contactsList
         // ..assignAll(deptMemberList)

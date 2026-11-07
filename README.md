@@ -1,5 +1,41 @@
 # OpenIM38 升级项目源码与使用说明
 
+## 整套系统统一仓库（2026-11-08）
+
+**GoSuxinWL、HRM、IM 全套源码统一保存在本仓库。** [GoSuxinWL 宿主与统一账号](services/gosuxinwl/)、[HRM 插件及企业微信同步](services/gosuxinwl/plugins/biz-suite/)、[GoSuxinWL 后台](services/gosuxinwl/web/)已作为普通源码目录合并，IM 各端及服务端仍在下方原目录。克隆此仓库即可取得整套系统，不依赖旧 Gosuxinwl 仓库或子模块。目录与构建入口见[整套源码说明](docs/system-source.md)。
+
+当前已发布清单：**Web 3.8.20、Windows 3.8.22、Android 3.8.21**。安卓小米安装器风险提示仍在复核，后台厂商推送尚未启用，iOS 仍待 Xcode 与真机验收。下面的生产接入和旧版本记录保留其原始日期；以[当前交付记录](clients/PRODUCTION-DELIVERY.md)及[验收记录](docs/acceptance.md)为准。
+
+## 当前生产接入（2026-11-03）
+
+生产实例位于 `192.168.10.11:/srv/puty-suite`。账号与员工资料由 `E:\PUTY_AI\kaoqinstyem\gosuxinwl` 管理，企业微信负责上游资料同步；IM 不再提供独立注册、改密或账号资料维护。群管理、聊天管理等原有 3.8 管理功能已接入 GoSuxin 的原生“通讯管理”页面。
+
+新同步员工使用工号登录 HRM 与 IM。当前同步不会发放共享默认密码：管理员需在 HRM 账户编辑中为员工设置各自初始密码并单独交付；员工随后可在 HRM 个人设置修改密码。通讯资料“就绪”不代表登录凭据已发放，当前也没有强制首次改密拦截。已有密码不会被同步覆盖。
+
+| 用途 | 内网入口 | 外网入口 |
+|---|---|---|
+| HRM / GoSuxin 工作台 | https://192.168.10.11:9880/suxinweb/ | https://hr.szputy.com:9880/suxinweb/ |
+| IM | https://192.168.10.11:9885/ | https://im.szputy.com:9885/ |
+
+Web / Windows 3.8.10 与 Android 3.8.16 正式包及更新记录已发布，下载页为上述 IM 入口的
+`/downloads/`。2026-11-03 发布后核对：HRM 当前有效名单 301 人，IM 300 人已就绪，
+一名离职员工停用。历史基线另有一名缺显式工号的员工命中既有姓名排除规则；该源行
+仍保留为 filtered，其 disabled 历史投影单列，不计当前名单，历史真实记录合计仍为
+302。六个验收员工已移除，其 disabled 投影与撤销审计保留并单独排除。员工人数与
+就绪状态不代表初始密码已逐人发放。
+
+内网按 IP 访问。Windows 客户端的正常管理员安装流程自动配置企业根证书；Android 在应用内部信任固定企业根证书，不要求修改手机系统信任库。域名入口使用提供的公网证书。用户已从独立外网确认两个登录页均可打开；该确认不代表音视频端口映射已通过实机验证。
+
+本次按全新业务数据启用，不导入原账号、聊天、考勤或审批历史；仅保留企业微信接入配置与过滤规则，再同步当前通讯录。唯一启用时间为北京时间 `2026-11-03 00:08:11`，服务器 `activation.json` 与 HRM `GOSUXIN_SYNC_START_AT` 必须保持一致，恢复时不得重新生成起点。
+
+默认头像使用 `LOGO2.png`，IM 图标使用 `IM.png`，HRM 图标使用 `HR.png`，GoSuxin 图标使用 `Suxin.png`；原有非默认头像保留。素材均已打包，不依赖运行服务器上的 `E:\suxinlogo`。
+
+五份品牌源图（IM、HR、Suxin、OA、小工具）均已去除外部黑角，保存为透明 PNG；LOGO2 保持原样。应用名称统一为 PUTY内部通讯，构建短名为 PUTY_IM，由 `clients/brand.json` 与后台显示配置维护。姓名/工号/手机号搜索、非好友同事直聊、组织架构、部门负责人和部门群开关已上线，详见[组织通讯与品牌配置](docs/organization-branding-20261103.md)。
+
+本轮真实接入检查及限制见 [验收记录](docs/acceptance.md)。运维工具见 [生产备份与隔离恢复](deploy/production/backup_README.md) 和 [证书更新](deploy/production/certificates_README.md)。安装包的版本、应用身份、签名指纹和 SHA256 以 [客户端清单](clients/artifacts-manifest.json) 为准。iOS 尚未完成 Mac/Xcode 构建，Android ARM64 音视频仍需实机验收。
+
+以下旧测试实例、旧安装包和历史验收记录保留作来源对照；与本节冲突的账号入口、测试地址或发布状态不适用于当前生产实例。
+
 ## 源码导航
 
 本仓库同时保存服务端、管理后台、Web、Windows、Android 和 iOS 的开发源码。Windows 与 Web 共用 React 界面，Windows 另有 Electron 主进程；Android 与 iOS 共用 Flutter/Dart 业务代码，分别保留各自平台工程。各端目录如下，不需要查找单独的 Android、Windows 或 iOS 仓库。

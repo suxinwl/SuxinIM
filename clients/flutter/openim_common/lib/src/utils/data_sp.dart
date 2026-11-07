@@ -38,6 +38,7 @@ class DataSp {
   static String? get userID => getLoginCertificate()?.userID;
 
   static Future<bool>? putLoginCertificate(LoginCertificate lc) {
+    if(getLoginCertificate()?.sessionToken!=lc.sessionToken) HrmSSO.invalidate();
     return SpUtil().putObject(_loginCertificate, lc);
   }
 
@@ -55,6 +56,7 @@ class DataSp {
   }
 
   static Future<bool>? removeLoginCertificate() {
+    HrmSSO.invalidate();
     return SpUtil().remove(_loginCertificate);
   }
 

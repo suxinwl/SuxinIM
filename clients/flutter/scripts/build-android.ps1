@@ -1,12 +1,16 @@
 param(
   [ValidateSet('development','production')][string]$Flavor = 'development',
+  [ValidateSet('android-arm64','android-x64')][string]$TargetPlatform = 'android-arm64',
   [string]$AndroidSdk = 'E:\AndroidDev\sdk',
   [string]$Jdk = 'E:\AndroidDev\jdk\jdk-17.0.20.1+1',
-  [string]$ShortDrive = 'O:'
+  [string]$ShortDrive = 'O:',
+  [string]$TemporaryDirectory = 'D:\PUTY-local-build\mobile-temp'
 )
 $ErrorActionPreference = 'Stop'
 $clientRoot = Split-Path $PSScriptRoot -Parent
 $suiteRoot = (Resolve-Path (Join-Path $clientRoot '../..')).Path
+& python (Join-Path $suiteRoot 'clients/tools/sync_brand.py')
+if ($LASTEXITCODE) { throw 'Client brand synchronization failed.' }
 $mappedByScript = $false
 if ($suiteRoot.Length -gt 20) {
   if ($ShortDrive -notmatch '^[O-Z]:$') { throw 'ShortDrive must be a drive letter O: through Z:.' }
@@ -24,7 +28,8 @@ if ($suiteRoot.Length -gt 20) {
 }
 $flutter = Join-Path $suiteRoot 'tools/flutter-3.32.8/bin/flutter.bat'
 if (-not (Test-Path -LiteralPath $flutter)) { throw 'Run bootstrap-flutter.ps1 first.' }
-if (-not (Test-Path -LiteralPath (Join-Path $clientRoot 'android/key.properties'))) { throw 'Missing private Android signing configuration.' }
+$signingPath = if ($Flavor -eq 'production') { Join-Path $suiteRoot '.private/android-production-signing/signing.properties' } else { Join-Path $clientRoot 'android/key.properties' }
+if (-not (Test-Path -LiteralPath $signingPath)) { throw 'Missing private Android signing configuration for selected flavor.' }
 $previousJava = $env:JAVA_HOME
 $previousAndroid = $env:ANDROID_SDK_ROOT
 $previousEngine = $env:FLUTTER_PREBUILT_ENGINE_VERSION
@@ -36,7 +41,7 @@ try {
   $env:ANDROID_SDK_ROOT = $AndroidSdk
   $env:FLUTTER_PREBUILT_ENGINE_VERSION = 'ef0cd000916d64fa0c5d09cc809fa7ad244a5767'
   $env:GRADLE_USER_HOME = Join-Path $suiteRoot '.cache/gradle'
-  $env:TEMP = Join-Path $suiteRoot '.cache/tmp'
+  $env:TEMP = $TemporaryDirectory
   New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
   $env:TMP = $env:TEMP
   Push-Location $clientRoot
@@ -67,11 +72,12 @@ try {
   $analysisExit = $LASTEXITCODE
   $analysis | Write-Output
   if ($analysisExit -gt 2 -or ($analysis | Where-Object { $_ -match '^ERROR\|' })) { throw 'Dart analysis failed.' }
-  & $flutter test --no-pub test
+  & $flutter test --no-pub --concurrency 1 test
   if ($LASTEXITCODE) { throw 'Flutter tests failed.' }
   & (Join-Path $clientRoot 'scripts/test-native-java.ps1') -Jdk $Jdk
   $development = if ($Flavor -eq 'development') { 'true' } else { 'false' }
-  & $flutter build apk --release --flavor $Flavor --target-platform android-arm64 --no-pub --dart-define "OPENIM_DEVELOPMENT=$development"
+  $androidAbi = if ($TargetPlatform -eq 'android-x64') { 'x86_64' } else { 'arm64-v8a' }
+  & $flutter build apk --release --flavor $Flavor --target-platform $TargetPlatform "--android-project-arg=openimTestAbi=$androidAbi" --no-pub --dart-define "OPENIM_DEVELOPMENT=$development"
   if ($LASTEXITCODE) { throw 'Android build failed.' }
   Get-ChildItem (Join-Path $clientRoot 'build/app/outputs/flutter-apk') -Filter '*.apk' | Get-FileHash -Algorithm SHA256
 } finally {

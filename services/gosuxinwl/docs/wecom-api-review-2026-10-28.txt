@@ -1,0 +1,174 @@
+企业微信五板块 API 核对与实现差距
+核对日期：2026-10-28
+项目：GoSuxinwl / biz-suite
+
+结论
+当前版本是“本地 HRM、IM + 部分企业微信原始数据同步”，不能认定为已完成企业微信考勤口径对齐或企业微信消息互通。
+本轮只读取官方文档、审计源码并保存核对记录；未修改产品逻辑，未调用企业业务 API，未向企业微信写数据或发送消息。
+此前本地单元测试及浏览器测试只能证明其覆盖的本地行为，不证明真实企业的授权、字段可得性或统计结果符合企业微信。
+
+阅读范围
+已读取用户给出的全部文档正文。第一个链接显示93384、实际跳转90331，两篇均读取。
+93384为“获取企业所有打卡规则”；90331为“创建成员”，二者不是同一篇。
+除指定页面外，扩展阅读审批、打卡、消息接收与发送、通讯录管理、应用授权的主干文档，以及应用管理、素材、回调加解密、账号ID与限流说明。
+分别对照企业自建应用和第三方应用目录；相同HTTP接口不代表相同授权或字段权限。没有将目录清单等同于正文已读。
+公开文档缓存及三个专项笔记位于 runtime/wecom-api-audit/。缓存清单 document-manifest.json 仅表示成功获取，不表示该页所有附录均已逐项审核。
+
+一、应用身份、授权与配置
+官方事实：
+1. 企业自建应用使用corpid和该应用secret取得access_token；每个应用独立缓存，支持到期及提前失效刷新。AgentID用于应用身份、消息等接口，不是gettoken参数。
+   https://developer.work.weixin.qq.com/document/path/91039
+2. 自建应用的可见范围决定其可读取成员；新自建应用还需配置可信IP。
+   https://developer.work.weixin.qq.com/document/path/90664
+   https://developer.work.weixin.qq.com/document/path/90665
+3. 自建应用读取打卡、审批数据前，需分别加入管理端“打卡/审批—可调用接口的应用”。相关接口正文注明2023-12-01起系统应用secret调用方式调整，存量企业存在例外；不能给新项目默认推荐系统打卡或审批Secret。
+   https://developer.work.weixin.qq.com/document/path/90262
+   https://developer.work.weixin.qq.com/document/path/91816
+4. 同一个自建应用获得多项业务权限后，复用该应用自己的Token是合理方式；不能武断要求一定有三把不同Secret。
+5. 第三方应用需要另一套授权流程：suite_ticket、suite_access_token、预授权码、管理员安装、永久授权码、企业access_token，以及授权变更/取消事件；不等于填企业CorpID和Secret。
+   https://developer.work.weixin.qq.com/document/path/90597
+   https://developer.work.weixin.qq.com/document/path/90600
+   https://developer.work.weixin.qq.com/document/path/100776
+   https://developer.work.weixin.qq.com/document/path/90605
+   https://developer.work.weixin.qq.com/document/path/100964
+6. 第三方成员授权模式不拥有部门权限，不能拿个人授权当全企业通讯录授权；第三方/升级代开发的userid可能是open_userid，需要与企业明文userid区分。
+   https://developer.work.weixin.qq.com/document/path/94496
+   https://developer.work.weixin.qq.com/document/path/95890
+7. agent/get可查当前应用身份、可见人员/部门/标签及停用状态。agent/get_permissions只面向文档列明的代开发、第三方等类型，不应拿来为普通自建应用做通用权限查询。
+   https://developer.work.weixin.qq.com/document/path/90363
+   https://developer.work.weixin.qq.com/document/path/99052
+
+当前差距：
+client.go:84、settings.go:147仅按配置字符串非空显示已配置；未确认应用身份、接口权限、可信IP和可见范围。AgentID在全局就绪判断中必填，但同步ready与实际调用不使用它，状态不一致。
+现有环境变量按contact/checkin/approval分组可保留为技术选项，但UI必须说明凭据对应的是哪个应用及其授权状态，不能把变量名称当官方凭据类型。
+
+修正方向（设计建议）：
+目前是单企业本地部署，优先按企业自建应用模式设计；同时记录模式边界，不因用户给出第三方文档就自动改成服务商SaaS。
+配置应覆盖CorpID、应用AgentID、凭据引用、应用可见范围、各能力验证结果、可信IP配置指引，以及接收事件所需URL/Token/EncodingAESKey。
+配置存在、Token可获取、接口可调用、数据范围有效应分别呈现。Secret和Token保留后端安全管理；已有部署环境注入约束继续有效。
+
+二、通讯录管理与过滤
+官方事实：
+1. 新环境不能用“管理工具—通讯录同步”Secret直接拉取姓名、手机号、部门名等完整资料。该功能主要面向外部通讯录写入企业微信；员工资料读取应使用有可见范围的自建应用等适用方式。
+   https://developer.work.weixin.qq.com/document/path/90193
+   https://developer.work.weixin.qq.com/document/path/96079
+2. 2022-06-20之后新建自建应用，通讯录读取不再直接返回手机号、邮箱等敏感信息；需按员工授权方式获取。不能承诺全量自动同步手机号/邮箱，也不能把缺字段当空值清空已有资料。
+   https://developer.work.weixin.qq.com/document/path/90196
+   https://developer.work.weixin.qq.com/document/path/90201
+3. department/list仍有文档支持，但官方因性能建议改用department/simplelist加department/get。逐部门user/list读取再去重是有效方式，需递归获取子部门，不能依赖已移除的fetch_child。
+   https://developer.work.weixin.qq.com/document/path/90208
+   https://developer.work.weixin.qq.com/document/path/95350
+   https://developer.work.weixin.qq.com/document/path/95351
+4. 普通自建应用、代开发、第三方、通讯录同步助手的通讯录事件权限不同。90970/90971列明的接收方不等于所有普通自建应用；不可假设只开应用消息回调就能拿到完整人员变更事件。
+   https://developer.work.weixin.qq.com/document/path/90967
+   https://developer.work.weixin.qq.com/document/path/90970
+   https://developer.work.weixin.qq.com/document/path/90971
+
+当前差距与修正方向：
+部门、人员筛选只是本系统的业务选择，不能扩大上游可见范围。界面需同时显示“企业微信授权范围”与“本地纳入/排除范围”。
+身份映射优先使用明确来源的企业ID和userid；跨接入模式时须转换/人工校验，手机号仅在授权可得时辅助匹配。
+当前快照消失不自动删除员工这一保护应保留；需要进一步区分离职、禁用、移出可见范围和本地排除，避免把权限缩小误判为离职。
+通讯录详情缺字段需标识“未获授权/上游未返回”，不能误报完整同步成功。事件按支持的模式订阅，其余通过周期快照补偿。
+
+三、打卡、规则、排班与报表
+已核对自建应用打卡目录12篇、第三方对应目录7篇；详细字段与读写边界见专项笔记。
+核心读取接口：
+- 原始打卡：checkin/getcheckindata，最多100人、跨度不超过30天，600次/分钟。
+- 员工每日规则：checkin/getcheckinoption，最多100人，日期为目标日0点；每天规则可能不同。
+- 企业全部规则：checkin/getcorpcheckinoption，60次/分钟，仅自建/代开发支持，第三方不支持。
+- 人员排班：checkin/getcheckinschedulist，最多100人、跨度不超过一个月，60次/分钟。
+- 日报：checkin/getcheckin_daydata，1至100人，起止日期0点，100次/分钟。
+- 月报：checkin/getcheckin_monthdata，1至100人，起止日期0点，60次/分钟。
+日报/月报正文没有规定最大日期跨度，不应硬套原始打卡30天窗口；日报示例允许starttime=endtime查询一天。
+来源：
+https://developer.work.weixin.qq.com/document/path/90262
+https://developer.work.weixin.qq.com/document/path/94204
+https://developer.work.weixin.qq.com/document/path/93384
+https://developer.work.weixin.qq.com/document/path/94208
+https://developer.work.weixin.qq.com/document/path/94206
+https://developer.work.weixin.qq.com/document/path/94207
+
+关键语义：
+大小周、弹性时间、无需下班打卡、晚走次日晚到、自由班制、跨日、多休息段、特殊日期等不能用当前简化班次完全表达。
+日报/月报假勤有按天/按小时单位，不能一律折算成小时。外出打卡、外出审批、外勤统计是不同对象。设备原始记录不包括手机打卡，还包含可能未匹配规则的设备记录。
+https://developer.work.weixin.qq.com/document/path/95176
+
+当前差距：
+checkin.go实际只调用原始打卡接口。hrm/attendance.go:367依赖本地考勤组；未唯一匹配时跳过该员工整月。统计没有采用企业微信日报/月报结果，不能称为企业微信统计镜像。
+checkin.go:159只对整个字符串等于“时间异常”分类，官方分号分隔的复合异常未完整结构化。
+
+修正方向（设计建议，非官方强制架构）：
+保留原始打卡、每日规则、排班、官方日报/月报及来源版本；以官方报表作为企业微信口径结果与对账基准。本地计算独立标明规则与差异，不覆盖官方结论。
+现有8请求/秒对原始打卡600次/分钟尚属保守，但不能直接用于日报100次/分钟、月报60次/分钟。按接口与企业额度调度、限流退避及续跑；当前250/500毫秒重试不足以处理分钟封禁。
+https://developer.work.weixin.qq.com/document/path/90312
+设置排班、修改规则、补卡、添加记录、人脸写入已阅读，但不属于本轮单向同步的默认实施范围。
+
+四、审批：请假、外出、出差
+官方事实：
+1. 原生审批应用使用oa/getapprovalinfo、oa/getapprovaldetail和sys_approval_change；独立审批流程引擎使用open_approval_change等另一套协议。当前数据同步应使用前者，继续不迁移OA。
+   https://developer.work.weixin.qq.com/document/path/91956
+   https://developer.work.weixin.qq.com/document/path/90269
+2. 列表按“提交时间”筛选，不是更新时间；窗口最多31天、size最多100，new_cursor分页，缺少new_next_cursor表示结束。record_type可辅助发现请假/出差/外出，但旧历史单需补扫。
+   https://developer.work.weixin.qq.com/document/path/91816
+3. 模板详情返回控件ID和结构；自建和第三方可访问模板的范围有区别。第三方文档限定其添加的模板，不能直接推断能读企业所有模板。
+   https://developer.work.weixin.qq.com/document/path/91982
+   https://developer.work.weixin.qq.com/document/path/92631
+4. 假勤需保存hour/halfday、一天换算值、逐日slice_info、计算来源、实际申请人列表；batch_applyer和applyer互斥。
+   https://developer.work.weixin.qq.com/document/path/91983
+   https://developer.work.weixin.qq.com/document/path/97437
+5. sys_approval_change需正确授权与API接收配置。编号优先SpNoStr；收到事件后拉详情校准，周期补偿不能仅靠提交时间增量。
+   https://developer.work.weixin.qq.com/document/path/91815
+
+两个已证实的代码错误：
+A. 官方DateRange示例type=halfday，开始1570550400、结束1570593600，相差12小时，new_duration及perday_duration为86400。
+   approval.go:431一律除3600得到24小时；hrm/hrm.go:548又禁止duration超过起止间隔，于是该官方示例会被拒绝导入。
+   这是按文档样例和代码执行条件核实的失败路径，本轮未修改或运行新的产品测试。
+B. 部门/人员筛选开启时，新的批量申请applyer.userid为空，approval.go:154先筛选、:164直接返回；原始数据保存尚未发生，会静默跳过。无筛选时虽存异常，也未按实际申请人展开。
+
+其他差距：
+目前手工填写模板和控件ID，没有读取模板结构验证；没有审批状态事件接入；月统计忽略保存的duration及逐日分片，按本地班次重算。
+现有代码确实会重查历史非canceled审批，应保留对旧单撤销的补偿能力，但全历史轮询随数据增长会扩大调用量。
+请假/外出/出差分开入口是合理设计。应先落原始单，再按多人申请、模板/控件语义及本地纳入范围生成记录，记录被排除/异常原因。
+假期配置及余额可作为假勤模型的补充来源；修改余额、发起审批、创建模板是远端写操作，不因阅读文档就扩成OA。
+
+五、消息接收、发送及本地IM边界
+1. 企业应用消息接收面向“员工发给应用”的消息及获准事件，不是所有员工私聊、群聊历史。
+   https://developer.work.weixin.qq.com/document/path/90238
+2. URL、Token、EncodingAESKey用于回调验签解密；GET验证1秒内返回解密后的echostr；POST5秒内响应，失败最多重试三次。应持久化去重并异步处理，校验ReceiveId，区分企业与第三方接收身份。回调入口不能要求宿主用户登录。
+   https://developer.work.weixin.qq.com/document/path/90968
+3. message/send发送应用通知；需要AgentID及可见收件人。errcode=0仍可能返回部分无效收件人，应分别记结果。配额按应用、接收成员等计算，不等同统一HTTP速率。
+   https://developer.work.weixin.qq.com/document/path/90372
+4. 应用群聊仅适用文档列明的企业自建应用和根部门可见范围，操作本应用经API创建的内部群，不是任意现有员工群聊。
+   https://developer.work.weixin.qq.com/document/path/90244
+   https://developer.work.weixin.qq.com/document/path/98914
+5. 原群机器人消息推送webhook是另一项能力，不能据发送接口推断可接收全群消息。新智能机器人补充文档未成功读取，本轮不推断其能力。
+   https://developer.work.weixin.qq.com/document/path/99110
+6. 会话内容存档需独立配置、开通范围、IP、公钥及相应告知/同意；按SDK游标拉取并解密。它不提供以员工身份发送任意消息的能力。
+   https://developer.work.weixin.qq.com/document/path/91361
+   https://developer.work.weixin.qq.com/document/path/91774
+7. 企业微信media_id与宿主文件URL不同，临时素材有效期3天，需独立处理素材上传及过期。
+   https://developer.work.weixin.qq.com/document/path/90253
+
+当前差距：
+internal/im/store.go:222只存本地biz_im_message并向本地WebSocket发布；wecom无消息inbox/outbox、回调或message/send。不能把本地IM测试通过表述为企业微信聊天互通完成。
+建议先接应用通知与获准事件接收，保留本地IM独立身份和消息来源。群聊或会话存档按实际业务需要单独接入，不承诺全量1:1映射。
+
+六、后续修正顺序及验收依据
+1. 先明确接入模式，修正配置引导、应用身份验证、可见范围及能力状态。
+2. 修正审批时长/多人模型与先存原始数据原则；补官方样例测试，确保筛选不造成静默丢单。
+3. 接规则、排班、官方日报/月报，保留原始单位和异常；本地重算与官方结果分开对账。
+4. 接入审批等获准回调的验签、解密、持久去重、快速响应与补偿，不将所有回调都假设可用。
+5. 接入企业应用消息发送、部分失败处理、素材与按额度队列；再根据需求确定群聊/存档范围。
+6. 更新同步控制台：授权检查、授权范围内的部门/人员筛选、通讯录/打卡/请假/外出/出差独立任务；显示未授权、部分失败、异常和来源。
+7. 本地回归至少覆盖官方halfday样例、多人申请过滤、审批撤销、审批回调重复乱序、日期0点/跨月、复合异常、日报/月报限额、消息部分失败、回调签名与重放。
+8. 真实联调再验证可信IP、可见范围、敏感字段可得性和官方报表对账。未获得真实企业环境前，只标“本地验证通过”，不标“企业微信验收通过”。
+
+七、本轮保留的正确实现
+原始打卡100人/30天/类型3；审批新版接口、31天/100条/new_cursor分页；精确控件ID映射；原始JSON留存；撤销反向取消记录；可见范围快照消失不直接删除人员。这些无需因本轮发现问题而推翻。
+
+八、阅读限制及待补核验页面
+官方文档站后续返回HTTP429，已停止新增抓取，未将以下页面记为已读：
+91854 自建审批概述；92630 复制/更新模板到企业；90235/90371 消息概述；94867 撤回应用消息；94888 更新模板卡片；90228 设置应用；90389/90390 第三方素材；100719 智能机器人接收消息；101033 智能机器人加解密。
+90374不是当前导航中的正文页；公告/document/51165只取得页面框架。上述页面不用于本轮判断。相关能力若进入实施范围，需先补读对应最新正文。
+员工敏感字段OAuth的具体跳转与回调参数需在实现前继续阅读其专门接口文档；本轮关于必须授权的结论来自已读通讯录接口和调整公告。
+所有结论区分“官方明确约束”“源码事实”“本项目设计建议”，未将建议伪装为官方强制要求。

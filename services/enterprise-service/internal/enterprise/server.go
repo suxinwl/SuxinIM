@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"openim38.local/identity"
 )
 
 type Server struct {
@@ -26,11 +29,14 @@ type Server struct {
 	SessionRevoker      SessionRevoker
 	Catalog             Catalog
 	Cipher              *sessionCipher
+	HRM                 *HRMBridge
+	Messages            *mongo.Collection
 	WebhookSecret       string
 	Now                 func() time.Time
 	lastSessionCheck    time.Time
 	lastPresenceCheck   time.Time
 	lastRevocationCheck time.Time
+	lastHRMRetry        time.Time
 	hintOnce            sync.Once
 	hintQueue           chan eventHint
 }
@@ -182,6 +188,11 @@ func writeError(w http.ResponseWriter, err error) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"errCode": a.Code, "errMsg": a.Message, "errDlt": "", "data": nil})
 }
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = r.WithContext(identity.WithRequestEntry(r.Context(), r))
+	if strings.HasPrefix(r.URL.Path, "/attachments/") {
+		s.attachmentProxy(w, r)
+		return
+	}
 	path := strings.TrimPrefix(r.URL.Path, "/enterprise/v1")
 	if path == "/healthz" {
 		writeJSON(w, 200, map[string]any{"service": "enterprise-service", "status": "alive"})
@@ -216,7 +227,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.sessionLogout(w, r)
 		return
 	}
-	if r.Method != "POST" && !(r.Method == "GET" && path == "/rtc/events") {
+	if path == "/session/state" && (r.Method != http.MethodGet || r.URL.RawQuery != "") {
+		writeError(w, bad("read-only session state requires GET without query"))
+		return
+	}
+	if path == "/storage/capacity" && (r.Method != http.MethodGet || r.URL.RawQuery != "") {
+		writeError(w, bad("capacity requires GET without query"))
+		return
+	}
+	if r.Method != "POST" && !(r.Method == "GET" && (path == "/rtc/events" || path == "/session/state" || path == "/storage/capacity")) {
 		writeError(w, &apiError{405, 1001, "method not allowed"})
 		return
 	}
@@ -226,7 +245,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if path == "/application/latest" {
-		v, e := s.latest(r.Context(), q)
+		v, e := s.latest(r.Context(), q, entryOrigin(r))
 		if e != nil {
 			writeError(w, e)
 		} else {
@@ -234,7 +253,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	adminOnly := strings.HasPrefix(path, "/application/publish") || strings.HasPrefix(path, "/admin/")
+	adminOnly := strings.HasPrefix(path, "/application/publish") || strings.HasPrefix(path, "/admin/") || path == "/storage/capacity"
 	a, err := s.Auth.Authenticate(r.Context(), r, adminOnly)
 	if err != nil {
 		writeError(w, err)
@@ -242,8 +261,30 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var data any
 	switch {
+	case path == "/storage/capacity":
+		data = s.storageCapacity()
+	case path == "/session/state":
+		data, err = s.sessionState(r.Context(), a, r)
+	case path == "/attachment/authorize":
+		data, err = s.attachmentAuthorize(r.Context(), a, q, r)
+		if err == nil {
+			if result, ok := data.(map[string]any); ok {
+				proof, _ := result["resourceProof"].(string)
+				expires, _ := result["resourceProofExpiresAt"].(int64)
+				setResourceCookie(w, proof, expires)
+			}
+		}
 	case strings.HasPrefix(path, "/office/"):
 		data, err = s.office(r.Context(), a, path, q)
+	case path == "/discovery/list":
+		var v json.RawMessage
+		v, _, err = load[json.RawMessage](r.Context(), s.Store, "discovery:items")
+		if errors.Is(err, ErrNotFound) {
+			data = map[string]any{"items": []any{}}
+			err = nil
+		} else {
+			data = v
+		}
 	case strings.HasPrefix(path, "/msg/"):
 		data, err = s.receipts(r.Context(), a, path, q)
 	case strings.HasPrefix(path, "/signaling/"):
@@ -277,6 +318,12 @@ func (s *Server) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-t.C:
+			if s.lastHRMRetry.IsZero() || s.now().Sub(s.lastHRMRetry) >= 10*time.Second {
+				s.lastHRMRetry = s.now()
+				if err := s.retryHRMGenerations(ctx); err != nil {
+					slog.Error("HRM revocation retry failed")
+				}
+			}
 			if err := s.retrySessionRevocations(ctx); err != nil {
 				slog.Error("session revocation retry failed", "error", err)
 			}

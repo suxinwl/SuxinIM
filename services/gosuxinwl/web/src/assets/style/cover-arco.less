@@ -1,0 +1,142 @@
+//message样式-ing
+.fade-message-enter-from {
+  opacity: 0;
+  transform: translate3d(0, -100%, 0);
+}
+
+.fade-message-enter-to {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.fade-message-enter-active,
+.fade-message-appear-active {
+  transition: opacity 0.3s, transform 0.4s;
+}
+
+.fade-message-leave-from {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.fade-message-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -100%, 0);
+}
+
+.fade-message-leave-active {
+  position: absolute;
+}
+//message样式-end
+//树Tree样式-ing
+.arco-tree-show-line .arco-tree-node-is-leaf:not(.arco-tree-node-is-tail) .arco-tree-node-indent::after,
+.arco-tree-show-line .arco-tree-node-indent-block::before {
+  transform: translateX(0);
+  border-color: var(--color-border-3);
+  flex-shrink: 0;
+}
+
+.arco-tree-node-minus-icon,
+.arco-tree-node-plus-icon {
+  border: 1px solid var(--color-border-3);
+  box-sizing: border-box;
+}
+
+.arco-tree-node-switcher-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+//树Tree样式-end
+//滚动条样式-ing
+/***********框架全局***********/
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+   border-radius: 9px;
+   // 普通状态下宽度
+   	border-style: dashed;
+    border-color: transparent;
+    border-width: 1px;
+    background-clip: padding-box;
+    background-color: var(--color-neutral-3);
+}
+::-webkit-scrollbar-thumb:hover {
+  // 悬停状态宽度
+  background-clip: border-box;
+  background-color: var(--color-neutral-4);
+}
+
+::-ms-scrollbar-thumb {
+  background-color: var(--color-neutral-3);
+}
+/***********arco内部***********/
+.arco-scrollbar-track-direction-vertical {
+  width: 7px;
+}
+.arco-scrollbar-thumb-direction-vertical .arco-scrollbar-thumb-bar {
+  width: 7px;
+  margin: 0px;
+}
+
+.arco-scrollbar-track-direction-horizontal {
+  height: 7px;
+}
+.arco-scrollbar-thumb-direction-horizontal .arco-scrollbar-thumb-bar {
+  height: 9px;
+  margin: 1px 0;
+  border-style: dashed;
+  border-color: transparent;
+  border-width: 1px;
+  background-clip: padding-box;
+}
+.arco-scrollbar-thumb-direction-horizontal .arco-scrollbar-thumb-bar:hover {
+  background-clip: border-box;
+}
+.arco-scrollbar-thumb-bar {
+  background-color: var(--color-neutral-3);
+}
+//滚动条样式-end
+//分页组件-ing
+.arco-pagination-item {
+  background-color: var(--color-fill-1);
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  transition: none;
+  box-sizing: border-box;
+  &:hover {
+    color: rgb(var(--primary-6));
+    background-color:var(--color-fill-2);
+  }
+}
+
+.arco-pagination-item-active {
+   background-color: var(--color-primary-light-1);
+  &:hover {
+   background-color: var(--color-primary-light-1);
+  }
+}
+
+.arco-pagination .arco-pagination-item-previous.arco-pagination-item-disabled,
+.arco-pagination .arco-pagination-item-next.arco-pagination-item-disabled {
+  border-color: var(--color-border-2);
+  &:hover {
+    border-color: var(--color-border-2);
+  }
+}
+//分页组件-end
+//下拉选项
+.arco-select-dropdown-list {
+  padding: 2px 6px;
+   .arco-select-option-active{
+    border-radius: 3px !important;
+  }
+}
+//radio按钮文字禁止双击选中
+.arco-radio-button-content{
+  user-select: none;
+}

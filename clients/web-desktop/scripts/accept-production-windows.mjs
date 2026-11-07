@@ -1,0 +1,72 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {_electron} from 'playwright';
+const client=path.resolve(import.meta.dirname,'..'),suite=path.resolve(client,'../..');
+const fixture=JSON.parse(fs.readFileSync(path.join(suite,'.private/production/acceptance/test-accounts.json'),'utf8').replace(/^\uFEFF/,''));
+const network=process.argv.includes('--wan')?'wan':'lan';
+const mapWanToLan=network==='wan' && process.argv.includes('--map-wan-lan');
+const preflightOnly=process.argv.includes('--preflight-only');
+const origin=network==='wan'?'https://im.szputy.com:9885':'https://192.168.10.11:9885';
+const evidence=path.join(client,'build/acceptance');fs.mkdirSync(evidence,{recursive:true});
+const executable=path.join(client,'build/windows-install-validation/速信通讯.exe');
+let app,page,stage='launch',session;const objectRequests=[];const receipt={platform:'windows',network,origin,networkPath:mapWanToLan?'domain-SNI-routed-to-LAN':'normal-network',internetNATAccepted:false,strictTLS:true,ignoreHTTPSErrors:false,websocket:{created:0,received:0,errors:0,errCodes:[]},apiHTTP200:0,apiSuccess:0,apiNullFields:[],httpFailures:[],uploadPUTs:0,uploadPUTs2xx:0,failedRequests:[],ssoResponses:[],pageErrors:[],consoleErrors:[]};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const sanitize=value=>{let text=String(value);for(const account of fixture.accounts)for(const field of ['username','password'])text=text.replaceAll(account[field],'[private]');return text.replace(/https?:\/\/[^\s\"'<>]+/g,url=>{try{const parsed=new URL(url);return parsed.origin+parsed.pathname.replace(/\/attachments\/[^/]+/,'/attachments/[grant]');}catch{return '[url]';}}).replace(/eyJ[A-Za-z0-9_.-]+/g,'[token]').replace(/[a-f0-9]{64,}/gi,'[opaque]');};
+try{
+ app=await _electron.launch({executablePath:executable,args:mapWanToLan?['--host-resolver-rules=MAP im.szputy.com 192.168.10.11, EXCLUDE localhost']:[],env:{...process.env,OPENIM38_TEST_DATA_DIR:path.join(process.env.PUTY_ACCEPTANCE_DATA_ROOT || path.join(client,'build/acceptance'),'w-'+network+'-'+Date.now())},timeout:60000});
+ for(let i=0;i<120;i++){page=app.windows().find(p=>p.url().startsWith('openim38://app/'));if(page)break;await wait(300);}if(!page)throw new Error('WINDOW_UNAVAILABLE');
+ page.on('websocket',ws=>{if(new URL(ws.url()).pathname==='/ws'){receipt.websocket.created++;ws.on('framereceived',({payload})=>{receipt.websocket.received++;try{const frame=JSON.parse(typeof payload==='string'?payload:payload.toString());if(Number.isInteger(frame.errCode))receipt.websocket.errCodes.push(frame.errCode);}catch{}});ws.on('socketerror',()=>receipt.websocket.errors++);}});
+ page.on('request',request=>{const url=new URL(request.url());if(['/api/object/initiate_multipart_upload','/api/object/complete_multipart_upload','/api/object/complete_form_data'].includes(url.pathname)){try{const data=request.postDataJSON();const allowed=new Set(['name','group','uploadID','objectID','key','filename','size','contentType','type','hash']);objectRequests.push({path:url.pathname,fields:Object.fromEntries(Object.entries(data || {}).filter(([key])=>allowed.has(key)))});}catch{}}});
+ page.on('response',async response=>{const url=new URL(response.url());if(response.request().method()==='PUT' && ['192.168.10.11','im.szputy.com'].includes(url.hostname)){receipt.uploadPUTs++;if(response.status()>=200 && response.status()<300)receipt.uploadPUTs2xx++;}if(response.status()>=400)receipt.httpFailures.push({path:url.pathname.replace(/\/attachments\/[^/]+/,'/attachments/[grant]'),method:response.request().method(),status:response.status()});if(url.pathname.startsWith('/sso/')){try{receipt.ssoResponses.push({path:url.pathname,status:response.status(),code:(await response.json()).code});}catch{}}if(url.pathname.startsWith('/api/') && response.status()===200){receipt.apiHTTP200++;try{const body=await response.json();if(body.errCode===0)receipt.apiSuccess++;const scan=(value,prefix='data',depth=0)=>{if(depth>3 || !value || typeof value!=='object' || Array.isArray(value))return;for(const [key,item] of Object.entries(value)){if(item===null)receipt.apiNullFields.push({path:url.pathname,field:prefix+'.'+key});else scan(item,prefix+'.'+key,depth+1);}};scan(body.data);}catch{}}});
+ page.on('console',message=>{if(['error','warning'].includes(message.type()))receipt.consoleErrors.push(sanitize(message.text()).slice(0,1000));});
+ page.on('pageerror',error=>receipt.pageErrors.push({name:error.name,message:sanitize(error.message)}));
+ page.on('requestfailed',request=>{const url=new URL(request.url());if(['192.168.10.11','im.szputy.com'].includes(url.hostname))receipt.failedRequests.push({path:url.pathname,error:request.failure()?.errorText});});
+ if(network==='wan'){await page.waitForFunction(()=>typeof window.login==='function',{timeout:60000});await page.evaluate(value=>localStorage.setItem('puty:network',value),network);await page.reload();}
+ await page.getByLabel('统一账号 / 工号').waitFor({timeout:45000});
+ receipt.localOrigin=await page.evaluate(()=>location.origin);receipt.nativePlatform=await page.evaluate(()=>window.electronAPI?.getPlatform());
+ if(preflightOnly){
+  stage='strict-tls-cors';
+  receipt.captchaHTTP=await page.evaluate(async origin=>{const response=await fetch(origin+'/sso/captcha',{credentials:'omit',cache:'no-store'});const body=await response.json();if(!response.ok || body.code!==0)throw new Error('CAPTCHA_PREFLIGHT_REJECTED');return response.status;},origin);
+  receipt.preflightOnly=true;receipt.passed=true;receipt.appVersion=await app.evaluate(({app})=>app.getVersion());await page.screenshot({path:path.join(evidence,'windows-'+network+'-preflight.png')});
+ }else{
+ stage='captcha';
+ const captchaInput=page.getByLabel('验证码',{exact:true});
+ if(await captchaInput.isVisible()){
+  const challenge=path.join(evidence,'windows-'+network+'-captcha-'+Date.now());
+  await page.getByAltText('点击更换验证码').screenshot({path:challenge+'.png'});
+  console.log(JSON.stringify({stage:'captcha',image:challenge+'.png',answerFile:challenge+'.txt'}));
+  for(let i=0;i<720 && !fs.existsSync(challenge+'.txt');i++)await wait(250);
+  if(!fs.existsSync(challenge+'.txt'))throw new Error('CAPTCHA_ANSWER_UNAVAILABLE');
+  await captchaInput.fill(fs.readFileSync(challenge+'.txt','utf8').trim());
+ }
+ stage='login';const account=fixture.accounts[0];
+ await page.waitForFunction(()=>typeof window.login==='function',{timeout:45000});
+ await page.evaluate(()=>{const login=window.login;window.login=(...args)=>{window.__putyAcceptanceLogin={called:true};try{return Promise.resolve(login(...args)).then(value=>{let parsed=value;try{if(typeof parsed==='string')parsed=JSON.parse(parsed);}catch{}window.__putyAcceptanceLogin={called:true,resolved:true,errCode:parsed?.errCode,errMsg:parsed?.errMsg};return value;},error=>{window.__putyAcceptanceLogin={called:true,resolved:false,name:error?.name,errCode:error?.errCode,errMsg:error?.errMsg || error?.message};throw error;});}catch(error){window.__putyAcceptanceLogin={called:true,resolved:false,name:error?.name,errCode:error?.errCode,errMsg:error?.errMsg || error?.message};throw error;}};});
+ await page.getByLabel('统一账号 / 工号').fill(account.username);await page.getByLabel('密码',{exact:true}).fill(account.password);
+ const reply=page.waitForResponse(r=>new URL(r.url()).pathname==='/sso/login',{timeout:45000});await page.getByRole('button',{name:'登录',exact:true}).click();
+ const response=await reply;receipt.loginHTTP=response.status();const body=await response.json();if(response.status()!==200 || body.code!==0)throw new Error('SSO_REJECTED');session=body.data;
+ receipt.sessionFieldsValid=['userID','imToken','chatToken','sessionToken'].every(k=>typeof session[k]==='string' && session[k].length>0);
+ if(!receipt.sessionFieldsValid)throw new Error('SESSION_INCOMPLETE');
+ stage='native-sdk';await page.waitForURL(url=>!url.hash.includes('/login'),{timeout:45000});for(let i=0;i<480 && !receipt.websocket.received;i++){if(page.url().includes('/login'))throw new Error('SDK_SESSION_REJECTED');await wait(250);}
+ if(!receipt.websocket.received || receipt.websocket.errors || receipt.websocket.errCodes.some(code=>code!==0))throw new Error('WSS_UNAVAILABLE');
+ await wait(1500);if(page.url().includes('/login'))throw new Error('SDK_SESSION_REJECTED');
+ stage='resource';const source=session.profile?.faceURL || session.profile?.avatar || '';
+ if(typeof source==='string' && /^https:\/\/(192\.168\.10\.11|hr\.szputy\.com|im\.szputy\.com):/.test(source)){
+  receipt.profileResource=await page.evaluate(async({origin,source,imToken,chatToken})=>{
+   const sourceURL=new URL(source);if(/^\/resource\/static\/brand\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:png|jpe?g|webp|gif|svg|ico)$/.test(sourceURL.pathname)){const image=await fetch(origin+sourceURL.pathname+sourceURL.search,{headers:{Range:'bytes=0-127'}});const data=await image.arrayBuffer();return {passed:image.ok && data.byteLength>0,publicBrand:true,getHTTP:image.status,bytes:data.byteLength,contentType:image.headers.get('content-type'),signature:Array.from(new Uint8Array(data).slice(0,8),v=>v.toString(16).padStart(2,'0')).join('')};}
+   const reply=await fetch(origin+'/enterprise/v1/attachment/authorize',{method:'POST',headers:{'Content-Type':'application/json',token:imToken,chatToken,platformID:'3',operationID:crypto.randomUUID()},body:JSON.stringify({url:source})});const body=await reply.json();if(!reply.ok || body.errCode!==0)return {passed:false,authorizeHTTP:reply.status,authorizeErrCode:body.errCode,reason:body.errMsg};const url=new URL(body.data.url);if(url.origin!==origin || url.protocol!=='https:')throw new Error('RESOURCE_ORIGIN_REJECTED');const download=await fetch(url,{headers:{Range:'bytes=0-127'}});const bytes=await download.arrayBuffer();if(!download.ok || !bytes.byteLength)throw new Error('RESOURCE_GET_REJECTED');return {passed:true,authorizeHTTP:reply.status,authorizeErrCode:body.errCode,getHTTP:download.status,bytes:bytes.byteLength};
+  },{origin,source,imToken:session.imToken,chatToken:session.chatToken});
+  if(!receipt.profileResource.passed)throw new Error('RESOURCE_AUTH_REJECTED');
+ }
+ if(!receipt.apiSuccess)throw new Error('SDK_API_UNAVAILABLE');
+ stage='sdk-upload';receipt.attachment=await page.evaluate(async({origin,imToken,chatToken})=>{
+  const name='puty-client-acceptance-'+crypto.randomUUID()+'.bin',uuid=crypto.randomUUID()+'/'+name;
+  const bytes=Uint8Array.from({length:4096},(_,i)=>i%251);bytes.set(crypto.getRandomValues(new Uint8Array(32)),0);window.__putyAcceptanceUpload={name,uuid,size:bytes.length,bodySHA256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join(''),uploaded:false};const file=new File([bytes],name,{type:'application/octet-stream'});window.fileMapSet(uuid,file);
+  let result=await window.uploadFile(crypto.randomUUID(),JSON.stringify({name,contentType:file.type,uuid,filepath:'',cause:''}));if(typeof result==='string')result=JSON.parse(result);if(result.errCode) return {passed:false,uploadErrCode:result.errCode};let data=result.data ?? result;if(typeof data==='string')data=JSON.parse(data);const uploadedURL=new URL(data.url);window.__putyAcceptanceUpload={...window.__putyAcceptanceUpload,uploaded:true,objectOrigin:uploadedURL.origin,objectPath:uploadedURL.pathname,objectKey:uploadedURL.pathname.startsWith('/attachments/')?uploadedURL.pathname.split('/').slice(3).join('/'):uploadedURL.pathname.replace(/^\//,'')};
+  const response=await fetch(origin+'/enterprise/v1/attachment/authorize',{method:'POST',headers:{'Content-Type':'application/json',token:imToken,chatToken,platformID:'3',operationID:crypto.randomUUID()},body:JSON.stringify({url:data.url})});const authorized=await response.json();if(!response.ok || authorized.errCode!==0)return {passed:false,uploadErrCode:0,authorizeHTTP:response.status,authorizeErrCode:authorized.errCode};const target=new URL(authorized.data.url);if(target.origin!==origin || !target.pathname.startsWith('/attachments/'))throw new Error('ATTACHMENT_ORIGIN_REJECTED');const download=await fetch(target,{headers:{Range:'bytes=0-127'}});const body=new Uint8Array(await download.arrayBuffer());return {passed:download.status===206 && body.length===128 && body.every((v,i)=>v===bytes[i]),uploadErrCode:0,authorizeHTTP:response.status,authorizeErrCode:authorized.errCode,getHTTP:download.status,bytes:body.length};
+ },{origin,imToken:session.imToken,chatToken:session.chatToken});if(!receipt.attachment.passed)throw new Error('SDK_ATTACHMENT_REJECTED');
+ stage='complete';receipt.passed=true;receipt.appVersion=await app.evaluate(({app})=>app.getVersion());await page.screenshot({path:path.join(evidence,'windows-'+network+'-logged-in.png')});
+ 
+ }
+}catch(error){receipt.passed=false;receipt.failureStage=stage;receipt.failureType=error.name;receipt.failureMessage=sanitize(error.message || error.errMsg || '').slice(0,600);receipt.sdkErrorCode=error.errCode;receipt.failureCode=/^[A-Z_]+$/.test(error.message)?error.message:undefined;if(page){try{receipt.sdkLogin=await page.evaluate(()=>window.__putyAcceptanceLogin);if(receipt.sdkLogin?.errMsg)receipt.sdkLogin.errMsg=sanitize(receipt.sdkLogin.errMsg);receipt.visibleText=sanitize(await page.locator('body').innerText()).slice(0,2000);await page.screenshot({path:path.join(evidence,'windows-'+network+'-failure.png'),mask:[page.locator('input')]});}catch{}}process.exitCode=1;}
+finally{if(session && page){try{const uploaded=await page.evaluate(()=>window.__putyAcceptanceUpload);if(uploaded){const target=path.join(suite,'.private/production/acceptance/client-uploads.json');const prior=fs.existsSync(target)?JSON.parse(fs.readFileSync(target,'utf8')):[];prior.push({createdAt:new Date().toISOString(),platform:'windows',userID:session.userID,...uploaded,apiObjectRequests:objectRequests});fs.writeFileSync(target,JSON.stringify(prior,null,2));}}catch{}try{await page.evaluate(async({origin,sessionToken})=>{await fetch(origin+'/sso/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionToken})});},{origin,sessionToken:session.sessionToken});}catch{}}fs.writeFileSync(path.join(evidence,'windows-'+network+(preflightOnly?'-preflight':'')+'.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));if(app){await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await Promise.race([app.close().catch(()=>{}),wait(3000)]);}}

@@ -1,0 +1,62 @@
+{
+  "format": "PUTY-CLIENT-ARTIFACTS-1",
+  "generatedAt": "2026-11-05T09:24:24.766120+00:00",
+  "endpoints": {
+    "lan": "https://192.168.10.11:9885",
+    "wan": "https://im.szputy.com:9885"
+  },
+  "enterpriseRoot": {
+    "derSHA256": "836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69",
+    "pemSHA256": "9a135d11160e2179c6d396088b765143b60b9ed82c44a8acc2cd8735e6d3f183"
+  },
+  "artifacts": [
+    {
+      "platform": "web",
+      "name": "PUTY内部通讯",
+      "version": "3.8.20",
+      "build": 382001,
+      "fileName": "PUTY_IM-3.8.20-web.zip",
+      "size": 17931204,
+      "sha256": "15b23879a7ab8d2654e75f0ce6e9d89c3a0063c552fde5ad136cc3ca50293db3"
+    },
+    {
+      "platform": "windows",
+      "name": "PUTY内部通讯",
+      "version": "3.8.22",
+      "build": 382201,
+      "applicationID": "io.openim.enterprise.upgrade38",
+      "architecture": "x64",
+      "authenticodeSigned": false,
+      "embeddedRootSHA256": "836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69",
+      "trustInstallation": "NSIS perMachine LocalMachine Root",
+      "fileName": "PUTY_IM-3.8.22-win-x64.exe",
+      "size": 166392434,
+      "sha256": "c336e96b910bf40560f99ed77bc325333f32483446724facdb080c1429281ed2"
+    },
+    {
+      "platform": "android",
+      "name": "PUTY内部通讯",
+      "version": "3.8.21",
+      "build": 121,
+      "applicationID": "com.szputy.im",
+      "architecture": "arm64-v8a",
+      "minimumAPI": 24,
+      "targetAPI": 35,
+      "signatureSchemes": [
+        "v2"
+      ],
+      "signingCertificateSHA256": "521723f5ecfd7ab4a7cc94f2cad50509e0d3bbc1bd4a565ad44b58c1fc12272f",
+      "embeddedRootSHA256": "836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69",
+      "embeddedTrustPaths": [
+        "Dart HTTPS/WSS via exact LAN peer binding after pinned-root native PKIX",
+        "Go HTTP/WSS/S3",
+        "Android Java HTTPS",
+        "native TURN/TLS LAN verifier"
+      ],
+      "developmentCAIncluded": false,
+      "fileName": "PUTY_IM-3.8.21-android-arm64.apk",
+      "size": 80526678,
+      "sha256": "6b6e5ab18d229a1b6771c3e861249a3b9ffd7edfa698cf1a9afb541815b43728"
+    }
+  ]
+}

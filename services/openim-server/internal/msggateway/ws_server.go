@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"openim38.local/identity"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -471,6 +472,7 @@ func (ws *WsServer) handlerError(ctx *UserConnContext, w http.ResponseWriter, r 
 }
 
 func (ws *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+	r = r.WithContext(identity.WithRequestEntry(r.Context(), r))
 	// Create a new connection context
 	connContext := newContext(w, r)
 
@@ -497,6 +499,14 @@ func (ws *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate the authentication response matches the request (e.g., user ID and platform ID)
+	if identity.Required() {
+		v, e := identity.Validate(r.Context(), connContext.GetToken(), connContext.GetUserID(), "im", connContext.GetPlatformID())
+		ip, ie := identity.ClientIP(r)
+		if e != nil || ie != nil || identity.CheckSessionAccess(r.Context(), v, ip, "connect", "") != nil {
+			ws.handlerError(connContext, w, r, servererrs.ErrNoPermission.WrapMsg("HRM access denied"))
+			return
+		}
+	}
 	err = ws.validateRespWithRequest(connContext, resp)
 	if err != nil {
 		// If validation fails, return an error via HTTP and stop processing

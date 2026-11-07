@@ -16,6 +16,9 @@ package admin
 
 import (
 	"context"
+	"github.com/openimsdk/chat/pkg/common/tokenverify"
+	"openim38.local/identity"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
@@ -27,7 +30,11 @@ import (
 )
 
 func (o *adminServer) CreateToken(ctx context.Context, req *adminpb.CreateTokenReq) (*adminpb.CreateTokenResp, error) {
-	token, expire, err := o.Token.CreateToken(req.UserID, req.UserType)
+	issuer := o.Token
+	if identity.Required() && req.UserType == 1 {
+		issuer = &tokenverify.Token{Secret: o.Token.Secret, Expires: 4 * time.Hour}
+	}
+	token, expire, err := issuer.CreateToken(req.UserID, req.UserType)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +61,11 @@ func (o *adminServer) ParseToken(ctx context.Context, req *adminpb.ParseTokenReq
 	}
 	if _, ok := m[req.Token]; !ok {
 		return nil, eerrs.ErrTokenNotExist.Wrap()
+	}
+	if identity.Required() && userType == 1 {
+		if _, err := identity.Validate(ctx, req.Token, userID, "chat", 0); err != nil {
+			return nil, eerrs.ErrTokenNotExist.WrapMsg("HRM session unavailable")
+		}
 	}
 
 	return &adminpb.ParseTokenResp{

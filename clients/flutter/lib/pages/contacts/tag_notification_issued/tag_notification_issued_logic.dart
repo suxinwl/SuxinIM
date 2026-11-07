@@ -1,3 +1,4 @@
+import 'package:app_im/app_im.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:openim/routes/app_navigator.dart';
@@ -147,7 +148,8 @@ class TagNotificationIssuedLogic extends GetxController {
     bool isExistSource = false;
     if (null != url && url.trim().isNotEmpty) {
       isExistSource = true;
-      _audioPlayer.setUrl(url);
+      final protected=await AppIm.enterprise.authorizeResource(url);
+      await _audioPlayer.setUrl(protected,headers:AppIm.enterprise.resourceHeaders(protected));
     }
     return isExistSource;
   }

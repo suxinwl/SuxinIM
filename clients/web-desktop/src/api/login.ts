@@ -110,19 +110,7 @@ export const useReset = () => {
 
 // change password
 export const modifyPassword = async (params: API.Login.ModifyParams) => {
-  const token = (await getChatToken()) as string;
-  return request.post(
-    "/account/password/change",
-    {
-      ...params,
-    },
-    {
-      headers: {
-        token,
-        operationID: uuidv4(),
-      },
-    },
-  );
+  throw new Error("密码由人事系统统一管理");
 };
 
 // log in
@@ -223,6 +211,7 @@ interface UpdateBusinessUserInfoParams {
 export const updateBusinessUserInfo = async (
   params: Partial<UpdateBusinessUserInfoParams>,
 ) => {
+  if (Object.keys(params).some(key => ["email","nickname","faceURL","gender","birth"].includes(key))) throw new Error("个人资料由人事系统统一管理");
   const token = (await getChatToken()) as string;
   return request.post<unknown>(
     "/user/update",

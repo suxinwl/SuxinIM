@@ -1,89 +1,45 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_download_manager/flutter_download_manager.dart';
+import 'package:flutter_download_manager/flutter_download_manager.dart' show DownloadStatus;
 import 'package:app_im/app_im.dart';
 import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 
+class ProtectedDownloadTask {
+ final status=ValueNotifier<DownloadStatus>(DownloadStatus.queued);
+ final progress=ValueNotifier<double>(0);
+ Map<String,dynamic>? saved;
+ void dispose(){status.dispose();progress.dispose();}
+}
+
+/// Explicit saves only. Native verifies save policy, performs real Range resume
+/// and writes original-name ciphertext. No public/plaintext destination exists.
 class DownloadController extends GetxController {
-  final downloadManager = DownloadManager();
-  String? savedDir;
-  final downloadTaskList = <String?, DownloadTask>{}.obs;
-
-  @override
-  void onInit() {
-    _initDir();
-    super.onInit();
-  }
-
-  _initDir() async {
-    savedDir ??= await IMUtils.getDownloadFileDir();
-  }
-
-  DownloadTask? getTask(String url) {
-    return downloadManager.getDownload(url);
-  }
-
-  bool isExistTask(String url) {
-    return null != downloadTaskList[url];
-  }
-
-  bool isExistMessageTask(Message message) => message.isFileType && null != message.fileElem?.sourceUrl && isExistTask(message.fileElem!.sourceUrl!);
-
-  ValueNotifier<DownloadStatus> getStatus(Message message) => downloadTaskList[message.fileElem!.sourceUrl!]!.status;
-
-  ValueNotifier<double> getProgress(Message message) => downloadTaskList[message.fileElem!.sourceUrl!]!.progress;
-
-  void addDownload(String url, {String? path}) {
-    Permissions.storage(() async {
-      await _initDir();
-      path ??= "$savedDir/${downloadManager.getFileNameFromUrl(url)}";
-      DownloadTask? task = await downloadManager.addDownload(url, path!);
-      if (null != task) downloadTaskList[url] = task;
-    });
-  }
-
-  void addDownloadForMessage(Message message, {String? path}) {
-    if (message.isFileType) {
-      final url = message.fileElem?.sourceUrl;
-      if (null != url) {
-        Permissions.storage(() async {
-          await _initDir();
-          path ??= "$savedDir/${downloadManager.getFileNameFromUrl(url)}";
-          DownloadTask? task = await downloadManager.addDownload(url, path!);
-          if (null != task) downloadTaskList[url] = task;
-        });
-      }
-    }
-  }
-
-  void clickFileMessage(String url, String path) async {
-    var task = getTask(url);
-    Logger.print('clickFileMessage 当前状态： ${task?.status.value}  进度：${task?.progress.value} 完成：${task?.status.value.isCompleted}  $url  $path');
-    if (task != null && !task.status.value.isCompleted) {
-      // downloadManager.cancelDownload(url);
-      switch (task.status.value) {
-        case DownloadStatus.downloading:
-          downloadManager.pauseDownload(url);
-          break;
-        case DownloadStatus.paused:
-          downloadManager.resumeDownload(url);
-          break;
-        case DownloadStatus.queued:
-          // addDownload(url, path: path);
-          break;
-        case DownloadStatus.completed:
-          // downloadManager.removeDownload(url);
-          break;
-        case DownloadStatus.failed:
-          await downloadManager.removeDownload(url);
-          addDownload(url, path: path);
-          break;
-        case DownloadStatus.canceled:
-          addDownload(url, path: path);
-          break;
-      }
-    } else {
-      addDownload(url, path: path);
-    }
-  }
+ final downloadTaskList=<String?,ProtectedDownloadTask>{}.obs;
+ StreamSubscription<void>? _locked;
+ @override void onInit(){super.onInit();_locked=NativeLocalVault.invalidated.listen((_){for(final task in downloadTaskList.values){task.saved=null;task.status.value=DownloadStatus.failed;}downloadTaskList.clear();});}
+ @override void onClose(){_locked?.cancel();for(final task in downloadTaskList.values){task.dispose();}super.onClose();}
+ ProtectedDownloadTask? getTask(String url)=>downloadTaskList[url];
+ bool isExistTask(String url)=>downloadTaskList.containsKey(url);
+ bool isExistMessageTask(Message message)=>message.isFileType&&message.fileElem?.sourceUrl!=null&&isExistTask(message.fileElem!.sourceUrl!);
+ ValueNotifier<DownloadStatus> getStatus(Message message)=>downloadTaskList[message.fileElem!.sourceUrl!]!.status;
+ ValueNotifier<double> getProgress(Message message)=>downloadTaskList[message.fileElem!.sourceUrl!]!.progress;
+ Future<void> save(String url,String sourceName,{int? size,String? conversationID,String? messageID})async{
+  var task=downloadTaskList[url];if(task?.status.value==DownloadStatus.downloading){IMViews.showToast('正在加密保存附件');return;}
+  task??=ProtectedDownloadTask();downloadTaskList[url]=task;task.status.value=DownloadStatus.downloading;
+  try{task.saved=await NativeLocalVault.save(url,sourceName,size:size,conversationID:conversationID,messageID:messageID);task.progress.value=1;task.status.value=DownloadStatus.completed;IMViews.showToast('已加密保存：${task.saved!['name']}');}
+  catch(_){task.status.value=DownloadStatus.failed;IMViews.showToast('加密保存未完成；可重试续传或检查下载权限');}
+ }
+ Future<void> addDownloadForMessage(Message message,{String? path})async{
+  String? url;int? size;
+  if(message.isFileType){url=message.fileElem?.sourceUrl;size=message.fileElem?.fileSize;}
+  else if(message.isPictureType){url=message.pictureElem?.sourcePicture?.url;size=message.pictureElem?.sourcePicture?.size;}
+  else if(message.isVideoType){url=message.videoElem?.videoUrl;size=message.videoElem?.videoSize;}
+  else if(message.contentType==MessageType.voice){url=message.soundElem?.sourceUrl;size=message.soundElem?.dataSize;}
+  if(url==null||url.isEmpty)return;
+  final peer=message.sessionType==ConversationType.single?(message.sendID==AppIm.iMManager.userID?message.recvID:message.sendID):message.groupID;
+  if(peer==null)return;
+  final conversation=await AppIm.iMManager.conversationManager.getConversationIDBySessionType(sourceID:peer,sessionType:message.sessionType!);
+  await save(url,IMUtils.messageSourceName(message,url),size:size,messageID:message.clientMsgID,conversationID:conversation is String?conversation:null);
+ }
 }

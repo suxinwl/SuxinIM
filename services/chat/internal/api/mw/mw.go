@@ -15,6 +15,7 @@
 package mw
 
 import (
+	"openim38.local/identity"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,7 @@ type MW struct {
 }
 
 func (o *MW) parseToken(c *gin.Context) (string, int32, string, error) {
+	c.Request = c.Request.WithContext(identity.WithRequestEntry(c.Request.Context(), c.Request))
 	token := c.GetHeader("token")
 	if token == "" {
 		return "", 0, "", errs.ErrArgs.WrapMsg("token is empty")
@@ -40,6 +42,19 @@ func (o *MW) parseToken(c *gin.Context) (string, int32, string, error) {
 	resp, err := o.client.ParseToken(c, &admin.ParseTokenReq{Token: token})
 	if err != nil {
 		return "", 0, "", err
+	}
+	if identity.Required() && resp.UserType == constant.NormalUser {
+		v, e := identity.Validate(c.Request.Context(), token, resp.UserID, "chat", 0)
+		if e != nil {
+			return "", 0, "", errs.ErrNoPermission.WrapMsg("HRM session unavailable")
+		}
+		ip, e := identity.ClientIP(c.Request)
+		if e != nil {
+			return "", 0, "", errs.ErrNoPermission.WrapMsg("client address unavailable")
+		}
+		if identity.CheckSessionAccess(c.Request.Context(), v, ip, "connect", "") != nil {
+			return "", 0, "", errs.ErrNoPermission.WrapMsg("HRM access denied")
+		}
 	}
 	return resp.UserID, resp.UserType, token, nil
 }
@@ -103,5 +118,6 @@ func (o *MW) CheckAdminOrNil(c *gin.Context) {
 func SetToken(c *gin.Context, userID string, userType int32) {
 	c.Set(constant.RpcOpUserID, userID)
 	c.Set(constant.RpcOpUserType, []string{strconv.Itoa(int(userType))})
-	c.Set(constant.RpcCustomHeader, []string{constant.RpcOpUserType})
+	c.Set(identity.EntryZoneMetadataKey, []string{identity.EntryZoneFromContext(c.Request.Context())})
+	c.Set(constant.RpcCustomHeader, []string{constant.RpcOpUserType, identity.EntryZoneMetadataKey})
 }

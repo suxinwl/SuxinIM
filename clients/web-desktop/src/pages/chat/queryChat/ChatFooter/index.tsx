@@ -6,6 +6,8 @@ import { memo, RefObject, useCallback, useEffect, useRef, useState } from "react
 import { useParams } from "react-router-dom";
 
 import cricle_cancel from "@/assets/images/chatFooter/cricle_cancel.png";
+import { message as antdMessage } from "@/AntdGlobalComp";
+import { fileMessageErrorKey } from "@/im/local-media";
 import EditableDiv, {
   deleteBeforeAt,
   EditableDivEvent,
@@ -235,12 +237,12 @@ const ChatFooter = () => {
       ...editableDiv.querySelectorAll(".image-el"),
     ] as HTMLImageElement[];
     imageEls.map(async (el) => {
-      const blob = await fetch(el.src).then((res) => res.blob());
-      const file = new File([blob], `screenshot${Date.now()}.png`, { type: blob.type });
-      const message = await createFileMessage(file);
-      sendMessage({
-        message,
-      });
+      try {
+        const blob = await fetch(el.src).then((res) => res.blob());
+        const file = new File([blob], `screenshot${Date.now()}.png`, { type: blob.type });
+        const message = await createFileMessage(file);
+        await sendMessage({ message, throwOnError: true });
+      } catch (error) { antdMessage.error(t(fileMessageErrorKey(error))); }
     });
   };
 

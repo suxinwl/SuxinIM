@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "employees": [
+    {"source_id":"employee-1001","wecom_userid":"zhangsan","employee_no":"EMP-1001","name":"张三","mobile":"13800000001","status":"active","entry_date":"2024-01-01"}
+  ],
+  "clocks": [
+    {"source_id":"clock-1001","employee_source_id":"employee-1001","clock_time":"2024-01-02 09:00:00","clock_type":"in","status":"normal"}
+  ],
+  "leaves": [
+    {"source_id":"leave-1001","employee_source_id":"employee-1001","approval_status":"approved","start_time":"2024-01-03 09:00:00","end_time":"2024-01-03 10:00:00","duration":1,"leave_type":"annual","reason":"历史记录"}
+  ],
+  "outs": [],
+  "im_users": [],
+  "messages": []
+}

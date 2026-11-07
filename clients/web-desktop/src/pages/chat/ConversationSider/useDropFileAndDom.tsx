@@ -4,7 +4,8 @@ import { GroupMemberRole, GroupStatus, MessageType } from "@openim/wasm-client-s
 import { ConversationItem } from "@/im/types";
 import { useState } from "react";
 
-import { modal } from "@/AntdGlobalComp";
+import { message as antdMessage, modal } from "@/AntdGlobalComp";
+import { fileMessageErrorKey } from "@/im/local-media";
 import file_icon from "@/assets/images/messageItem/file_icon.png";
 import { IMSDK } from "@/layout/MainContentWrap";
 import { ExMessageItem, useUserStore } from "@/store";
@@ -64,16 +65,17 @@ export function useDropFileAndDom({
           ),
           okText: t("confirm"),
           cancelText: t("cancel"),
-          onOk: () => {
-            files.map(async (file) => {
+          onOk: () => Promise.all(files.map(async (file) => {
+            try {
               const message = await createFileMessage(file);
-              sendMessage({
-                message: message,
+              await sendMessage({
+                message,
                 recvID: currentConversation.userID,
                 groupID: currentConversation.groupID,
+                throwOnError: true,
               });
-            });
-          },
+            } catch (error) { antdMessage.error(t(fileMessageErrorKey(error))); }
+          })),
         });
       }
 

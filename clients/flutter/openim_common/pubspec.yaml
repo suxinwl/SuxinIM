@@ -31,6 +31,7 @@ dependencies:
   wechat_assets_picker: ^8.4.0
   wechat_camera_picker: 
   extended_image: ^8.2.0
+  image: 4.3.0
   country_picker: ^2.0.20
   image_gallery_saver: ^2.0.3
   file_picker: 10.3.10
@@ -107,7 +108,7 @@ flutter:
 
   # To add assets to your package, add an assets section, like this:
   assets:
-    - assets/certificates/openim38_dev_ca.crt
+    - assets/certificates/puty_enterprise_root_ca.crt
     - assets/images/
     - assets/anim/
     - assets/audio/

@@ -19,15 +19,11 @@ public class OnBaseListener implements Base {
 
     @Override
     public void onError(int l, String s) {
-        String threadName = Thread.currentThread().getName();
-        Log.i("F-OpenIMSDK(native call flutter)", "thread: " + threadName + " method: 【 " + call.method + " 】, onError: { code:" + l + ", message:" + s + "}");
         CommonUtil.runMainThreadReturnError(result, l, s, null);
     }
 
     @Override
     public void onSuccess(String s) {
-        String threadName = Thread.currentThread().getName();
-        Log.i("F-OpenIMSDK(native call flutter)", "thread: " + threadName + " method: 【 " + call.method + " 】, onSuccess: " + s);
         CommonUtil.runMainThreadReturn(result, s);
     }
 }

@@ -1,0 +1,3 @@
+sys_auth_permission = "您沒有權限"
+sys_login_invalid   = "請先登錄"
+common_vlidity_api   = "接口非法請求"

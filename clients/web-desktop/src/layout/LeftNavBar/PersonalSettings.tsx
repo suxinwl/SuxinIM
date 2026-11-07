@@ -2,7 +2,7 @@ import { CloseOutlined, RightOutlined } from "@ant-design/icons";
 import { Checkbox, Divider, Modal, Spin } from "antd";
 import { t } from "i18next";
 import { MessageReceiveOptType } from "@openim/wasm-client-sdk";
-import { forwardRef, ForwardRefRenderFunction, memo, useRef } from "react";
+import { forwardRef, ForwardRefRenderFunction, memo, useRef,useState } from "react";
 import { useMutation } from "react-query";
 
 import { modal } from "@/AntdGlobalComp";
@@ -22,6 +22,8 @@ import { OverlayVisibleHandle, useOverlayVisible } from "../../hooks/useOverlayV
 import { IMSDK } from "../MainContentWrap";
 import BlackList from "./BlackList";
 import ChangePassword from "./ChangePassword";
+import LocalStorageSettings from './LocalStorageSettings';
+import ScreenshotShortcutSettings from './ScreenshotShortcutSettings';
 
 const PersonalSettings: ForwardRefRenderFunction<OverlayVisibleHandle, unknown> = (
   _,
@@ -73,6 +75,8 @@ export const PersonalSettingsContent = ({
   openBackListOverlay?: () => void;
   openChangePasswordOverlay?: () => void;
 }) => {
+  const [storageOpen,setStorageOpen]=useState(false);
+  const [screenshotShortcutOpen, setScreenshotShortcutOpen] = useState(false);
   const selfInfo = useUserStore((state) => state.selfInfo);
   const localeStr = useUserStore((state) => state.appSettings.locale);
   const closeAction = useUserStore((state) => state.appSettings.closeAction);
@@ -107,18 +111,7 @@ export const PersonalSettingsContent = ({
   };
 
   const tryClearChatLogs = () => {
-    modal.confirm({
-      title: t("toast.clearChatHistory"),
-      content: t("toast.confirmClearChatHistory"),
-      onOk: async () => {
-        try {
-          await IMSDK.deleteAllMsgFromLocalAndSvr();
-          clearHistoryMessage();
-        } catch (error) {
-          feedbackToast({ error });
-        }
-      },
-    });
+    setStorageOpen(true);
   };
 
   const toBlackList = () => {
@@ -260,6 +253,18 @@ export const PersonalSettingsContent = ({
             </div>
           </div>
         </div>
+        {Boolean(window.electronAPI) && <>
+          <Divider className="m-0 border-4 border-[var(--gap-text)]" />
+          <button
+            type="button"
+            className="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent px-6 py-4 text-left"
+            onClick={() => setScreenshotShortcutOpen(true)}
+          >
+            <span className="text-base font-medium">{t("screenshotShortcut.title")}</span>
+            <RightOutlined rev={undefined} />
+          </button>
+          <ScreenshotShortcutSettings open={screenshotShortcutOpen} onClose={() => setScreenshotShortcutOpen(false)} />
+        </>}
         <Divider className="m-0 border-4 border-[var(--gap-text)]" />
         <div
           className="flex cursor-pointer items-center justify-between px-6 py-4"
@@ -273,7 +278,7 @@ export const PersonalSettingsContent = ({
           className="flex cursor-pointer items-center justify-between px-6 py-4"
           onClick={toChangePassword}
         >
-          <div className="text-base font-medium">{t("placeholder.changePassword")}</div>
+          <div className="text-base font-medium">修改密码</div>
           <RightOutlined rev={undefined} />
         </div>
         <Divider className="m-0 border-4 border-[var(--gap-text)]" />
@@ -282,9 +287,10 @@ export const PersonalSettingsContent = ({
             className="text-base font-medium text-[var(--warn-text)]"
             onClick={tryClearChatLogs}
           >
-            {t("toast.clearChatHistory")}
+            本地存储 / 清理聊天记录
           </div>
         </div>
+        <LocalStorageSettings open={storageOpen} onClose={()=>setStorageOpen(false)}/>
       </div>
     </div>
   );

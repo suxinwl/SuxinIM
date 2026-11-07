@@ -3,7 +3,8 @@ import { t } from "i18next";
 import { ConversationItem } from "@/im/types";
 import { useState } from "react";
 
-import { modal } from "@/AntdGlobalComp";
+import { message as antdMessage, modal } from "@/AntdGlobalComp";
+import { fileMessageErrorKey } from "@/im/local-media";
 import file_icon from "@/assets/images/messageItem/file_icon.png";
 import { insertAtCursor } from "@/components/EditableDiv";
 import { bytesToSize } from "@/utils/common";
@@ -79,14 +80,12 @@ export function useDropAndPaste({
           ),
           okText: t("confirm"),
           cancelText: t("cancel"),
-          onOk: () => {
-            otherFiles.map(async (file) => {
+          onOk: () => Promise.all(otherFiles.map(async (file) => {
+            try {
               const message = await createFileMessage(file);
-              sendMessage({
-                message: message,
-              });
-            });
-          },
+              await sendMessage({ message, throwOnError: true });
+            } catch (error) { antdMessage.error(t(fileMessageErrorKey(error))); }
+          })),
         });
       }
 

@@ -1,0 +1,21 @@
+package im
+
+// Schema describes the plugin-owned IM storage. No host identity tables are changed.
+// A single message sequence makes reconnect catch-up and read cursors unambiguous.
+func Schema() []string {
+	return []string{
+		`CREATE TABLE IF NOT EXISTS biz_im_counter (id INTEGER PRIMARY KEY, value BIGINT NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS biz_im_message (id VARCHAR(64) PRIMARY KEY, seq BIGINT NOT NULL UNIQUE, change_seq BIGINT NOT NULL, sender_id BIGINT NOT NULL, conversation_type VARCHAR(16) NOT NULL, target_id VARCHAR(64) NOT NULL, stream_id VARCHAR(160) NOT NULL, client_message_id VARCHAR(128) NOT NULL, request_hash VARCHAR(64) NOT NULL, message_type VARCHAR(16) NOT NULL, content TEXT NOT NULL, status VARCHAR(16) NOT NULL DEFAULT 'sent', send_time DATETIME NOT NULL, UNIQUE(sender_id,client_message_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_conversation (id VARCHAR(64) PRIMARY KEY, user_id BIGINT NOT NULL, conversation_type VARCHAR(16) NOT NULL, conversation_id VARCHAR(64) NOT NULL, stream_id VARCHAR(160) NOT NULL, last_seq BIGINT NOT NULL DEFAULT 0, change_seq BIGINT NOT NULL DEFAULT 0, last_message_id VARCHAR(64) NOT NULL DEFAULT '', last_content TEXT NOT NULL, last_read_seq BIGINT NOT NULL DEFAULT 0, unread_count INTEGER NOT NULL DEFAULT 0, updated_at DATETIME NOT NULL, UNIQUE(user_id,stream_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_group (id VARCHAR(64) PRIMARY KEY, owner_id BIGINT NOT NULL, name VARCHAR(160) NOT NULL, notice TEXT NOT NULL, join_approval INTEGER NOT NULL DEFAULT 1, mute_all INTEGER NOT NULL DEFAULT 0, pinned_message_id VARCHAR(64) NOT NULL DEFAULT '', status VARCHAR(16) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS biz_im_group_member (id VARCHAR(64) PRIMARY KEY, group_id VARCHAR(64) NOT NULL, user_id BIGINT NOT NULL, role VARCHAR(16) NOT NULL DEFAULT 'member', muted INTEGER NOT NULL DEFAULT 0, status VARCHAR(16) NOT NULL DEFAULT 'active', joined_at DATETIME NOT NULL, UNIQUE(group_id,user_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_group_request (id VARCHAR(64) PRIMARY KEY, group_id VARCHAR(64) NOT NULL, user_id BIGINT NOT NULL, status VARCHAR(16) NOT NULL DEFAULT 'pending', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE(group_id,user_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_channel (id VARCHAR(64) PRIMARY KEY, owner_id BIGINT NOT NULL, name VARCHAR(160) NOT NULL, description VARCHAR(500) NOT NULL, status VARCHAR(16) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS biz_im_channel_member (id VARCHAR(64) PRIMARY KEY, channel_id VARCHAR(64) NOT NULL, user_id BIGINT NOT NULL, role VARCHAR(16) NOT NULL DEFAULT 'member', status VARCHAR(16) NOT NULL DEFAULT 'active', joined_at DATETIME NOT NULL, UNIQUE(channel_id,user_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_friend (id VARCHAR(64) PRIMARY KEY, user_id BIGINT NOT NULL, friend_user_id BIGINT NOT NULL, display_name VARCHAR(160) NOT NULL DEFAULT '', status VARCHAR(16) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE(user_id,friend_user_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_friend_request (id VARCHAR(64) PRIMARY KEY, sender_id BIGINT NOT NULL, receiver_id BIGINT NOT NULL, message VARCHAR(500) NOT NULL DEFAULT '', status VARCHAR(16) NOT NULL DEFAULT 'pending', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE(sender_id,receiver_id))`,
+		`CREATE TABLE IF NOT EXISTS biz_im_face_pack (id VARCHAR(64) PRIMARY KEY, owner_id BIGINT NOT NULL, name VARCHAR(160) NOT NULL, cover_url VARCHAR(500) NOT NULL DEFAULT '', items TEXT NOT NULL, status VARCHAR(16) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS biz_im_sensitive_word (id VARCHAR(64) PRIMARY KEY, word VARCHAR(160) NOT NULL UNIQUE, replacement VARCHAR(160) NOT NULL DEFAULT '', status VARCHAR(16) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS biz_im_rtc_call (id VARCHAR(64) PRIMARY KEY, creator_id BIGINT NOT NULL, stream_id VARCHAR(160) NOT NULL, room_name VARCHAR(128) NOT NULL, status VARCHAR(16) NOT NULL DEFAULT 'created', created_at DATETIME NOT NULL, ended_at DATETIME NULL)`,
+	}
+}

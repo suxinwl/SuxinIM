@@ -46,6 +46,7 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
     private static Context context;
     private ConnectivityListener connectivityListener;
     private VisibilityListener visibilityListener;
+    private NativeVaultBroker nativeVault;
     public static volatile boolean isInitialized;
 
     public FlutterOpenimSdkPlugin() {
@@ -60,8 +61,12 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), CHANNEL_NAME);
+        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), CHANNEL_NAME,io.flutter.plugin.common.StandardMethodCodec.INSTANCE,flutterPluginBinding.getBinaryMessenger().makeBackgroundTaskQueue());
         context = flutterPluginBinding.getApplicationContext();
+        nativeVault = new NativeVaultBroker(context);
+        MethodChannel vaultChannel=new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "puty/local_store");
+        nativeVault.setChannel(vaultChannel);
+        vaultChannel.setMethodCallHandler((call,result) -> nativeVault.handle(call.method,call.arguments,result));
         channel.setMethodCallHandler(this);
         connectivityListener = new ConnectivityListener(context);
         visibilityListener = new VisibilityListener();
@@ -75,6 +80,7 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        if(nativeVault!=null){nativeVault.close();nativeVault=null;}
         FlutterOpenimSdkPlugin.channel.setMethodCallHandler(null);
         connectivityListener.unregisterReceiver();
     }
@@ -83,10 +89,12 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
     @Override
     public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
         visibilityListener.register(activity = binding.getActivity());
+        nativeVault.backupPicker.attach(activity);binding.addActivityResultListener(nativeVault.backupPicker);
     }
 
     @Override
     public void onDetachedFromActivityForConfigChanges() {
+        nativeVault.backupPicker.attach(null);
         visibilityListener.unregisterReceiver(activity);
         activity = null;
     }
@@ -94,10 +102,12 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
     @Override
     public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
         visibilityListener.register(activity = binding.getActivity());
+        nativeVault.backupPicker.attach(activity);binding.addActivityResultListener(nativeVault.backupPicker);
     }
 
     @Override
     public void onDetachedFromActivity() {
+        nativeVault.backupPicker.attach(null);
         visibilityListener.unregisterReceiver(activity);
         activity = null;
     }
@@ -110,7 +120,7 @@ public class FlutterOpenimSdkPlugin implements FlutterPlugin, MethodCallHandler,
             Log.i("F-OpenIMSDK(flutter call native)", "{ class:" + managerName + ",  method:" + method.getName() + " }");
             method.invoke(field.get(new Object()), call, result);
         } catch (Exception e) {
-            e.printStackTrace();
+            result.error("NATIVE_OPERATION_REJECTED", e.getClass().getSimpleName(),null);
         }
     }
 }

@@ -16,6 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:uuid/uuid.dart';
+import 'package:wechat_camera_picker/wechat_camera_picker.dart';
 
 class IMViews {
   IMViews._();
@@ -126,9 +127,7 @@ class IMViews {
               label: StrRes.toolboxAlbum,
               onTap: () {
                 Permissions.storage(() async {
-                  final XFile? image = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                  );
+                  XFile? image;if(Platform.isIOS){final items=await NativeLocalVault.nativePickAssets(multiple:false,videos:false);if(items.isNotEmpty)image=XFile(items.first['path'] as String);}else{image=await _picker.pickImage(source:ImageSource.gallery);}
                   if (null != image?.path) {
                     var map = await _uCropPic(image!.path, crop: crop, toUrl: toUrl, quality: quality);
                     onData?.call(map['path'], map['url']);
@@ -141,13 +140,8 @@ class IMViews {
               label: StrRes.toolboxCamera,
               onTap: () {
                 Permissions.camera(() async {
-                  final XFile? image = await _picker.pickImage(
-                    source: ImageSource.camera,
-                  );
-                  if (null != image?.path) {
-                    var map = await _uCropPic(image!.path, crop: crop, toUrl: toUrl, quality: quality);
-                    onData?.call(map['path'], map['url']);
-                  }
+                  final captured=await ProtectedCamera.capture(Get.context!,video:false);
+                  if(captured!=null){final map=await _uCropPic(captured.protectedPath,crop:crop,toUrl:toUrl,quality:quality);onData?.call(map['path'],map['url']);}
                 });
               },
             ),

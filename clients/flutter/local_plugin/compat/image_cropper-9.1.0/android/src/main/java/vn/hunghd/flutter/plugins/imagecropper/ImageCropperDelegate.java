@@ -31,12 +31,14 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
 
     private final Activity activity;
     private final SharedPreferences preferences;
+    private String protectedImagePath;
     private final FileUtils fileUtils;
     private MethodChannel.Result pendingResult;
 
     public ImageCropperDelegate(Activity activity) {
         this.activity = activity;
         preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        preferences.edit().remove(FILENAME_CACHE_KEY).commit();
         fileUtils = new FileUtils();
     }
 
@@ -54,13 +56,9 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
 
         pendingResult = result;
 
-        File outputDir = activity.getCacheDir();
         File outputFile;
-        if ("png".equals(compressFormat)) {
-            outputFile = new File(outputDir, "image_cropper_" + (new Date()).getTime() + ".png");
-        } else {
-            outputFile = new File(outputDir, "image_cropper_" + (new Date()).getTime() + ".jpg");
-        }
+        try{outputFile=(File)Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles").getMethod("createTempFile",String.class,String.class).invoke(null,"image_cropper_"+(new Date()).getTime(),"png".equals(compressFormat)?".png":".jpg");}
+        catch(ReflectiveOperationException rejected){result.error("ENCRYPTED_MEDIA_UNAVAILABLE","Encrypted crop scratch unavailable",null);pendingResult=null;return;}
         Uri sourceUri = Uri.fromFile(new File(sourcePath));
         Uri destinationUri = Uri.fromFile(outputFile);
 
@@ -109,20 +107,11 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
     }
 
     private void cacheImage(String filePath) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(FILENAME_CACHE_KEY, filePath);
-        editor.apply();
+        protectedImagePath=filePath;
     }
 
     private String getAndClearCachedImage() {
-        if (preferences.contains(FILENAME_CACHE_KEY)) {
-            String result = preferences.getString(FILENAME_CACHE_KEY, "");
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.remove(FILENAME_CACHE_KEY);
-            editor.apply();
-            return result;
-        }
-        return null;
+        String result=protectedImagePath;protectedImagePath=null;return result;
     }
 
     @Override

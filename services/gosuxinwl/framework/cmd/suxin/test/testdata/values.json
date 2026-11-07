@@ -1,0 +1,8 @@
+{
+    "server": {
+        "address": "https://www.suxinwl.com"
+    },
+    "sql":{
+        "table": "table_name"
+    }
+}

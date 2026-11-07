@@ -21,6 +21,7 @@ import (
 	"github.com/openimsdk/chat/pkg/common/constant"
 	constantpb "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/tools/errs"
+	"openim38.local/identity"
 )
 
 func (x *UpdateUserInfoReq) Check() error {
@@ -113,14 +114,17 @@ func (x *RegisterUserReq) Check() error {
 	//if x.VerifyCode == "" {
 	//	return errs.ErrArgs.WrapMsg("VerifyCode is empty")
 	//}
+	if x.User == nil {
+		return errs.ErrArgs.WrapMsg("user is empty")
+	}
 	if x.User.Nickname == "" {
 		return errs.ErrArgs.WrapMsg("Nickname is nil")
 	}
 	if x.Platform < constantpb.IOSPlatformID || x.Platform > constantpb.HarmonyOSPlatformID {
 		return errs.ErrArgs.WrapMsg("platform is invalid")
 	}
-	if x.User == nil {
-		return errs.ErrArgs.WrapMsg("user is empty")
+	if identity.Required() && x.Platform == constantpb.AdminPlatformID && identity.Managed(x.User.UserID) && x.User.Account != "" && x.User.Email == "" && x.User.PhoneNumber == "" && x.User.AreaCode == "" {
+		return nil
 	}
 	if x.User.Email == "" {
 		if x.User.AreaCode == "" {
@@ -294,6 +298,11 @@ func (x *SearchUserInfoReq) Check() error {
 func (x *AddUserAccountReq) Check() error {
 	if x.User == nil {
 		return errs.ErrArgs.WrapMsg("user is empty")
+	}
+	// HRM's authenticated provisioning endpoint uses an internal account only;
+	// employee phone/email are never invented to satisfy the demo login DTO.
+	if identity.Required() && identity.Managed(x.User.UserID) && x.User.Account != "" && x.User.Email == "" && x.User.PhoneNumber == "" && x.User.AreaCode == "" {
+		return nil
 	}
 
 	if x.User.Email == "" {

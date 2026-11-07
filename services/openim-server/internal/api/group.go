@@ -17,6 +17,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/a2r"
 )
 
@@ -95,7 +96,14 @@ func (o *GroupApi) InviteUserToGroup(c *gin.Context) {
 }
 
 func (o *GroupApi) GetJoinedGroupList(c *gin.Context) {
-	a2r.Call(c, group.GroupClient.GetJoinedGroupList, o.Client)
+	a2r.Call(c, group.GroupClient.GetJoinedGroupList, o.Client, &a2r.Option[group.GetJoinedGroupListReq, group.GetJoinedGroupListResp]{RespAfter: func(v *group.GetJoinedGroupListResp) error {
+		// A new employee legitimately has no groups. The JS SDK passes this
+		// list directly to its database worker, whose array contract rejects null.
+		if v.Groups == nil {
+			v.Groups = []*sdkws.GroupInfo{}
+		}
+		return nil
+	}})
 }
 
 func (o *GroupApi) DismissGroup(c *gin.Context) {

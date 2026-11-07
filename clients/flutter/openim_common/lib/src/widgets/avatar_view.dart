@@ -85,7 +85,7 @@ class AvatarView extends StatelessWidget {
 
   Widget _normalAvatar() => !isUrlValid ? _textAvatar() : _networkImageAvatar();
 
-  Widget _textAvatar() => Container(
+  Widget _textAvatar() => !isGroup ? Image.asset('packages/openim_common/assets/images/puty_avatar.png',width:_avatarSize,height:_avatarSize,fit:BoxFit.cover) : Container(
         width: _avatarSize,
         height: _avatarSize,
         alignment: Alignment.center,

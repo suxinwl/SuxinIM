@@ -11,7 +11,7 @@ const mocks = {
       findMessageList: (...args) => globalThis.__receiptFacadeTest.findMessageList(...args),
     });`,
   "./enterprise": `export const enterpriseRequest = (...args) => globalThis.__receiptFacadeTest.enterpriseRequest(...args);`,
-  "@/utils/storage": `export const getIMUserID = async () => "synthetic-receipt-test";`,
+  "@/utils/storage": `export const getIMUserID = async () => "synthetic-receipt-test"; export const getSSOSession=async()=>({userID:"synthetic-receipt-test",sessionToken:"synthetic-receipt-session"});`,
   "./models": `export const adaptPayload = value => value; export const isEnterpriseHint = () => false;`,
   "./database-close": `export const installDatabaseCloseBridge = () => undefined;`,
 };

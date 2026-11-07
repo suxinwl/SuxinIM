@@ -1,6 +1,7 @@
 import {registerLocalProtocol} from "./localProtocol";
+import brand from "../../../brand.json";
 import { join } from "node:path";
-import { BrowserWindow, dialog, shell, desktopCapturer } from "electron";
+import { BrowserWindow, dialog, shell, desktopCapturer, session } from "electron";
 import { isLinux, isMac, isWin } from "../utils";
 import { destroyTray } from "./trayManage";
 import { clearChildWindows } from "./ipcHandlerManage";
@@ -8,6 +9,7 @@ import { getStore } from "./storeManage";
 import { getIsForceQuit } from "./appManage";
 import { maxInstanceCount, singleInstanceLock } from "../config";
 import { initDownloadManage } from "./downloadManage";
+import { storeLifecycle } from "./localStore/runtime";
 import { registerShortcuts, unregisterShortcuts } from "./shortcutManage";
 
 const url = process.env.VITE_DEV_SERVER_URL;
@@ -33,7 +35,7 @@ function createSplashWindow() {
 export function createMainWindow() {
   if(!process.env.OPENIM38_SMOKE_TEST)createSplashWindow();
   mainWindow = new BrowserWindow({
-    title: "OpenIM",
+    title: brand.displayName,
     icon: join(global.pathConfig.publicPath, "favicon.ico"),
     frame: false,
     show: false,
@@ -49,7 +51,7 @@ export function createMainWindow() {
       contextIsolation: true,
       sandbox: false,
       devTools: true,
-      partition: getNextPartition(),
+      session: session.fromPartition(getNextPartition(), {cache:false}),
       webSecurity: true,
       // Automated native UI tests still need frames and timers while no window is shown.
       offscreen: Boolean(process.env.OPENIM38_SMOKE_TEST),
@@ -65,6 +67,11 @@ export function createMainWindow() {
     } catch { callback({}); }
   });
   const cleanDownloadTask = initDownloadManage(mainWindow.webContents);
+  // Preview windows share the account's in-memory session. Remove their already
+  // decoded content whenever the archive is locked, resynchronized or cleaned.
+  const closeProtectedChildren = () => clearChildWindows();
+  storeLifecycle.on("lock", closeProtectedChildren);
+  storeLifecycle.on("sync-lock", closeProtectedChildren);
 
   if (process.env.VITE_DEV_SERVER_URL) {
     // Open devTool if the app is not packaged
@@ -103,6 +110,8 @@ export function createMainWindow() {
       destroyTray();
       clearChildWindows();
       cleanDownloadTask();
+      storeLifecycle.off("lock", closeProtectedChildren);
+      storeLifecycle.off("sync-lock", closeProtectedChildren);
     } else {
       e.preventDefault();
       if (isMac && mainWindow.isFullScreen()) {
@@ -137,6 +146,7 @@ export function createChildWindow(
       contextIsolation: true,
       sandbox: false,
       webSecurity: true,
+      session: mainWindow?.webContents.session || session.fromPartition("puty-memory-children",{cache:false}),
     },
   });
 
@@ -307,12 +317,12 @@ export const getWebContents = (): Electron.WebContents => {
 };
 
 export const getNextPartition = () => {
-  if (singleInstanceLock) return "persist:part0";
+  if (singleInstanceLock) return "puty-memory-part0";
   const store = getStore();
   let part = (store.get("partitionRandom") as number) || 0;
 
   part = (part + 1) % maxInstanceCount;
-  const partition = `persist:part${part === 0 ? maxInstanceCount : part}`;
-  store.set("partitionRandom", partition);
+  const partition = `puty-memory-part${part === 0 ? maxInstanceCount : part}`;
+  store.set("partitionRandom", part);
   return partition;
 };

@@ -1576,11 +1576,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     String peerConnectionId = getNextStreamUUID();
     RTCConfiguration conf = parseRTCConfiguration(configuration);
     PeerConnectionObserver observer = new PeerConnectionObserver(conf, this, messenger, peerConnectionId);
-    PeerConnection peerConnection
-            = mFactory.createPeerConnection(
-            conf,
-            parseMediaConstraints(constraints),
-            observer);
+    org.webrtc.SSLCertificateVerifier verifier=EnterpriseTurnVerifier.forConfiguration(context,conf);
+    PeerConnection peerConnection=verifier == null
+        ? mFactory.createPeerConnection(conf,parseMediaConstraints(constraints),observer)
+        : mFactory.createPeerConnection(conf,org.webrtc.PeerConnectionDependencies.builder(observer)
+            .setSSLCertificateVerifier(verifier).createPeerConnectionDependencies());
     observer.setPeerConnection(peerConnection);
     mPeerConnectionObservers.put(peerConnectionId, observer);
     return peerConnectionId;

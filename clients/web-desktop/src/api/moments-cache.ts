@@ -1,18 +1,20 @@
 import type { InfiniteData, QueryClient } from "react-query";
 
 import type { WorkMoments } from "@/types/moment";
+import { getResourceSessionVersion } from "@/im/resource-session";
 
 // A common prefix updates the feed, author pages and detail together.
 export const momentKeys = {
   lists: ["WorkMoments"] as const,
-  list: (userID?: string) => ["WorkMoments", userID ? `user:${userID}` : "feed"],
+  list: (userID?: string, scope = getResourceSessionVersion()) => ["WorkMoments", scope, userID ? `user:${userID}` : "feed"],
   details: ["WorkMoment"] as const,
-  detail: (id: string) => ["WorkMoment", id],
+  detail: (id: string, scope = getResourceSessionVersion()) => ["WorkMoment", scope, id],
 };
 
-export function updateMomentCaches(client: QueryClient, moment: WorkMoments) {
+export function updateMomentCaches(client: QueryClient, moment: WorkMoments, scope = getResourceSessionVersion()) {
   if (!moment?.workMomentID || !moment.content) return;
-  client.setQueriesData<InfiniteData<WorkMoments[]> | undefined>(momentKeys.lists, (old) => {
+  if (scope !== getResourceSessionVersion()) return;
+  client.setQueriesData<InfiniteData<WorkMoments[]> | undefined>([...momentKeys.lists, scope], (old) => {
     if (!old) return old;
     return {
       ...old,
@@ -50,15 +52,16 @@ export function refreshMomentQueries(client: QueryClient) {
 }
 
 export function momentMutationOptions(client: QueryClient) {
+  const scope = getResourceSessionVersion();
   return {
     onMutate: () => cancelMomentQueries(client),
     onSuccess: async (response: { data: { workMoment: WorkMoments } }) => {
       // Cancel interval requests begun during the mutation, so an older response
       // cannot erase the like/comment which the server just confirmed.
       await cancelMomentQueries(client);
-      updateMomentCaches(client, response.data.workMoment);
+      updateMomentCaches(client, response.data.workMoment, scope);
     },
-    onSettled: () => refreshMomentQueries(client),
+    onSettled: () => { if (scope === getResourceSessionVersion()) refreshMomentQueries(client); },
   };
 }
 

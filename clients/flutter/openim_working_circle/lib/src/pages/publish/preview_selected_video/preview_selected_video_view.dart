@@ -23,8 +23,8 @@ class PreviewSelectedVideoPage extends StatelessWidget {
       ),
       backgroundColor: Styles.c_000000,
       body: SafeArea(
-        child: Obx(() => logic.isInitialized.value
-            ? Chewie(controller: logic.chewieController!)
+        child: Obx(() => logic.sourcePath.value!=null
+            ? ChatVideoPlayerView(path:logic.sourcePath.value)
             : const SizedBox()),
       ),
     );

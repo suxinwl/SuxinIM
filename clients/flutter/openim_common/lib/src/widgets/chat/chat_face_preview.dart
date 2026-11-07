@@ -20,8 +20,9 @@ class ChatFacePreview extends StatelessWidget {
     );
   }
 
-  Widget _networkGestureImage(String url) => ExtendedImage.network(
-        url,
+  Widget _networkGestureImage(String url) => ExtendedImage(
+        image: ProtectedResourceImage(url),
+        enableLoadState: true,
         fit: BoxFit.contain,
         mode: ExtendedImageMode.gesture,
         clearMemoryCacheWhenDispose: true,

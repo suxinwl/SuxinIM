@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"openim38.local/identity"
 	"strconv"
 	"time"
 
@@ -25,6 +26,11 @@ type Actor struct {
 	IMToken, ChatToken string
 	IP                 string
 	ExpiresAt          int64
+	LogicalClient      string
+	SessionID          string
+	Epoch              int64
+	EntryOrigin        string
+	EntryZone          string
 }
 type Authenticator interface {
 	Authenticate(context.Context, *http.Request, bool) (Actor, error)
@@ -126,12 +132,20 @@ func intField(f map[protowire.Number][][]byte, n protowire.Number) int64 {
 	return int64(v)
 }
 func (a *GRPCAuth) Authenticate(ctx context.Context, r *http.Request, adminOnly bool) (Actor, error) {
+	ctx = identity.WithRequestEntry(ctx, r)
 	actor := Actor{IMToken: r.Header.Get("token"), ChatToken: r.Header.Get("chatToken")}
 	ip := r.Header.Get("X-Real-IP")
 	if net.ParseIP(ip) == nil {
 		ip, _, _ = net.SplitHostPort(r.RemoteAddr)
 	}
 	actor.IP = ip
+	if identity.Required() {
+		trustedIP, e := identity.ClientIP(r)
+		if e != nil {
+			return actor, unauthorized("client address is unavailable")
+		}
+		actor.IP = trustedIP
+	}
 	if actor.ChatToken == "" && adminOnly {
 		actor.ChatToken = r.Header.Get("token")
 	}
@@ -188,6 +202,27 @@ func (a *GRPCAuth) Authenticate(ctx context.Context, r *http.Request, adminOnly 
 	}
 	if actor.Platform == 10 {
 		return actor, forbidden("management IM tokens cannot be used as client sessions")
+	}
+	if identity.Required() {
+		state, e := identity.Global()
+		if e != nil {
+			return actor, unavailable("identity registry unavailable")
+		}
+		session, e := state.Pair(ctx, actor.ChatToken, actor.IMToken, actor.UserID, actor.Platform)
+		if e != nil {
+			return actor, unauthorized("HRM session is expired or revoked")
+		}
+		actor.SessionID = session.SessionID
+		actor.Epoch = session.Epoch
+		actor.ExpiresAt = session.ExpiresAt
+		actor.LogicalClient = session.LogicalClient
+		actor.EntryOrigin = entryOrigin(r)
+		if e = identity.CheckSessionAccess(ctx, session, actor.IP, "connect", ""); e != nil {
+			if errors.Is(e, identity.ErrAccessDenied) {
+				return actor, forbidden("HRM access denied")
+			}
+			return actor, unavailable("current access policy unavailable")
+		}
 	}
 	return actor, nil
 }

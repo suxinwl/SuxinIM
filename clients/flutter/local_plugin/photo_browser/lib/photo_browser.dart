@@ -608,6 +608,9 @@ class PhotoBrowserController with ChangeNotifier {
   void pop() {
     _state?._pop();
   }
+  /// Remove only this preview route, never a newer login route.
+  void closeProtected(){final state=_state;if(state==null||!state.mounted)return;final route=ModalRoute.of(state.context);if(route==null||!route.isActive)return;state._willPop=true;Navigator.of(state.context).removeRoute(route);}
+
 
   setState(VoidCallback fn) {
     _state?._setState(fn);

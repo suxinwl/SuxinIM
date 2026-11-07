@@ -51,7 +51,7 @@ test("attachment URL signature bytes are untouched and cache metadata travels se
     p,
   );
   assert.deepEqual(p.sent, [
-    { url: syntheticUrl, saveType: "video", randomPrefix: "synthetic-unique" },
+    {url:syntheticUrl,saveType:"video",fileName:undefined,fileSize:undefined,taskID:"synthetic-video-video",conversationID:undefined,clientMsgID:"synthetic-video"},
   ]);
   assert.equal(p.tasks.get(syntheticUrl).downloadUrl, syntheticUrl);
   assert.equal(p.tasks.get(syntheticUrl).clientMsgID, "synthetic-video");
@@ -78,6 +78,15 @@ test("duplicate active clicks do not start another transfer", async () => {
     startAttachmentDownload(syntheticUrl, { saveType: "video" }, p),
   ]);
   assert.equal(p.sent.length, 1);
+});
+
+test('work-circle retry retains task identity across renewed URLs while different media stay independent',async()=>{
+  const p=ports(),data={saveType:'image',workMomentID:'synthetic-moment-0'};
+  await startAttachmentDownload(syntheticUrl,data,p);p.tasks.clear();
+  await startAttachmentDownload(syntheticUrl+'&renewed=1',data,p);p.tasks.clear();
+  await startAttachmentDownload(syntheticUrl+'&renewed=2',{...data,workMomentID:'synthetic-moment-1'},p);
+  assert.equal(p.sent[0].taskID,'moment_synthetic-moment-0-image');
+  assert.equal(p.sent[1].taskID,p.sent[0].taskID);assert.notEqual(p.sent[2].taskID,p.sent[0].taskID);
 });
 test("non-network attachment URLs and credentials are refused before task creation", async () => {
   const p = ports();
@@ -121,127 +130,29 @@ test("remote filenames cannot choose directories outside the managed cache", () 
   assert.throws(() => attachmentSavePath("", "video.mp4"));
 });
 
-const handlers = new Map();
-globalThis.__attachmentIPC = {
-  handle: (key, callback) => {
-    if (handlers.has(key)) throw new Error("duplicate handler");
-    handlers.set(key, callback);
-  },
-  removeHandler: (key) => handlers.delete(key),
-};
-const { initDownloadManage } = await load("electron/main/downloadManage.ts", [
-  {
-    name: "native-attachment-boundary",
-    setup(builder) {
-      builder.onResolve({ filter: /^electron$/ }, () => ({
-        path: "electron",
-        namespace: "attachment-native",
-      }));
-      builder.onLoad({ filter: /.*/, namespace: "attachment-native" }, () => ({
-        contents: "export const ipcMain = globalThis.__attachmentIPC;",
-      }));
-    },
-  },
-]);
-function nativeFixture() {
-  const directory = mkdtempSync(path.join(tmpdir(), "openim-attachment-test-"));
-  const session = new EventEmitter(),
-    requests = [],
-    events = [];
-  session.downloadURL = (url) => requests.push(url);
-  const contents = {
-    session,
-    isDestroyed: () => false,
-    send: (...args) => events.push(args),
-  };
-  globalThis.pathConfig = Object.fromEntries(
-    ["image", "video", "avatar", "file"].map((type) => [
-      `${type}CachePath`,
-      path.join(directory, type),
-    ]),
-  );
-  const clean = initDownloadManage(contents);
-  const invoke = (name, input, sender = contents) =>
-    handlers.get(name)({ sender }, input);
-  function item(url = syntheticUrl, filename = "movie.mp4") {
-    const value = new EventEmitter();
-    let savePath = "";
-    let paused = false;
-    Object.assign(value, {
-      getURLChain: () => [url, "https://redirect.invalid/object"],
-      getURL: () => url,
-      getFilename: () => filename,
-      setSavePath: (path) => (savePath = path),
-      getSavePath: () => savePath,
-      getTotalBytes: () => 0,
-      getReceivedBytes: () => 5,
-      isPaused: () => paused,
-      pause: () => {
-        paused = true;
-      },
-      resume: () => {
-        paused = false;
-      },
-      cancel: () => value.emit("done", {}, "cancelled"),
-    });
-    return value;
-  }
-  return { directory, session, requests, events, contents, invoke, item, clean };
-}
-test("native download creates the selected cache and correlates completion to the unmodified URL", () => {
-  const f = nativeFixture();
-  try {
-    f.invoke("startDownload", { url: syntheticUrl, saveType: "video" });
-    assert.deepEqual(f.requests, [syntheticUrl]);
-    const item = f.item();
-    f.session.emit("will-download", { preventDefault() {} }, item);
-    assert.equal(path.dirname(item.getSavePath()), path.join(f.directory, "video"));
-    assert.equal(existsSync(path.dirname(item.getSavePath())), true);
-    writeFileSync(item.getSavePath(), "synthetic video");
-    item.emit("updated", {}, "progressing");
-    assert.deepEqual(f.events.at(-1), ["downloadProgress", syntheticUrl, 0]);
-    item.emit("done", {}, "completed");
-    assert.deepEqual(f.events.at(-1), [
-      "downloadSuccess",
-      syntheticUrl,
-      item.getSavePath(),
-    ]);
-    assert.equal(readFileSync(item.getSavePath(), "utf8"), "synthetic video");
-  } finally {
-    f.clean();
-  }
-});
-test("a failed transfer removes partial bytes and accepts a retry, without deleting the cache directory", () => {
-  const f = nativeFixture();
-  try {
-    f.invoke("startDownload", { url: syntheticUrl, saveType: "video" });
-    const item = f.item();
-    f.session.emit("will-download", { preventDefault() {} }, item);
-    writeFileSync(item.getSavePath(), "partial");
-    item.emit("done", {}, "interrupted");
-    assert.equal(existsSync(item.getSavePath()), false);
-    assert.equal(existsSync(path.dirname(item.getSavePath())), true);
-    assert.deepEqual(f.events.at(-1).slice(0, 2), ["downloadFailed", syntheticUrl]);
-    f.invoke("startDownload", { url: syntheticUrl, saveType: "video" });
-    assert.equal(f.requests.length, 2);
-  } finally {
-    f.clean();
-  }
-});
-test("pause, resume and cancellation use the original URL and reject another window", () => {
-  const f = nativeFixture();
-  try {
-    assert.throws(() => f.invoke("startDownload", { url: syntheticUrl }, {}), /window/);
-    f.invoke("startDownload", { url: syntheticUrl, saveType: "video" });
-    const item = f.item();
-    f.session.emit("will-download", { preventDefault() {} }, item);
-    f.invoke("pauseDownload", syntheticUrl);
-    assert.equal(item.isPaused(), true);
-    f.invoke("resumeDownload", syntheticUrl);
-    assert.equal(item.isPaused(), false);
-    f.invoke("cancelDownload", syntheticUrl);
-    assert.deepEqual(f.events.at(-1), ["downloadCancel", syntheticUrl]);
-  } finally {
-    f.clean();
-  }
+
+test('native manager sends current proof and atomic encrypted original names; a failed stream resumes with Range',async t=>{
+  const {mkdtemp,rm,readFile}=await import('node:fs/promises'),directory=await mkdtemp(path.join(tmpdir(),'puty-download-manager-'));
+  const {LocalVault}=await load('electron/main/localStore/vault.ts'),store=await LocalVault.open(directory,'test_download',Buffer.alloc(32,21),async()=>{}),handlers=new Map(),events=new EventEmitter(),requests=[],lifecycle=new EventEmitter();
+  const size=1024*1024+89,payload=Buffer.alloc(size,53),url='https://im.szputy.com:9885/enterprise/v1/attachments/read/synthetic?opaque=keep%20these~bytes',proof='a'.repeat(64);let fail=true;
+  const contents={isDestroyed:()=>false,send:(...args)=>events.emit(args[0],args)};
+  globalThis.__attachmentIPC={handle:(name,fn)=>handlers.set(name,fn),removeHandler:name=>handlers.delete(name)};
+  globalThis.__attachmentRuntime={activeVault:async()=>store,requireSavePermission:async()=>({saveAllowed:true}),authenticatedResourceHeaders:async resourceProof=>({token:'synthetic-current-token','X-Puty-Resource-Proof':resourceProof}),storeLifecycle:lifecycle};
+  globalThis.__attachmentNet={fetch:async(request,options)=>{
+    requests.push({request,options});assert.equal(request,url);assert.equal(options.headers['X-Puty-Resource-Proof'],proof);assert.equal(options.redirect,'error');
+    const headers={'Content-Length':String(size),'ETag':'"same-object"','Content-Disposition':"attachment; filename*=UTF-8''%E8%81%8C%E5%91%98%E5%90%8D%E5%8D%95.xlsx"};
+    if(options.method==='HEAD')return new Response(null,{headers});
+    if(fail){fail=false;let n=0;return new Response(new ReadableStream({pull(controller){if(!n++){controller.enqueue(payload.subarray(0,1024*1024));return;}controller.error(new Error('synthetic network interruption'));}}),{headers});}
+    const offset=Number(options.headers.Range?.match(/bytes=(\d+)-/)?.[1] || 0);if(offset){assert.equal(offset,1024*1024);assert.equal(options.headers['If-Range'],'"same-object"');headers['Content-Range']=`bytes ${offset}-${size-1}/${size}`;headers['Content-Length']=String(size-offset);}
+    return new Response(payload.subarray(offset),{status:offset?206:200,headers});
+  }};
+  const {initDownloadManage}=await load('electron/main/downloadManage.ts',[{name:'controlled-download-host',setup(builder){builder.onResolve({filter:/^electron$/},()=>({path:'electron',namespace:'mock'}));builder.onResolve({filter:/localStore\/runtime$/},()=>({path:'runtime',namespace:'mock'}));builder.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path==='electron'?'export const ipcMain=globalThis.__attachmentIPC;export const net=globalThis.__attachmentNet;':'export const {activeVault,requireSavePermission,authenticatedResourceHeaders,storeLifecycle}=globalThis.__attachmentRuntime;'}));}}]);
+  const clean=initDownloadManage(contents),invoke=(name,arg,sender=contents)=>handlers.get(name)({sender},arg),wait=name=>new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('Timed out '+name)),3000);events.once(name,args=>{clearTimeout(timeout);resolve(args);});});
+  try{
+    await assert.rejects(invoke('startDownload',{url,resourceProof:proof},{}),/window/);await assert.rejects(invoke('startDownload',{url,resourceProof:''}),/授权/);
+    const failed=wait('downloadFailed');await invoke('startDownload',{url,resourceProof:proof,taskID:'same-task',clientMsgID:'m1',conversationID:'si_test',fileSize:size});await failed;
+    const completed=wait('downloadSuccess');await invoke('startDownload',{url,resourceProof:proof,taskID:'same-task',clientMsgID:'m1',conversationID:'si_test',fileSize:size});const success=await completed;
+    assert.equal(path.basename(success[2]),'职员名单.xlsx');const disk=await readFile(success[2]);assert.equal(disk.subarray(0,8).toString(),'PUTYLS1\n');assert.ok(!disk.includes(Buffer.alloc(32,53)));assert.deepEqual(await store.readAttachment('same-task'),payload);assert.ok(requests.some(item=>item.options.headers.Range==='bytes=1048576-'));
+    const second=wait('downloadSuccess');await invoke('startDownload',{url,resourceProof:proof,taskID:'different-content',clientMsgID:'m2',conversationID:'si_test',fileSize:size,fileName:'职员名单.xlsx'});assert.equal(path.basename((await second)[2]),'职员名单（1）.xlsx');
+  }finally{clean();store.lock();delete globalThis.__attachmentIPC;delete globalThis.__attachmentNet;delete globalThis.__attachmentRuntime;await rm(directory,{recursive:true,force:true});}
 });

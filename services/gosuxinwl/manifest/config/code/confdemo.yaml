@@ -1,0 +1,9 @@
+conftype: configuration
+title: "Suxin 动态配置示例"
+pluginident: "demo" # 插件标识
+status: false
+data:
+  qqacount: ""  # 联系账号
+  secretkey: ""  # 密钥，按实际服务配置
+  nickname_str: "Suxin"  # 昵称
+  pem_txt: ""  # 证书内容，仅在部署环境填写

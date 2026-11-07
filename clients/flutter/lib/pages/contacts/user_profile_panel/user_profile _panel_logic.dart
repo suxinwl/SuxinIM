@@ -28,6 +28,7 @@ class UserProfilePanelLogic extends GetxController {
   final mutedTime = "".obs;
   final onlineStatus = false.obs;
   final onlineStatusDesc = ''.obs;
+  final directoryPerson = Rxn<DirectoryPerson>();
   final groupUserNickname = "".obs;
   final joinGroupTime = 0.obs;
   final joinGroupMethod = ''.obs;
@@ -49,7 +50,7 @@ class UserProfilePanelLogic extends GetxController {
 
   @override
   void onInit() {
-    userInfo = (UserFullInfo()
+    userInfo = (UserFullInfo(isFriendship: false)
           ..userID = Get.arguments['userID']
           ..nickname = Get.arguments['nickname']
           ..faceURL = Get.arguments['faceURL'])
@@ -87,6 +88,7 @@ class UserProfilePanelLogic extends GetxController {
   @override
   void onReady() {
     _getUsersInfo();
+    _getDirectoryPerson();
     _queryGroupInfo();
     _queryGroupMemberInfo();
     // _queryUserOnlineStatus();
@@ -107,6 +109,19 @@ class UserProfilePanelLogic extends GetxController {
   /// 是否能给非好友发送消息
   bool get allowSendMsgNotFriend =>
       null == appLogic.clientConfigMap['allowSendMsgNotFriend'] || appLogic.clientConfigMap['allowSendMsgNotFriend'] == '1';
+
+  bool get isEnterpriseColleague => directoryPerson.value?.canDirectChat == true;
+  Future<void> _getDirectoryPerson() async {
+    try {
+      final person = await HrmDirectory.instance.person(userInfo.value.userID!);
+      if (!isClosed && person.userID == userInfo.value.userID) {
+        directoryPerson.value = person;
+        userInfo.update((value) { value?.nickname = person.nickname; value?.faceURL = person.faceURL; });
+      }
+    } catch (_) {
+      if (!isClosed) directoryPerson.value = null;
+    }
+  }
 
   void _getUsersInfo() async {
     final userID = userInfo.value.userID!;

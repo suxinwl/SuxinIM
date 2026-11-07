@@ -65,6 +65,15 @@ class ChatLogic extends GetxController {
   final messageList = <Message>[].obs;
   final quoteContent = "".obs;
   final multiSelMode = false.obs;
+  final pickingAttachment = false.obs;
+
+  bool _attachmentCurrent(int generation, int epoch, String route) =>
+      !isClosed &&
+      NativeLocalVault.unlocked &&
+      generation == NativeLocalVault.generation &&
+      imLogic.session.active &&
+      epoch == imLogic.session.epoch &&
+      route == Get.currentRoute;
   final multiSelList = <Message>[].obs;
   final atUserNameMappingMap = <String, String>{};
   final atUserInfoMappingMap = <String, UserInfo>{};
@@ -91,6 +100,7 @@ class ChatLogic extends GetxController {
   final privateMessageList = <Message>[];
   final isInBlacklist = false.obs;
   final _audioPlayer = AudioPlayer();
+  StreamSubscription<void>? _vaultInvalidated;
   final _currentPlayClientMsgID = "".obs;
   final isShowPopMenu = false.obs;
 
@@ -168,11 +178,13 @@ class ChatLogic extends GetxController {
 
   // Query multimedia messages and prepare for large image browsing.
   void _searchMediaMessage() async {
+    final generation=NativeLocalVault.generation;
     final messageList = await AppIm.iMManager.messageManager
         .searchLocalMessages(
             conversationID: conversationInfo.conversationID,
             messageTypeList: [MessageType.picture, MessageType.video],
             count: 100000);
+    if(isClosed||!NativeLocalVault.unlocked||generation!=NativeLocalVault.generation)return;
     mediaMessages =
         messageList.searchResultItems?.first.messageList?.reversed.toList() ??
             [];
@@ -194,6 +206,12 @@ class ChatLogic extends GetxController {
   void onInit() {
     var arguments = Get.arguments;
     conversationInfo = arguments['conversationInfo'];
+    _vaultInvalidated=NativeLocalVault.invalidated.listen((_){
+      _audioPlayer.stop();_currentPlayClientMsgID.value='';IMUtils.cancelVideoCompression();
+      messageList.clear();mediaMessages.clear();scrollingCacheMessageList.clear();privateMessageList.clear();multiSelList.clear();multiSelMode.value=false;
+      quoteMsg=null;quoteContent.value='';searchMessage=null;revokedTextMessage.clear();copyTextMap.clear();lastMinSeq=null;_isFirstLoad=true;
+      if(!isClosed&&NativeLocalVault.unlocked&&imLogic.session.active)unawaited(onScrollToBottomLoad().catchError((_)=>false));
+    });
     _inputStatusSubscription = imLogic.inputStatusSubject.listen((data) {
       if (!imLogic.session.active ||
           !isSingleChat ||
@@ -528,14 +546,24 @@ class ChatLogic extends GetxController {
   }
 
   /// 发送图片
-  void sendPicture({required String path}) async {
-    final file = await IMUtils.compressImageAndGetFile(File(path));
-
-    var message =
-        await AppIm.iMManager.messageManager.createImageMessageFromFullPath(
-      imagePath: file!.path,
-    );
-    _sendMessage(message);
+  Future<void> sendPicture({required String path}) async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (!_attachmentCurrent(generation, epoch, route)) return;
+    try {
+      final file = await IMUtils.compressImageAndGetFile(File(path));
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      if (file == null) throw StateError('Image preparation incomplete');
+      final message = await AppIm.iMManager.messageManager
+          .createImageMessageFromFullPath(imagePath: file.path);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      _sendMessage(message);
+      if (file.path != path) await NativeLocalVault.discard(path);
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('图片发送准备失败，请重试');
+      }
+    }
   }
 
   /// 发送语音
@@ -549,53 +577,82 @@ class ChatLogic extends GetxController {
   }
 
   ///  发送视频
-  void sendVideo({
+  Future<void> sendVideo({
     required String videoPath,
     required String mimeType,
     required int duration,
     required String thumbnailPath,
   }) async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (!_attachmentCurrent(generation, epoch, route)) return;
     final d = duration < 0 ? 0 : duration;
-    var message =
+    try {
+      var message =
         await AppIm.iMManager.messageManager.createVideoMessageFromFullPath(
       videoPath: videoPath,
       videoType: mimeType,
       duration: d.toInt(),
       snapshotPath: thumbnailPath,
     );
-    _sendMessage(message);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      _sendMessage(message);
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('视频发送准备失败，请重试');
+      }
+    }
   }
 
   Future<void> _prepareAndSendVideo(String path, String mimeType) async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (!_attachmentCurrent(generation, epoch, route)) return;
     LoadingView.singleton.show(onCancel: () {
       IMUtils.cancelVideoCompression();
       LoadingView.singleton.dismiss();
     });
     try {
       final file = await IMUtils.compressVideoAndGetFile(File(path));
+      if (!_attachmentCurrent(generation, epoch, route)) return;
       if (file == null) return;
-      final info = await VideoCompress.getMediaInfo(file.path);
+      final duration=Platform.isIOS?((await NativeLocalVault.nativeMediaInfo(file.path))['duration'] as num? ?? 0).toDouble()*1000:(await VideoCompress.getMediaInfo(file.path)).duration??0;
       final thumb = await IMUtils.getVideoThumbnail(file);
-      sendVideo(
+      final actualName=(await NativeLocalVault.sourceInfo(file.path))['name'] as String;
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      final actualType=IMUtils.getMediaType(actualName);if(actualType==null||!actualType.startsWith('video/'))throw StateError('不支持的视频格式');
+      await sendVideo(
           videoPath: file.path,
-          mimeType: 'video/mp4',
-          duration: ((info.duration ?? 0) / 1000).round(),
+          mimeType:actualType,
+          duration: (duration / 1000).round(),
           thumbnailPath: thumb.path);
-    } catch (error) {
-      IMViews.showToast('视频处理失败：$error');
+      if(file.path!=path)await NativeLocalVault.discard(path);
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('视频处理失败，请重试');
+      }
     } finally {
       LoadingView.singleton.dismiss();
     }
   }
 
   /// 发送文件
-  void sendFile({required String filePath, required String fileName}) async {
-    var message =
-        await AppIm.iMManager.messageManager.createFileMessageFromFullPath(
-      filePath: filePath,
-      fileName: fileName,
-    );
-    _sendMessage(message);
+  Future<void> sendFile({required String filePath, required String fileName}) async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (!_attachmentCurrent(generation, epoch, route)) return;
+    try {
+      final protectedPath = await NativeLocalVault.importSource(filePath);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      final message = await AppIm.iMManager.messageManager
+          .createFileMessageFromFullPath(filePath: protectedPath, fileName: fileName);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      _sendMessage(message);
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('文件发送准备失败，请重试');
+      }
+    }
   }
 
   /// 发送位置
@@ -1014,74 +1071,92 @@ class ChatLogic extends GetxController {
   }
 
   /// 打开相册
-  void onTapAlbum() async {
-    final List<AssetEntity>? assets = await AssetPicker.pickAssets(Get.context!,
-        pickerConfig:
-            AssetPickerConfig(selectPredicate: (_, entity, isSelected) {
-      // 视频限制5分钟的时长
-      if (entity.videoDuration > const Duration(seconds: 5 * 60)) {
-        IMViews.showToast(
-            sprintf(StrRes.selectVideoLimit, [5]) + StrRes.minute);
-        return false;
+  Future<void> onTapAlbum() async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (pickingAttachment.value || !_attachmentCurrent(generation, epoch, route)) return;
+    pickingAttachment.value = true;
+    try {
+      final List<AssetEntity>? assets;
+      if (Platform.isIOS) {
+        assets = (await NativeLocalVault.nativePickAssets())
+            .map((item) => NativeMediaAsset(item)).toList();
+      } else {
+        final context = Get.context;
+        if (context == null) throw StateError('Chat is unavailable');
+        assets = await AssetPicker.pickAssets(context,
+            pickerConfig: AssetPickerConfig(selectPredicate: (_, entity, isSelected) {
+          if (entity.videoDuration > const Duration(seconds: 5 * 60)) {
+            IMViews.showToast(sprintf(StrRes.selectVideoLimit, [5]) + StrRes.minute);
+            return false;
+          }
+          return true;
+        }));
       }
-      return true;
-    }));
-    if (null != assets) {
-      for (var asset in assets) {
-        _handleAssets(asset);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      for (final asset in assets ?? <AssetEntity>[]) {
+        if (!_attachmentCurrent(generation, epoch, route)) break;
+        await _handleAssets(asset);
       }
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('相册未能打开或读取，请检查照片权限后重试');
+      }
+    } finally {
+      pickingAttachment.value = false;
     }
   }
 
   /// 打开相机
-  void onTapCamera() async {
-    final AssetEntity? entity = await CameraPicker.pickFromCamera(
-      Get.context!,
-      locale: Get.locale,
-      pickerConfig: CameraPickerConfig(
-        enableAudio: true,
-        enableRecording: true,
-        enableScaledPreview: true,
-        resolutionPreset: ResolutionPreset.medium,
-        maximumRecordingDuration: 60.seconds,
-        onMinimumRecordDurationNotMet: () {
-          IMViews.showToast(StrRes.tapTooShort);
-        },
-      ),
-    );
-    _handleAssets(entity);
+  void onTapCamera()async{
+    final asset=await ProtectedCamera.capture(Get.context!,locale:Get.locale);
+    if(asset==null)return;
+    final confirmed=await Get.to<bool>(()=>ProtectedCapturePreview(asset));
+    if(confirmed!=true){await NativeLocalVault.discard(asset.protectedPath);return;}
+    if(asset.type==AssetType.video){await _prepareAndSendVideo(asset.protectedPath,'video/mp4');}else{sendPicture(path:asset.protectedPath);}
   }
 
   /// 打开系统文件浏览器
-  void onTapFile() async {
-    await FilePicker.platform.clearTemporaryFiles();
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      // type: FileType.custom,
-      // allowedExtensions: ['jpg', 'pdf', 'doc'],
-    );
-
-    if (result != null) {
-      for (var file in result.files) {
-        // String? mimeType = IMUtils.getMediaType(file.name);
-        String? mimeType = lookupMimeType(file.name);
-        if (mimeType != null) {
-          if (mimeType.contains('image/')) {
-            sendPicture(path: file.path!);
-            continue;
-          } else if (mimeType.contains('video/')) {
-            try {
-              await _prepareAndSendVideo(file.path!, mimeType);
-              continue;
-            } catch (e, s) {
-              Logger.print('e :$e  s:$s');
-            }
-          }
-        }
-        sendFile(filePath: file.path!, fileName: file.name);
+  Future<void> onTapFile() async {
+    final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+    final route = Get.currentRoute;
+    if (pickingAttachment.value || !_attachmentCurrent(generation, epoch, route)) return;
+    pickingAttachment.value = true;
+    try {
+      final List<Map<String, dynamic>> files;
+      if (Platform.isIOS) {
+        files = await NativeLocalVault.nativePickFiles();
+      } else {
+        final result = await FilePicker.platform.pickFiles(
+            type: FileType.any, allowMultiple: true, withData: false);
+        files = (result?.files ?? <PlatformFile>[]).map((file) =>
+            <String, dynamic>{'path': file.path, 'name': file.name}).toList();
       }
-    } else {
-      // User canceled the picker
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      for (final file in files) {
+        if (!_attachmentCurrent(generation, epoch, route)) break;
+        final path = file['path'] as String?;
+        if (path == null || path.isEmpty) throw StateError('Selected file is unavailable');
+        // Both SAF and PhotoManager already stage encrypted sources. Import
+        // also verifies their ownership; it never creates a permanent archive.
+        final protectedPath = await NativeLocalVault.importSource(path);
+        if (!_attachmentCurrent(generation, epoch, route)) return;
+        final name = file['name'] as String;
+        final mime = file['mimeType'] as String? ?? lookupMimeType(name) ?? '';
+        if (mime.startsWith('image/')) {
+          await sendPicture(path: protectedPath);
+        } else if (mime.startsWith('video/')) {
+          await _prepareAndSendVideo(protectedPath, mime);
+        } else {
+          await sendFile(filePath: protectedPath, fileName: name);
+        }
+      }
+    } catch (_) {
+      if (_attachmentCurrent(generation, epoch, route)) {
+        IMViews.showToast('文件选择或读取未完成，请重试');
+      }
+    } finally {
+      pickingAttachment.value = false;
     }
   }
 
@@ -1099,14 +1174,19 @@ class ChatLogic extends GetxController {
     }
   }
 
-  void _handleAssets(AssetEntity? asset) async {
+  Future<void> _handleAssets(AssetEntity? asset) async {
     if (null != asset) {
-      Logger.print('--------assets type-----${asset.type}');
-      var path = (await asset.file)!.path;
-      Logger.print('--------assets path-----$path');
+      final generation = NativeLocalVault.generation, epoch = imLogic.session.epoch;
+      final route = Get.currentRoute;
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      final file = await asset.file;
+      if (!_attachmentCurrent(generation, epoch, route)) return;
+      if (file == null) throw StateError('Selected media is unavailable');
+      final path = await NativeLocalVault.importSource(file.path);
+      if (!_attachmentCurrent(generation, epoch, route)) return;
       switch (asset.type) {
         case AssetType.image:
-          sendPicture(path: path);
+          await sendPicture(path: path);
           break;
         case AssetType.video:
           await _prepareAndSendVideo(path, asset.mimeType ?? 'video/mp4');
@@ -1350,6 +1430,7 @@ class ChatLogic extends GetxController {
 
   @override
   void onClose() {
+    _vaultInvalidated?.cancel();
     _inputStatusSubscription?.cancel();
     typingTimer?.cancel();
     _clearUnreadCount();
@@ -1942,7 +2023,9 @@ class ChatLogic extends GetxController {
     if (isReceived) {
       if (null != url && url.trim().isNotEmpty) {
         isExistSource = true;
-        _audioPlayer.setUrl(url);
+        if(Platform.isIOS){await NativeLocalVault.nativePreview(url:url);return false;}
+        final authorized=await AppIm.enterprise.authorizeResource(url);
+        await _audioPlayer.setUrl(authorized,headers:AppIm.enterprise.resourceHeaders(authorized));
       }
     } else {
       bool existFile = false;
@@ -1952,10 +2035,13 @@ class ChatLogic extends GetxController {
       }
       if (existFile) {
         isExistSource = true;
-        _audioPlayer.setFilePath(path!);
+        if(Platform.isIOS){await NativeLocalVault.nativePreview(path:path);return false;}
+        await _audioPlayer.setUrl((await NativeLocalVault.sourcePreviewUri(path!)).toString());
       } else if (null != url && url.trim().isNotEmpty) {
         isExistSource = true;
-        _audioPlayer.setUrl(url);
+        if(Platform.isIOS){await NativeLocalVault.nativePreview(url:url);return false;}
+        final authorized=await AppIm.enterprise.authorizeResource(url);
+        await _audioPlayer.setUrl(authorized,headers:AppIm.enterprise.resourceHeaders(authorized));
       }
     }
     return isExistSource;
@@ -2406,12 +2492,15 @@ class ChatLogic extends GetxController {
       );
 
   Future<bool> onScrollToBottomLoad() async {
+    final generation=NativeLocalVault.generation;
+    if(!NativeLocalVault.unlocked||isClosed)return false;
     if (isGroupChat && ownerAndAdmin.isEmpty) {
       // 为了做撤回消息的功能,需要先获取群成员信息
       await _queryOwnerAndAdmin();
     }
     late List<Message> list;
     final result = await _requestHistoryMessage();
+    if(isClosed||!NativeLocalVault.unlocked||generation!=NativeLocalVault.generation)return false;
     if (result.messageList == null || result.messageList!.isEmpty) return false;
     _searchMediaMessage();
     list = result.messageList!;
@@ -2424,6 +2513,7 @@ class ChatLogic extends GetxController {
       // There is currently a bug on the server side. If the number obtained once is less than one page, get it again.
       if (list.isNotEmpty && list.length < 20) {
         final result = await _requestHistoryMessage();
+        if(isClosed||!NativeLocalVault.unlocked||generation!=NativeLocalVault.generation)return false;
         if (result.messageList?.isNotEmpty == true) {
           _searchMediaMessage();
           list = result.messageList!;

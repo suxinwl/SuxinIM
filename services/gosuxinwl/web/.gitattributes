@@ -1,0 +1,2 @@
+# Preserve the existing LF/CRLF files while treating CRLF as a valid line ending.
+* whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

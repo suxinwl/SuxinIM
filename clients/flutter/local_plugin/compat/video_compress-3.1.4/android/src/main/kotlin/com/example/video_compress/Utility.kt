@@ -35,17 +35,19 @@ class Utility(private val channelName: String) {
         val file = File(path)
         val retriever = MediaMetadataRetriever()
 
-        retriever.setDataSource(context, Uri.fromFile(file))
+        val source=ProtectedMediaSource(path)
+        try {
+        retriever.setDataSource(source)
 
         val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
         val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
         val author = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR) ?: ""
         val widthStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
         val heightStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-        val duration = java.lang.Long.parseLong(durationStr)
-        var width = java.lang.Long.parseLong(widthStr)
-        var height = java.lang.Long.parseLong(heightStr)
-        val filesize = file.length()
+        val duration = durationStr?.toLongOrNull() ?: 0L
+        var width = widthStr?.toLongOrNull() ?: 0L
+        var height = heightStr?.toLongOrNull() ?: 0L
+        val filesize = source.size
         val orientation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
         } else {
@@ -57,8 +59,6 @@ class Utility(private val channelName: String) {
             width = height
             height = tmp
         }
-
-        retriever.release()
 
         val json = JSONObject()
 
@@ -74,28 +74,23 @@ class Utility(private val channelName: String) {
         }
 
         return json
+        } finally { try { retriever.release() } finally { source.close() } }
     }
 
     fun getBitmap(path: String, position: Long, result: MethodChannel.Result): Bitmap {
         var bitmap: Bitmap? = null
         val retriever = MediaMetadataRetriever()
-
+        val source=ProtectedMediaSource(path)
         try {
-            retriever.setDataSource(path)
+            retriever.setDataSource(source)
             bitmap = retriever.getFrameAtTime(position, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-        } catch (ex: IllegalArgumentException) {
-            result.error(channelName, "Assume this is a corrupt video file", null)
-        } catch (ex: RuntimeException) {
-            result.error(channelName, "Assume this is a corrupt video file", null)
         } finally {
             try {
                 retriever.release()
-            } catch (ex: RuntimeException) {
-                result.error(channelName, "Ignore failures while cleaning up", null)
-            }
+            } finally { source.close() }
         }
 
-        if (bitmap == null) result.success(emptyArray<Int>())
+        if (bitmap == null) throw IllegalStateException("Video thumbnail unavailable")
 
         val width = bitmap!!.width
         val height = bitmap.height
@@ -104,7 +99,9 @@ class Utility(private val channelName: String) {
             val scale = 512f / max
             val w = Math.round(scale * width)
             val h = Math.round(scale * height)
-            bitmap = Bitmap.createScaledBitmap(bitmap, w, h, true)
+            val scaled = Bitmap.createScaledBitmap(bitmap, w, h, true)
+            if(scaled !== bitmap)bitmap.recycle()
+            bitmap = scaled
         }
 
         return bitmap!!

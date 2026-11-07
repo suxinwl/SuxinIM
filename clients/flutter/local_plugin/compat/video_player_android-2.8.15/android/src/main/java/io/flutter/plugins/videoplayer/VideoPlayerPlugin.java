@@ -120,6 +120,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
 
   private @NonNull VideoAsset videoAssetWithOptions(@NonNull CreationOptions options) {
     final @NonNull String uri = options.getUri();
+    if (uri.startsWith("puty-local:")) {return new PutyVaultVideoAsset(uri);}
     if (uri.startsWith("asset:")) {
       return VideoAsset.fromAssetUrl(uri);
     } else if (uri.startsWith("rtsp:")) {

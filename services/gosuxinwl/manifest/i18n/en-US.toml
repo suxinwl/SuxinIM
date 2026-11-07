@@ -1,0 +1,3 @@
+sys_auth_permission = "You have no permission"
+sys_login_invalid   = "Please login first"
+common_vlidity_api   = "Invalid interface request"

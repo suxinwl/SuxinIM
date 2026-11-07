@@ -15,6 +15,8 @@ export type MomentMeta = {
   thumb: string;
   width: number;
   height: number;
+  // Viewer-only read copy. Publishing still uses the original upload response.
+  readSources?: { original: string; thumb: string };
 };
 
 export enum MomentPermission {

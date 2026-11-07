@@ -8,6 +8,7 @@ import '../publish_logic.dart';
 class PreviewSelectedVideoLogic extends GetxController {
   final publishLogic = Get.find<PublishLogic>();
   late VideoPlayerController _videoPlayerController;
+  final sourcePath=RxnString();
   ChewieController? chewieController;
   final isInitialized = false.obs;
 
@@ -20,10 +21,7 @@ class PreviewSelectedVideoLogic extends GetxController {
   Future<void> _initializePlayer() async {
     final entity = publishLogic.assetsList[0];
     final file = await entity.file;
-    _videoPlayerController = VideoPlayerController.file(file!);
-    await _videoPlayerController.initialize();
-    _createChewieController();
-    isInitialized.value = true;
+    if(!isClosed&&file!=null)sourcePath.value=file.path;
   }
 
   void _createChewieController() {

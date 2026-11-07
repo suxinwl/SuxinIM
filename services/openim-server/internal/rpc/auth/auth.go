@@ -17,6 +17,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"openim38.local/identity"
 
 	"github.com/openimsdk/open-im-server/v3/pkg/rpcli"
 
@@ -155,6 +156,11 @@ func (s *authServer) parseToken(ctx context.Context, tokensString string) (claim
 	if v, ok := m[tokensString]; ok {
 		switch v {
 		case constant.NormalToken:
+			if identity.Required() {
+				if _, e := identity.Validate(ctx, tokensString, claims.UserID, "im", claims.PlatformID); e != nil {
+					return nil, servererrs.ErrTokenNotExist.WrapMsg("HRM session unavailable")
+				}
+			}
 			return claims, nil
 		case constant.KickedToken:
 			return nil, servererrs.ErrTokenKicked.Wrap()

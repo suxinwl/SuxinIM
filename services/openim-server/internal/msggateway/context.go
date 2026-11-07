@@ -75,7 +75,7 @@ func (c *UserConnContext) Value(key any) any {
 	case constant.RemoteAddr:
 		return c.RemoteAddr
 	default:
-		return ""
+		return c.Req.Context().Value(key)
 	}
 }
 

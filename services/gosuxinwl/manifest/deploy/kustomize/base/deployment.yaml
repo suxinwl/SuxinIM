@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gosuxin
+  labels:
+    app: gosuxin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gosuxin
+  template:
+    metadata:
+      labels:
+        app: gosuxin
+    spec:
+      containers:
+        - name : main
+          image: gosuxin
+          imagePullPolicy: Always
+

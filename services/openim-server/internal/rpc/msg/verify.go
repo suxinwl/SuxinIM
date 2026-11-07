@@ -16,11 +16,13 @@ package msg
 
 import (
 	"context"
+	"github.com/openimsdk/open-im-server/v3/pkg/authverify"
 	"github.com/openimsdk/open-im-server/v3/pkg/common/servererrs"
 	"github.com/openimsdk/tools/utils/datautil"
 	"github.com/openimsdk/tools/utils/encrypt"
 	"github.com/openimsdk/tools/utils/timeutil"
 	"math/rand"
+	"openim38.local/identity"
 	"strconv"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 var ExcludeContentType = []int{constant.HasReadReceipt}
@@ -52,11 +55,26 @@ type MessageRevoked struct {
 func (m *msgServer) messageVerification(ctx context.Context, data *msg.SendMsgReq) error {
 	switch data.MsgData.SessionType {
 	case constant.SingleChatType:
+		serverNotification := data.MsgData.MsgFrom == constant.SysMsgType && data.MsgData.ContentType >= constant.NotificationBegin && data.MsgData.ContentType <= constant.NotificationEnd
+		manager := authverify.IsAppManagerUid(ctx, m.config.Share.IMAdminUserID)
+		colleague := identity.Required() && !manager && !serverNotification
+		if colleague {
+			if mcontext.GetOpUserID(ctx) != data.MsgData.SendID {
+				return errs.ErrNoPermission.WrapMsg("message sender differs from authenticated employee")
+			}
+			authorize := m.peerAuthorize
+			if authorize == nil {
+				authorize = identity.AuthorizePeer
+			}
+			if err := authorize(ctx, data.MsgData.SendID, data.MsgData.RecvID); err != nil {
+				return errs.ErrNoPermission.WrapMsg("HRM colleague access denied")
+			}
+		}
 		if datautil.Contain(data.MsgData.SendID, m.config.Share.IMAdminUserID...) {
 			return nil
 		}
 		if data.MsgData.ContentType <= constant.NotificationEnd &&
-			data.MsgData.ContentType >= constant.NotificationBegin {
+			data.MsgData.ContentType >= constant.NotificationBegin && (!identity.Required() || serverNotification || manager) {
 			return nil
 		}
 		if err := m.webhookBeforeSendSingleMsg(ctx, &m.config.WebhooksConfig.BeforeSendSingleMsg, data); err != nil {
@@ -68,6 +86,11 @@ func (m *msgServer) messageVerification(ctx context.Context, data *msg.SendMsgRe
 		}
 		if black {
 			return servererrs.ErrBlockedByPeer.Wrap()
+		}
+		if colleague {
+			// Only this authenticated, currently eligible HRM colleague pair
+			// bypasses friendship. Receive preferences are applied by the caller.
+			return nil
 		}
 		if m.config.RpcConfig.FriendVerify {
 			friend, err := m.FriendLocalCache.IsFriend(ctx, data.MsgData.SendID, data.MsgData.RecvID)

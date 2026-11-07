@@ -86,7 +86,7 @@ func artifactKey(platform, version string) string {
 func validPlatform(p string) bool {
 	return p == "android" || p == "windows" || p == "ios" || p == "mac" || p == "linux"
 }
-func (s *Server) latest(ctx context.Context, q request) (any, error) {
+func (s *Server) latest(ctx context.Context, q request, entry string) (any, error) {
 	p := strings.ToLower(q.str("platform"))
 	if !validPlatform(p) {
 		return nil, bad("unsupported platform")
@@ -123,7 +123,26 @@ func (s *Server) latest(ctx context.Context, q request) (any, error) {
 	if cmp < 0 || cmp == 0 && a.Build <= q.num("build") {
 		return map[string]any{"available": false}, nil
 	}
-	return map[string]any{"available": true, "version": a.Version, "build": a.Build, "url": a.URL, "sha256": a.SHA256, "size": a.Size, "text": up.Text, "force": up.Force, "platform": p}, nil
+	return map[string]any{"available": true, "version": a.Version, "build": a.Build, "url": artifactEntryURL(a.URL, entry), "sha256": a.SHA256, "size": a.Size, "text": up.Text, "force": up.Force, "platform": p}, nil
+}
+
+func artifactEntryURL(raw, entry string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.User != nil || u.Scheme != "https" || entry == "" {
+		return raw
+	}
+	origin := u.Scheme + "://" + u.Host
+	lan := envOrigin("PUBLIC_LAN_ORIGIN", "https://192.168.10.11:9885")
+	wan := envOrigin("PUBLIC_INTERNET_ORIGIN", "https://im.szputy.com:9885")
+	if origin != lan && origin != wan || entry != lan && entry != wan {
+		return raw
+	}
+	target, err := url.Parse(entry)
+	if err != nil {
+		return raw
+	}
+	u.Scheme, u.Host = target.Scheme, target.Host
+	return u.String()
 }
 func (s *Server) publish(ctx context.Context, a Actor, q request) (any, error) {
 	if !a.Admin {

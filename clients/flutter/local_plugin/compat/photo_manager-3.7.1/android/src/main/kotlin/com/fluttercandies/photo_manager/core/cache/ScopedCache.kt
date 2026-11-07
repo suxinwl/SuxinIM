@@ -23,35 +23,22 @@ class ScopedCache {
         isOrigin: Boolean
     ): File {
         val assetId = assetEntity.id
-        val targetFile = getCacheFile(context, assetEntity, isOrigin)
-        if (targetFile.exists()) {
-            return targetFile
-        }
-        val contentResolver = context.contentResolver
-        val uri = AndroidQDBUtils.getUri(assetId, assetEntity.type, isOrigin)
-        if (uri == Uri.EMPTY) {
-            throwIdNotFound(assetId)
-        }
-        try {
-            LogUtils.info(
-                "Caching $assetId [origin: $isOrigin] into ${targetFile.absolutePath}"
-            )
-            val inputStream = contentResolver.openInputStream(uri)
-            val outputStream = FileOutputStream(targetFile)
-            outputStream.use { os ->
-                inputStream?.use { it.copyTo(os) }
-            }
-        } catch (e: Exception) {
-            LogUtils.error("Caching $assetId [origin: $isOrigin] error", e)
-            throw e
-        }
-        return targetFile
+        val uri=AndroidQDBUtils.getUri(assetId,assetEntity.type,isOrigin)
+        if(uri==Uri.EMPTY)throwIdNotFound(assetId)
+        val name=assetEntity.displayName
+        val path=Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles")
+            .getMethod("importUri",Context::class.java,Uri::class.java,String::class.java)
+            .invoke(null,context,uri,name) as String
+        return File(path)
     }
 
     private fun getCacheFile(context: Context, assetEntity: AssetEntity, isOrigin: Boolean): File {
         val originString = if (isOrigin) "_o" else ""
         val name = "$FILENAME_PREFIX${assetEntity.id}${originString}_${assetEntity.displayName}"
-        return File(context.cacheDir, name)
+        val dot=name.lastIndexOf('.')
+        return Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles")
+            .getMethod("createTempFile",String::class.java,String::class.java)
+            .invoke(null,if(dot>0)name.substring(0,dot) else name,if(dot>0)name.substring(dot) else ".bin") as File
     }
 
     fun clearFileCache(context: Context) {

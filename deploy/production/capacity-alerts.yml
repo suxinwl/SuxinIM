@@ -1,0 +1,29 @@
+# Load into the existing Prometheus rule_files. No exporter/notification target
+# is created here. An absent filesystem series means unknown, never zero use.
+# Keep physical writable filesystems, excluding pseudo/overlay mounts. Mountpoint,
+# instance and device labels remain available to the existing admin dashboard.
+groups:
+  - name: puty-storage-capacity
+    rules:
+      - record: puty_storage_usage_bytes
+        expr: (node_filesystem_size_bytes{fstype!~"tmpfs|devtmpfs|overlay|squashfs|proc|sysfs",mountpoint!~"/run($|/.*)"} - node_filesystem_avail_bytes) and on(instance,device,mountpoint,job) (node_filesystem_readonly == 0)
+      - record: puty_storage_available_bytes
+        expr: node_filesystem_avail_bytes{fstype!~"tmpfs|devtmpfs|overlay|squashfs|proc|sysfs",mountpoint!~"/run($|/.*)"} and on(instance,device,mountpoint,job) (node_filesystem_readonly == 0)
+      - record: puty_storage_usage_ratio
+        expr: puty_storage_usage_bytes / (puty_storage_usage_bytes + puty_storage_available_bytes)
+      - record: puty_storage_state
+        expr: (puty_storage_usage_ratio >= bool 0.70) + (puty_storage_usage_ratio >= bool 0.85)
+      - alert: PutyStorageCapacityWarning
+        expr: puty_storage_usage_ratio >= 0.70 and puty_storage_usage_ratio < 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: PUTY storage is at least 70% used
+      - alert: PutyStorageCapacityCritical
+        expr: puty_storage_usage_ratio >= 0.85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: PUTY storage is at least 85% used

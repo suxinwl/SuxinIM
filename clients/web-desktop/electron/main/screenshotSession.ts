@@ -3,7 +3,7 @@ interface ScreenshotSessionDependencies {
   startCapture: () => Promise<void>;
   endCapture: () => Promise<void>;
   restoreWindow: () => void;
-  writeClipboard: (bytes: Uint8Array) => void;
+  writeClipboard: (bytes: Uint8Array) => void | Promise<void>;
   respond: (bytes?: Uint8Array) => void;
   reportError: (error: unknown) => void;
 }
@@ -30,7 +30,7 @@ export function createScreenshotSession(deps: ScreenshotSessionDependencies) {
       await attempt.starting.catch(() => undefined);
       try { await deps.endCapture(); } catch (error) { reportError(error); }
       if (bytes) {
-        try { deps.writeClipboard(bytes); } catch (error) { reportError(error); }
+        try { await deps.writeClipboard(bytes); } catch (error) { reportError(error); }
       }
       try { deps.restoreWindow(); } catch (error) { reportError(error); }
       try { deps.respond(bytes); } catch (error) { reportError(error); }

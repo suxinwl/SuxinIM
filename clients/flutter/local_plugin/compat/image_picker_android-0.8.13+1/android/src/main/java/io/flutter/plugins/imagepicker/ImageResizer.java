@@ -66,7 +66,7 @@ class ImageResizer {
               (double) targetSize.getHeight(),
               imageQuality,
               imageName);
-      copyExif(imagePath, file.getPath());
+      // Pixels are recompressed in RAM; never reopen ciphertext as a JPEG.
       return file.getPath();
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -114,11 +114,7 @@ class ImageResizer {
   }
 
   private File createFile(File externalFilesDirectory, String child) {
-    File image = new File(externalFilesDirectory, child);
-    if (!image.getParentFile().exists()) {
-      image.getParentFile().mkdirs();
-    }
-    return image;
+    try{return FileUtils.encryptedTemporary(child);}catch(IOException rejected){throw new IllegalStateException("Encrypted image resize unavailable",rejected);}
   }
 
   private FileOutputStream createOutputStream(File imageFile) throws IOException {
@@ -142,7 +138,10 @@ class ImageResizer {
   }
 
   private Bitmap decodeFile(String path, @Nullable BitmapFactory.Options opts) {
-    return BitmapFactory.decodeFile(path, opts);
+    byte[] bytes=null;
+    try{bytes=(byte[])Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles").getMethod("readBytes",String.class,long.class).invoke(null,path,32L<<20);return BitmapFactory.decodeByteArray(bytes,0,bytes.length,opts);}
+    catch(ReflectiveOperationException rejected){throw new IllegalStateException("Encrypted image decode unavailable");}
+    finally{if(bytes!=null)java.util.Arrays.fill(bytes,(byte)0);}
   }
 
   private Bitmap createScaledBitmap(Bitmap bmp, int width, int height, boolean filter) {
@@ -189,11 +188,9 @@ class ImageResizer {
         imageQuality,
         outputStream);
 
-    File cacheDirectory = context.getCacheDir();
-    File imageFile = createFile(cacheDirectory, name);
-    FileOutputStream fileOutput = createOutputStream(imageFile);
-    fileOutput.write(outputStream.toByteArray());
-    fileOutput.close();
-    return imageFile;
+    byte[] bytes=outputStream.toByteArray();
+    try{String clean=name.startsWith("/")?name.substring(1):name;String path=(String)Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles").getMethod("importStream",java.io.InputStream.class,String.class).invoke(null,new java.io.ByteArrayInputStream(bytes),clean);return new File(path);}
+    catch(ReflectiveOperationException rejected){throw new IOException("Encrypted image resize unavailable");}
+    finally{java.util.Arrays.fill(bytes,(byte)0);}
   }
 }

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:app_im/app_im.dart';
 import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
@@ -11,6 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../im_callback.dart';
 import '../session_epoch.dart';
+import '../session_renewal.dart';
+import '../vault_reauthorization.dart';
 import '../../routes/app_navigator.dart';
 import 'push_controller.dart';
 
@@ -18,7 +19,67 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
   final userInfo = UserFullInfo().obs;
   late String atAllTag;
   final session = SessionEpoch();
-  final _sdkReady = Completer<bool>();
+  Timer? _ssoTimer;
+  StreamSubscription<void>? _vaultLock,_backgroundVaultLock;
+  bool _needsBackgroundSDKReset=false;
+  bool vaultReauthorizationPending=false;
+  bool _hardInvalidationPending=false;
+  void prepareAutomaticVaultRecovery(){
+    if(!_hardInvalidationPending&&!session.active&&DataSp.getLoginCertificate()!=null){
+      vaultReauthorizationPending=true;
+      if(_sdkReady.isCompleted)_needsBackgroundSDKReset=true;
+    }
+  }
+  Future<void>? _resumingVault;
+  void requireVaultReauthorization(){
+    if(_hardInvalidationPending||DataSp.getLoginCertificate()==null)return;
+    _needsBackgroundSDKReset=true;
+    if(vaultReauthorizationPending)return;
+    vaultReauthorizationPending=true;session.invalidate();AppIm.enterprise.invalidateCallTerminations();
+    AppNavigator.startVaultReauthorization();
+    if(WidgetsBinding.instance.lifecycleState==AppLifecycleState.resumed)unawaited(resumeAfterVaultBackground());
+  }
+  Future<void> resumeAfterVaultBackground()=>_resumingVault??=
+      _resumeVault().whenComplete(()=>_resumingVault=null);
+  Future<void> _resumeVault()async{
+    if(WidgetsBinding.instance.lifecycleState!=AppLifecycleState.resumed)return;
+    if(Platform.isAndroid&&session.active&&!vaultReauthorizationPending){
+      await NativeLocalVault.ensureCurrentAuthorization();
+      await Future<void>.delayed(Duration.zero);
+    }
+    if(!vaultReauthorizationPending||_hardInvalidationPending)return;
+    if(!_needsBackgroundSDKReset){initializedSubject.add(true);return;}
+    _needsBackgroundSDKReset=false;
+    final generation=NativeLocalVault.generation;
+    try{await _serialSdk(()async{
+      if(generation!=NativeLocalVault.generation||_hardInvalidationPending)return;
+      await AppIm.iMManager.unInitSDKAndWait();await initOpenIM();
+    });}
+    catch(_){_needsBackgroundSDKReset=true;initializedSubject.add(false);}
+  }
+  bool _renewingSSO=false;
+  Future<void> reconfigureServer() => _serialSdk(() async {
+    await AppIm.iMManager.unInitSDKAndWait();
+    await initOpenIM();
+  });
+  Future<void> _renewSSO() async {
+    if(_renewingSSO || !session.active || NativeLocalVault.restoring) return;
+    _renewingSSO=true;
+    try {
+      await renewCurrentSSOSession(
+        session: session,
+        readCertificate: DataSp.getLoginCertificate,
+        refresh: () => HrmSSO.refresh(),
+        unlock: NativeLocalVault.unlock,
+        login: (current) async { await login(current.userID, current.imToken); },
+        lock: NativeLocalVault.lock,
+        kick: kickedOffline,
+        restoring: () => NativeLocalVault.restoring,
+        suspend: NativeLocalVault.suspend,
+      );
+    } finally { _renewingSSO=false; }
+  }
+  Completer<bool> _sdkReady = Completer<bool>();
   Future<void> _sdkOperation = Future<void>.value();
   Future<void> _invalidationCleanup = Future<void>.value();
 
@@ -34,13 +95,17 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
     }
   }
 
-  Future<void> prepareLogin() {
+  Future<void> prepareLogin() async {
     AppIm.enterprise.invalidateCallTerminations();
-    return _invalidationCleanup;
+    await _invalidationCleanup;
+    _hardInvalidationPending=false;
   }
 
   @override
   void kickedOffline() {
+    _hardInvalidationPending=true;
+    vaultReauthorizationPending=false;
+    unawaited(NativeLocalVault.lock());
     AppIm.enterprise.invalidateCallTerminations();
     final token = session.attempt?.imToken ?? DataSp.imToken;
     final epoch = session.invalidate();
@@ -72,6 +137,8 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
 
   @override
   void onClose() {
+    _vaultLock?.cancel();_backgroundVaultLock?.cancel();
+    _ssoTimer?.cancel();
     AppIm.enterprise.invalidateCallTerminations();
     session.invalidate();
     super.close();
@@ -83,12 +150,17 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
   @override
   void onInit() async {
     super.onInit();
+    NativeLocalVault.quiesceSDKForRestore=()=>_serialSdk(()async{if(await AppIm.iMManager.getLoginStatus()!=1)await AppIm.iMManager.logout();});
+    _vaultLock=NativeLocalVault.locked.listen((_){if(session.active||vaultReauthorizationPending)kickedOffline();});
+    _backgroundVaultLock=NativeLocalVault.backgroundLocked.listen((_)=>requireVaultReauthorization());
     onInitLive();
+    _ssoTimer=Timer.periodic(const Duration(minutes:1),(_)=>_renewSSO());
     // Initialize SDK
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         await initOpenIM();
       } catch (error) {
+        if(vaultReauthorizationPending)_needsBackgroundSDKReset=true;
         if (!_sdkReady.isCompleted) _sdkReady.complete(false);
         initializedSubject.add(false);
         Logger.print('SDK initialization failed: ${error.runtimeType}');
@@ -97,6 +169,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
   }
 
   Future<void> initOpenIM() async {
+    if(_sdkReady.isCompleted)_sdkReady=Completer<bool>();
     final initialized = await AppIm.iMManager.initSDK(
       platformID: IMUtils.getPlatform(),
       apiAddr: Config.imApiUrl,
@@ -219,10 +292,13 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
 
     if (!_sdkReady.isCompleted) _sdkReady.complete(initialized == true);
     initializedSubject.sink.add(initialized == true);
+    if(initialized!=true){if(vaultReauthorizationPending)_needsBackgroundSDKReset=true;throw StateError('SDK initialization failed; retry initialization');}
   }
 
   Future<SessionAttempt> login(String userID, String token) =>
       _serialSdk(() async {
+        final recovering=vaultReauthorizationPending;
+        if(NativeLocalVault.restoring)throw StateError('本机档案正在恢复，请完成后重新登录');
         await prepareLogin();
         if (!await _sdkReady.future.timeout(const Duration(seconds: 30))) {
           throw StateError('SDK initialization failed; retry login');
@@ -237,6 +313,9 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
         if (await AppIm.iMManager.getLoginStatus() != 1) {
           await AppIm.iMManager.logout();
         }
+        final certificate = DataSp.getLoginCertificate();
+        if(certificate == null || certificate.userID != userID) throw StateError('Missing local vault identity');
+        await NativeLocalVault.unlock(certificate);
         final attempt =
             session.begin(userID, token, chatToken, IMUtils.getPlatform());
         try {
@@ -245,6 +324,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
             token: token,
           );
           await session.waitForConnection(attempt);
+          await NativeLocalVault.finalizeLegacy();
           await AppIm.enterprise.verifySession(
               imToken: attempt.imToken,
               chatToken: attempt.chatToken,
@@ -256,25 +336,30 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
           }
           userInfo.value = UserFullInfo.fromJson(user.toJson());
           session.activate(attempt);
+          vaultReauthorizationPending=false;
+          _needsBackgroundSDKReset=false;
           explicitLogoutPending = false;
           _queryMyFullInfo();
           _queryAtAllTag();
           AppIm.enterprise.pullEvents();
           return attempt;
         } catch (e, s) {
+          final preserve=recovering&&!isDefiniteSessionDenial(e);
+          await NativeLocalVault.lock(reauthorize:preserve);
           Logger.print('IM login failed: ${e.runtimeType}');
-          await _handleLoginRepeatError(attempt);
+          await _handleLoginRepeatError(attempt,preserveCredentials:preserve);
           // rethrow;
           return Future.error(e, s);
         }
       });
 
   Future<void> logout({bool revokeSession = true}) => _serialSdk(() async {
+        _hardInvalidationPending=true;
+        vaultReauthorizationPending=false;
         AppIm.enterprise.invalidateCallTerminations();
         if (revokeSession) {
           explicitLogoutPending = true;
-          final result = await AppIm.enterprise.request('/session/logout');
-          if (result['revoked'] != true) throw StateError('退出未确认，请重试');
+          await HrmSSO.logout();
         }
         session.invalidate();
         try {
@@ -298,6 +383,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
         }
         PackageBridge.meetingBridge?.dismiss();
         PackageBridge.rtcBridge?.dismiss();
+        await NativeLocalVault.lock();
       });
 
   /// @所有人ID
@@ -330,7 +416,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
     }
   }
 
-  Future<void> _handleLoginRepeatError(SessionAttempt attempt) async {
+  Future<void> _handleLoginRepeatError(SessionAttempt attempt,{bool preserveCredentials=false}) async {
     // SDK login can set its local flag before fetching the initial self profile.
     // A failed first fetch (including TLS failure) must not become a successful UI login.
     if (!session.current(attempt)) return;
@@ -340,7 +426,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
     } catch (_) {}
     AppIm.iMManager.isLogined = false;
     AppIm.iMManager.token = null;
-    if (session.epoch == epoch &&
+    if (!preserveCredentials && session.epoch == epoch &&
         DataSp.imToken == attempt.imToken &&
         DataSp.chatToken == attempt.chatToken) {
       await DataSp.removeLoginCertificate();

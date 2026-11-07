@@ -1,0 +1,31 @@
+# 这是开发时使用配置
+# CLI tool, only in development environment.
+# https://goframe.org/docs/cli
+suxincli:
+  # go run main.go自动编译配置
+  run:
+    path:  "./temp/run"
+    extra: ""
+    args:  "all"
+    ignorePatterns:
+    - devsource*
+    - devsource/codemarket/install*
+  #代码dao代码生成使用数据库配置
+  gen:
+    dao:
+      - link: "mysql:demo:CHANGE_ME@tcp(127.0.0.1:3306)/gosuxin_v1_0"
+        removePrefix: "gf_"
+        descriptionTag: true
+        noModelComment: true
+
+  docker:
+    build: "-a amd64 -s linux -p temp -ew"
+    tagPrefixes:
+      - gosuxin:1.0.0
+  # gf build交叉编译配置
+  build:
+    name:     "gosuxin"
+    arch:     "amd64"
+    system:   "linux"
+    mod:      "none"
+    path:     "temp"

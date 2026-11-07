@@ -315,6 +315,7 @@ class ChatPage extends StatelessWidget {
                     onClearQuote: () => logic.setQuoteMsg(null),
                     onSend: (v) => logic.sendTextMsg(),
                     toolbox: ChatToolBox(
+                      attachmentBusy: logic.pickingAttachment.value,
                       onTapAlbum: logic.onTapAlbum,
                       onTapCall: logic.call,
                       onTapCamera: logic.onTapCamera,

@@ -63,7 +63,7 @@ class WApis {
         for (int i = 0; i < result.length; i += 2) {
           final thumb = jsonDecode(result[i])['url'];
           final original = jsonDecode(result[i + 1])['url'];
-          metasUrl.add({thumbKey: "$thumb?type=image&width=420&height=420", originalKey: original});
+          metasUrl.add({thumbKey: thumb, originalKey: original});
         }
       }
     }

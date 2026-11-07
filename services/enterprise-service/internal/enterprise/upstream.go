@@ -20,9 +20,10 @@ type User struct {
 	RoleLevel int    `json:"roleLevel,omitempty"`
 }
 type Group struct {
-	GroupID   string `json:"groupID"`
-	GroupName string `json:"groupName"`
-	FaceURL   string `json:"faceURL"`
+	GroupID     string `json:"groupID"`
+	GroupName   string `json:"groupName"`
+	FaceURL     string `json:"faceURL"`
+	OwnerUserID string `json:"ownerUserID"`
 }
 type GroupResolver interface {
 	Groups(context.Context, []string) ([]Group, error)

@@ -1,4 +1,4 @@
-import { Divider, Empty, Image, Spin } from "antd";
+import { Divider, Empty, Spin } from "antd";
 import clsx from "clsx";
 import { t } from "i18next";
 import { forwardRef, ForwardRefRenderFunction, memo, useImperativeHandle } from "react";
@@ -7,6 +7,7 @@ import { Virtuoso } from "react-virtuoso";
 import { useLogs } from "@/api/moments";
 import liked from "@/assets/images/moments/liked.png";
 import OIMAvatar from "@/components/OIMAvatar";
+import CacheImage from "@/components/CacheImage";
 import { WorkMomentLogType } from "@/constants";
 import { WorkMoments } from "@/types/moment";
 import { formatMomentsTime } from "@/utils/imCommon";
@@ -165,7 +166,7 @@ const MomentsMessageItem = memo(
           onClick={() => jumpToMoments(moments.workMomentID)}
         >
           <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center">
-            <Image
+            <CacheImage
               className="max-w-[42px]"
               src={moments.content.metas?.[0]?.thumb}
               preview={false}

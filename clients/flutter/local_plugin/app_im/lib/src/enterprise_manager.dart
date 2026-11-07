@@ -1,10 +1,113 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../app_im.dart';
 
 /// Enterprise transport is separate from the unmodified public SDK.
 class EnterpriseManager {
+  int _resourceGeneration=0;
+  final _resourceGrants=<String,Map<String,dynamic>>{};
+  final _resourceSources=<String,String>{};
+  final _resourceFlights=<String,Future<String>>{};
+  final _resourceProofs=<String,Map<String,dynamic>>{};
+  String _resourceAuthIdentity='';
+  int get resourceGeneration { _syncResourceIdentity();return _resourceGeneration; }
+  void _syncResourceIdentity(){
+    final current='${_userID?.call()}|${_imToken?.call()}|${_chatToken?.call()}|${_baseUrl?.call()}';
+    if(current!=_resourceAuthIdentity){_resourceAuthIdentity=current;_resourceGeneration++;_resourceGrants.clear();_resourceProofs.clear();_resourceFlights.clear();}
+  }
+  static final _publicBrandPaths=<String>{
+    '/resource/static/brand/default-avatar.png',
+    for(final prefix in ['', 'suxin/', 'hr/', 'im/'])
+      for(final name in ['logo.png','favicon.ico','favicon-16x16.png','favicon-32x32.png','apple-touch-icon.png','android-chrome-192x192.png','android-chrome-512x512.png']) '/resource/static/brand/$prefix$name',
+  };
+  String? _publicBrandPath(String value) {
+    final uri=Uri.tryParse(value);
+    if(uri==null || uri.scheme!='https' || !uri.hasAuthority || uri.userInfo.isNotEmpty || !['https://192.168.10.11:9885','https://im.szputy.com:9885','https://192.168.10.11:9880','https://hr.szputy.com:9880'].contains(uri.origin) || !value.startsWith(uri.origin))return null;
+    final path=value.substring(uri.origin.length);
+    final match=RegExp(r'^([^?#]+)(?:\?v=[A-Za-z0-9._-]{1,64})?$').firstMatch(path);
+    return match!=null && match.end==path.length && _publicBrandPaths.contains(match.group(1))?path:null;
+  }
+  String resolvePublicBrandResource(String value) {
+    final path=_publicBrandPath(value),base=_baseUrl?.call();
+    if(path==null || base==null)return value;
+    final origin=Uri.tryParse(base);
+    if(origin==null || origin.scheme!='https' || !origin.hasAuthority || !['https://192.168.10.11:9885','https://im.szputy.com:9885'].contains(origin.origin))return value;
+    return origin.origin+path;
+  }
+  bool needsResourceGrant(String value) {
+    final uri=Uri.tryParse(value);
+    return uri!=null && uri.scheme=='https' && uri.hasAuthority && uri.userInfo.isEmpty && _publicBrandPath(value)==null && ['https://192.168.10.11:9885','https://im.szputy.com:9885','https://192.168.10.11:9880','https://hr.szputy.com:9880'].contains(uri.origin);
+  }
+  Future<String> authorizeResource(String value,{String purpose='preview',bool force=false}) async {
+    if(!['preview','save'].contains(purpose))throw StateError('Invalid resource purpose');
+    _syncResourceIdentity();
+    if(_publicBrandPath(value)!=null)return resolvePublicBrandResource(value);
+    if(!needsResourceGrant(value)) return value;
+    final generation=_resourceGeneration;
+    final source=_resourceSources[value] ?? value;
+    final key='''$generation|$purpose|$source|''' + (_userID?.call() ?? '') + '|' + (_baseUrl?.call() ?? '');
+    if(force)_resourceGrants.remove(key);
+    final cached=_resourceGrants[key];
+    if(cached!=null && (cached['expiresAt'] as num) > DateTime.now().millisecondsSinceEpoch/1000+30) return cached['url'] as String;
+    return _resourceFlights[key] ??= _authorizeResource(key,source,generation,purpose).whenComplete((){_resourceFlights.remove(key);});
+  }
+  Future<String> _authorizeResource(String key,String source,int generation,String purpose) async {
+    final result=await request('/attachment/authorize',{'url':source,'purpose':purpose});
+    _syncResourceIdentity();
+    if(generation!=_resourceGeneration) throw StateError('Resource session changed');
+    final url=result['url'] as String;
+    final target=Uri.parse(url), origin=Uri.parse(_baseUrl!.call()).origin;
+    if(target.scheme!='https' || target.origin!=origin || target.userInfo.isNotEmpty) throw StateError('Invalid attachment grant');
+    final proof=result['resourceProof'];
+    if(proof is! String||!RegExp(r'^[0-9a-f]{64}$').hasMatch(proof))throw StateError('Missing current resource proof');
+    _resourceGrants[key]=result;
+    _resourceProofs[url]=result;
+    _resourceSources[url]=source;
+    return url;
+  }
+  Map<String,String> resourceHeaders(String url){
+    _syncResourceIdentity();
+    if(!needsResourceGrant(url))return const {};
+    final target=Uri.tryParse(url),origin=Uri.tryParse(_baseUrl?.call()??'')?.origin;
+    final grant=_resourceProofs[url],expiry=(grant?['resourceProofExpiresAt'] as num?)?.toDouble()??0;
+    final until=expiry>100000000000?expiry/1000:expiry;
+    if(target?.origin!=origin||grant==null||until<=DateTime.now().millisecondsSinceEpoch/1000)throw StateError('Current resource proof unavailable');
+    return {'X-Puty-Resource-Proof':grant['resourceProof'] as String};
+  }
+  Future<Uint8List> readResourceBytes(String source) async {
+    final generation=resourceGeneration;
+    for(var attempt=0;attempt<2;attempt++){
+      final url=await authorizeResource(source,force:attempt==1);
+      if(generation!=resourceGeneration)throw StateError('Resource session changed');
+      final cancel=CancelToken();
+      try {
+        final response=await _dio.get<ResponseBody>(url,cancelToken:cancel,options:Options(responseType:ResponseType.stream,headers:resourceHeaders(url),followRedirects:false,maxRedirects:0));
+        final body=response.data;if(body==null)throw StateError('Protected resource unavailable');
+        final expected=int.tryParse(body.headers[Headers.contentLengthHeader]?.firstOrNull??'');
+        if(expected!=null&&expected>32*1024*1024)throw StateError('Protected image limit exceeded');
+        final bytes=BytesBuilder(copy:true);var total=0;
+        try{await for(final chunk in body.stream){if(generation!=resourceGeneration)throw StateError('Resource session changed');total+=chunk.length;if(total>32*1024*1024)throw StateError('Protected image limit exceeded');bytes.add(chunk);}if(generation!=resourceGeneration)throw StateError('Resource session changed');return bytes.takeBytes();}
+        catch(_){final pending=bytes.takeBytes();pending.fillRange(0,pending.length,0);rethrow;}
+      }on DioException catch(error){if(attempt==0&&error.response?.statusCode==403)continue;rethrow;}
+      finally{cancel.cancel('Protected resource transfer completed');}
+    }
+    throw StateError('Protected image unavailable');
+  }
+  Future<void> authorizeResources(dynamic value) async {
+    const keys={'url','faceurl','senderfaceurl','sourceurl','snapshoturl','videourl','soundurl','fileurl','imageurl','pictureurl','coverurl'};
+    if(value is Map) {
+      await Future.wait(value.keys.toList().map((key) async {
+        final item=value[key];
+        if(item is String && keys.contains(key.toString().toLowerCase())) {
+          try { value[key]=await authorizeResource(item); } catch (_) {}
+        } else if(item is Map || item is List) { await authorizeResources(item); }
+      }));
+    } else if(value is List) {
+      await Future.wait(value.map(authorizeResources));
+    }
+  }
   final Dio _dio;
   EnterpriseManager({Dio? dio})
     : _dio =
@@ -304,6 +407,11 @@ class EnterpriseManager {
   }
 
   void dispose() {
+    _resourceGeneration++;
+    _resourceGrants.clear();
+    _resourceProofs.clear();
+    _resourceSources.clear();
+    _resourceFlights.clear();
     invalidateCallTerminations();
     _timer?.cancel();
     _cursor = -1;

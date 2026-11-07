@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 // Formal111 production AppNavigator regression; four route timing cases.
 // Uses the actual AppNavigator, LoginBinding, LoginPage and LoginLogic.
 // Only SDK/push dependencies, SharedPreferences and package metadata are fake.
@@ -16,6 +18,13 @@ import 'package:openim/routes/app_navigator.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'native_settings_mock.dart';
+
+class _CaptchaAdapter implements HttpClientAdapter {
+ @override Future<ResponseBody> fetch(RequestOptions options,Stream<Uint8List>? stream,Future<void>? cancel)async =>
+   ResponseBody.fromString('{"code":0,"data":{"show":false}}',200,headers:{Headers.contentTypeHeader:['application/json']});
+ @override void close({bool force=false}){}
+}
 
 class _InertDependency extends Fake {
   final onStart = InternalFinalCallback<void>(callback: () {});
@@ -105,28 +114,15 @@ Future<LoginLogic> _assertEditableAndClear(WidgetTester tester) async {
   await tester.enterText(fields.at(1), 'x' * 46);
   await tester.pump();
   expect(logic.enabled.value, isTrue);
-  expect(tester.widget<Button>(find.byType(Button)).enabled, isTrue);
-  final accountBox = find.ancestor(
-    of: fields.at(0),
-    matching: find.byType(InputBox),
-  );
-  expect(accountBox, findsOneWidget);
-  // In email mode the account InputBox has one translucent GestureDetector:
-  // its actual clear button (the optional country-code control is absent).
-  final clearButton = find.descendant(
-    of: accountBox,
-    matching: find.byWidgetPredicate((widget) =>
-        widget is GestureDetector &&
-        widget.behavior == HitTestBehavior.translucent &&
-        widget.onTap != null),
-  );
-  expect(clearButton, findsOneWidget);
+  expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNotNull);
+  final clearButton=find.byKey(const Key('clear-unified-account'));
+  expect(clearButton,findsOneWidget);
   await tester.tap(clearButton);
   await tester.pump();
   expect(logic.phoneCtrl.text, isEmpty);
   expect(tester.widget<TextField>(fields.at(0)).controller!.text, isEmpty);
   expect(logic.enabled.value, isFalse);
-  expect(tester.widget<Button>(find.byType(Button)).enabled, isFalse);
+  expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
   expect(tester.takeException(), isNull);
   return logic;
 }
@@ -134,7 +130,9 @@ Future<LoginLogic> _assertEditableAndClear(WidgetTester tester) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() async {
+    installNativeSettingsMock();
     Get.testMode = true;
+    dio=Dio()..httpClientAdapter=_CaptchaAdapter();
     SharedPreferences.setMockInitialValues({'loginType': 1});
     await DataSp.init();
     PackageInfo.setMockInitialValues(

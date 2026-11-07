@@ -1,5 +1,9 @@
 .private/
 .cache/
+**/.cache/
+**/.private/
+services/.build/
+services/gosuxinwl/resource/suxinweb/
 artifacts/
 tools/go1.25.14/
 tools/go1.26.9/

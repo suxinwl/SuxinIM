@@ -14,7 +14,7 @@ const mocks = {
       getOneConversation:(...args)=>globalThis.__quoteFacadeTest.getOneConversation(...args),
     });`,
   "./enterprise": `export const enterpriseRequest=(...args)=>globalThis.__quoteFacadeTest.enterpriseRequest(...args);`,
-  "@/utils/storage": `export const getIMUserID=async()=>"synthetic-quote-facade-user";`,
+  "@/utils/storage": `export const getIMUserID=async()=>"synthetic-quote-facade-user";export const getSSOSession=async()=>({userID:"synthetic-quote-facade-user",sessionToken:"synthetic-quote-session"});`,
   "./database-close": `export const installDatabaseCloseBridge=()=>undefined;`,
 };
 const compiled = await build({

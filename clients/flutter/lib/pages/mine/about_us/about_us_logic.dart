@@ -17,7 +17,7 @@ class AboutUsLogic extends GetxController {
   void getPackageInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     version.value = packageInfo.version;
-    appName.value = packageInfo.appName;
+    appName.value = AppBrand.nameFrom(appLogic.clientConfigMap);
     buildNumber.value = packageInfo.buildNumber;
   }
 

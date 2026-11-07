@@ -3,7 +3,9 @@ package chat
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/chat/pkg/common/mctx"
 	"math/rand"
+	"openim38.local/identity"
 	"strconv"
 	"strings"
 	"time"
@@ -214,6 +216,11 @@ func (o *chatSvr) genVerifyCode() string {
 }
 
 func (o *chatSvr) RegisterUser(ctx context.Context, req *chat.RegisterUserReq) (*chat.RegisterUserResp, error) {
+	if identity.Required() {
+		if _, err := mctx.CheckAdmin(ctx); err != nil || req.User == nil || !identity.Managed(req.User.UserID) {
+			return nil, errs.ErrNoPermission.WrapMsg("accounts are managed by HRM")
+		}
+	}
 	isAdmin, err := o.Admin.CheckNilOrAdmin(ctx)
 	ctx = o.WithAdminUser(ctx)
 	if err != nil {
@@ -370,6 +377,9 @@ func (o *chatSvr) RegisterUser(ctx context.Context, req *chat.RegisterUserReq) (
 }
 
 func (o *chatSvr) Login(ctx context.Context, req *chat.LoginReq) (*chat.LoginResp, error) {
+	if identity.Required() {
+		return nil, errs.ErrNoPermission.WrapMsg("use HRM sign in")
+	}
 	resp := &chat.LoginResp{}
 	if req.Password == "" && req.VerifyCode == "" {
 		return nil, errs.ErrArgs.WrapMsg("password or code must be set")

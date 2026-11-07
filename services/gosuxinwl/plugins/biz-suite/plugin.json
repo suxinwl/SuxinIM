@@ -1,0 +1,10 @@
+{
+  "format": "suxin-runtime-v1",
+  "name": "biz-suite",
+  "title": "HRM、IM 与企业微信",
+  "version": "0.3.2",
+  "protocol": 1,
+  "os": "windows",
+  "arch": "amd64",
+  "files": {}
+}

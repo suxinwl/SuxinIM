@@ -1,0 +1,28 @@
+// =================================================================================
+// 控制层文件-分类
+// =================================================================================
+package packageName
+
+import (
+	"context"
+
+	"github.com/suxinwl/GoSuxin/api/{api_apth}"
+	"github.com/suxinwl/GoSuxin/internal/service"
+)
+
+func (c *Controller{firstModule}) CateList(ctx context.Context, req *{module}.CateListReq) (res *{module}.CateListRes, err error) {
+	res = &{module}.CateListRes{R: service.{serviceName}().CateList(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) CateSave(ctx context.Context, req *{module}.CateSaveReq) (res *{module}.CateSaveRes, err error) {
+	res = &{module}.CateSaveRes{R: service.{serviceName}().CateSave(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) CateStatus(ctx context.Context, req *{module}.CateStatusReq) (res *{module}.CateStatusRes, err error) {
+	res = &{module}.CateStatusRes{R: service.{serviceName}().CateStatus(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) CateDel(ctx context.Context, req *{module}.CateDelReq) (res *{module}.CateDelRes, err error) {
+	res = &{module}.CateDelRes{R: service.{serviceName}().CateDel(ctx, req)}
+	return
+}

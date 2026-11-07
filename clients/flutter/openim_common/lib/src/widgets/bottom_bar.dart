@@ -49,7 +49,8 @@ class BottomBar extends StatelessWidget {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    (i == index ? item.selectedImgRes.toImage : item.unselectedImgRes.toImage)
+                    if (item.icon != null) Icon(item.icon, size: item.imgWidth, color: i == index ? Styles.c_0089FF : Colors.grey)
+                    else (i == index ? item.selectedImgRes.toImage : item.unselectedImgRes.toImage)
                       ..width = item.imgWidth
                       ..height = item.imgHeight,
                     Positioned(
@@ -109,6 +110,7 @@ class BottomBar extends StatelessWidget {
 }
 
 class BottomBarItem {
+  final IconData? icon;
   final String selectedImgRes;
   final String unselectedImgRes;
   final String label;
@@ -122,7 +124,8 @@ class BottomBarItem {
   final int? count;
 
   BottomBarItem(
-      {required this.selectedImgRes,
+      {this.icon,
+      required this.selectedImgRes,
       required this.unselectedImgRes,
       required this.label,
       this.selectedStyle,

@@ -15,6 +15,7 @@ import {
 import { v4 as uuidV4 } from "uuid";
 
 import { usePublishMoments } from "@/api/moments";
+import { publishedMomentMedia } from "@/api/moments-media";
 import { IMSDK } from "@/layout/MainContentWrap";
 import { useFileMessage } from "@/pages/chat/queryChat/ChatFooter/SendActionBar/useFileMessage";
 import { CheckListItem } from "@/pages/common/ChooseModal/ChooseBox/CheckItem";
@@ -85,10 +86,8 @@ const PrepareContent: ForwardRefRenderFunction<
         ? MomentContentType.TextWithVideo
         : MomentContentType.TextWithImage,
       metas: uploadFileList.map((task) => ({
-        thumb: `${task.url as string}?type=image&width=420&height=420`,
+        ...publishedMomentMedia(task.url as string, task.width, task.height),
         original: task.response as string,
-        width: task.width,
-        height: task.height,
       })),
     };
     try {

@@ -33,6 +33,8 @@ export interface UserStore {
 }
 
 export interface AppConfig {
+  appName?: string;
+  webTitle?: string;
   discoverPageURL: string;
   ordinaryUserAddFriend: number;
   allowSendMsgNotFriend: number;
@@ -113,6 +115,8 @@ export type DownloadData = {
   showError?: boolean;
   saveType?: SaveType;
   randomName?: boolean;
+    fileName?: string;
+    fileSize?: number;
 };
 
 export interface GetMessageReverseParams {

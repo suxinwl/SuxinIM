@@ -21,6 +21,9 @@
   "toast": {
     "accessSuccess": "操作成功！",
     "accessFailed": "操作失败！",
+    "mediaPreparationTimeout": "读取图片或视频超时，请检查文件后重试。",
+    "mediaDecodeFailed": "无法读取图片或视频，请选择完整且受支持的文件。",
+    "imageLoadFailed": "图片加载失败",
     "getConversationFailed": "获取会话列表失败！",
     "getGroupInfoFailed": "获取群信息失败！",
     "getGroupMemberFailed": "获取群成员信息失败！",
@@ -457,6 +460,28 @@
     "pending": "等待验证",
     "applyToJoin": "申请加入",
     "applyToFriend": "申请添加您为好友"
+  },
+  "screenshotShortcut": {
+    "title": "截图快捷键",
+    "enabled": "启用全局截图快捷键",
+    "behavior": "客户端在后台运行时也可使用。截图确认后仅插入当前聊天或复制到剪贴板，不会自动发送。",
+    "combination": "快捷键组合",
+    "pressKeys": "请按下新的快捷键组合…",
+    "hint": "使用 Ctrl 或 Alt，搭配字母、数字或 F1–F24；可同时使用 Shift。系统保留组合不可使用。",
+    "record": "录制快捷键",
+    "stopRecording": "停止录制",
+    "restoreDefault": "恢复默认 Ctrl + Alt + A",
+    "recording": "正在录制，原截图快捷键暂时停用。按 Esc 或切换窗口可取消，录到有效组合后请点击保存。",
+    "cancel": "取消",
+    "save": "保存",
+    "loadFailed": "无法读取截图快捷键设置，请关闭后重试。",
+    "recordFailed": "无法完成快捷键录制，请停止录制或关闭后重试。",
+    "saveFailed": "快捷键未保存，请重试。",
+    "invalid": "该组合不可用。请使用 Ctrl 或 Alt，搭配字母、数字或 F1–F24，并避开系统保留组合。",
+    "reserved": "该组合由系统保留，请录制其他快捷键。",
+    "conflict": "该快捷键已被其他程序占用，或当前系统无法注册。请更换组合后保存。",
+    "storage": "本地偏好存储不可用，设置无法保存。请先在“本地存储 / 清理聊天记录”中修复或重新选择数据目录。",
+    "busy": "截图或其他快捷键设置正在使用中，请结束后重试。"
   },
   "errCode": {
     "passwordError": "密码错误",

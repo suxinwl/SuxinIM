@@ -3,16 +3,27 @@ plugins {
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
+def putyClientBrand = new groovy.json.JsonSlurper().parse(rootProject.file('../../brand.json'))
+def putyDisplayName = putyClientBrand.displayName
+if (!(putyDisplayName instanceof String) || putyDisplayName.trim().isEmpty()) throw new GradleException('Missing client brand display name')
 def signingProperties = new Properties()
 def signingFile = rootProject.file("key.properties")
 if (signingFile.exists()) signingFile.withInputStream { signingProperties.load(it) }
+def productionSigningProperties = new Properties()
+def productionSigningFile = rootProject.file('../../../.private/android-production-signing/signing.properties')
+if (productionSigningFile.exists()) productionSigningFile.withInputStream { productionSigningProperties.load(it) }
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('production') } && !productionSigningFile.exists()) {
+    throw new GradleException('Private enterprise Android production signing configuration is required')
+}
 // Explicit x86_64 override is only for the separately named private AVD
 // validation artifact. The default phone delivery remains ARM64.
 def openimAbi = providers.gradleProperty('openimTestAbi').getOrElse('arm64-v8a')
 if (!(openimAbi in ['arm64-v8a', 'x86_64'])) throw new GradleException('Unsupported OpenIM ABI')
 android {
     namespace "cn.rentsoft.flutter.openim.consumer"
-    compileSdk 35
+    // SQLCipher's approved AAR requires API36 at compile time. Runtime target
+    // and minimum Android versions remain independently configured below.
+    compileSdk 36
     buildToolsVersion "34.0.0"
     ndkVersion flutter.ndkVersion
     compileOptions {
@@ -22,15 +33,38 @@ android {
     }
     kotlinOptions { jvmTarget = '17' }
     buildFeatures { buildConfig true }
+    signingConfigs {
+        developmentRelease {
+            if (signingFile.exists()) {
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+                storeFile file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+            }
+        }
+        productionRelease {
+            if (productionSigningFile.exists()) {
+                keyAlias productionSigningProperties['keyAlias']
+                keyPassword productionSigningProperties['keyPassword']
+                storeFile file(productionSigningProperties['storeFile'])
+                storePassword productionSigningProperties['storePassword']
+            }
+        }
+    }
     flavorDimensions "environment"
     productFlavors {
         development {
             dimension "environment"
             applicationIdSuffix ".dev"
+            resValue "string", "app_name", putyDisplayName
+            signingConfig signingConfigs.developmentRelease
             buildConfigField "boolean", "TRUST_DEVELOPMENT_CA", "true"
         }
         production {
             dimension "environment"
+            applicationId "com.szputy.im"
+            resValue "string", "app_name", putyDisplayName
+            signingConfig signingConfigs.productionRelease
             buildConfigField "boolean", "TRUST_DEVELOPMENT_CA", "false"
         }
     }
@@ -44,18 +78,8 @@ android {
         multiDexEnabled true
         manifestPlaceholders = [GETUI_APPID:System.getenv('OPENIM_GETUI_APP_ID') ?: "",XIAOMI_APP_ID:"",XIAOMI_APP_KEY:"",MEIZU_APP_ID:"",MEIZU_APP_KEY:"",HUAWEI_APP_ID:"",OPPO_APP_KEY:"",OPPO_APP_SECRET:"",VIVO_APP_ID:"",VIVO_APP_KEY:"",HONOR_APP_ID:""]
     }
-    signingConfigs {
-        release {
-            if (signingFile.exists()) {
-                keyAlias signingProperties['keyAlias']
-                keyPassword signingProperties['keyPassword']
-                storeFile file(signingProperties['storeFile'])
-                storePassword signingProperties['storePassword']
-            }
-        }
-    }
     buildTypes {
-        release { signingConfig signingConfigs.release }
+        release { }
     }
     packagingOptions {
         jniLibs { pickFirsts += ['**/libc++_shared.so'] }

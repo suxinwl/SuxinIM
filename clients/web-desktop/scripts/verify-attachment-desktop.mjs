@@ -1,0 +1,25 @@
+// Exact packaged ASAR/installer proof, without accounts or production requests.
+import asar from '@electron/asar';
+import fs from 'node:fs/promises';
+import {createHash,X509Certificate} from 'node:crypto';
+import path from 'node:path';
+const client=path.resolve(import.meta.dirname,'..'),suite=path.resolve(client,'../..');
+const version=JSON.parse(await fs.readFile(path.join(client,'build-version.json'),'utf8'));
+if(version.version!=='3.8.10' || version.build!==381001)throw new Error('Unexpected attachment candidate version');
+const packagePath=path.join(client,'release/win-unpacked/resources/app.asar');
+const extract=name=>asar.extractFile(packagePath,path.normalize(name));
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const pkg=JSON.parse(extract('package.json'));
+if(pkg.version!==version.version || pkg.name!=='openim-enterprise-upgrade')throw new Error('Packaged application identity mismatch');
+const index=extract('dist/index.html').toString();
+if(!index.includes('<title>PUTY内部通讯</title>') || !index.includes('favicon-32x32.png?v=647fa79d564a21d1'))throw new Error('Packaged brand mismatch');
+for(const asset of ['favicon-32x32.png','icons/icon.png','icons/icon.ico','icons/tray.png','icons/tray@2x.png'])if(sha(extract('dist/'+asset))!==sha(await fs.readFile(path.join(client,'public',asset))))throw new Error('Packaged icon mismatch');
+const root=new X509Certificate(await fs.readFile(path.join(client,'release/win-unpacked/resources/extraResources/certificates/Puty-Enterprise-Root-CA.crt')));
+if(sha(root.raw)!=='836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69')throw new Error('Packaged trust root mismatch');
+const sdk=JSON.parse(extract('dist/sdk-assets.json'));
+for(const asset of sdk.assets)if(sha(extract('dist/'+asset.file))!==asset.sha256)throw new Error('Packaged pinned SDK mismatch');
+const installer=await fs.readFile(path.join(client,`release/PUTY_IM-${version.version}-win-x64.exe`));
+const report={...version,name:'PUTY内部通讯',applicationID:'io.openim.enterprise.upgrade38',stablePackageName:pkg.name,enterpriseRootDER_SHA256:sha(root.raw),pinnedSDKAssetCount:sdk.assets.length,packagedBrandMatched:true,installerSHA256:sha(installer),installerBytes:installer.length,authenticodeSigned:false,scope:'Static packaged bytes; UI and installation are verified separately'};
+const output=path.join(suite,'.private/production/acceptance/attachment-20261103/windows-static.json');
+await fs.writeFile(output,JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify(report));

@@ -26,6 +26,9 @@ import { OverlayVisibleHandle, useOverlayVisible } from "@/hooks/useOverlayVisib
 import { IMSDK } from "@/layout/MainContentWrap";
 import { useMessageStore } from "@/store";
 import { getConversationContent } from "@/utils/imCommon";
+import { DirectoryPerson, getDirectory } from "@/api/directory";
+import emitter from "@/utils/events";
+import DirectoryPanel from "./DirectoryPanel";
 
 import ChatLogsPanel from "./ChatLogsPanel";
 import ContactPanel from "./ContactPanel";
@@ -43,7 +46,7 @@ export type ChatLogsItem = SearchMessageResultItem & {
   description: string;
 };
 
-const TabKeys = ["DashBoard", "Friends", "Groups", "ChatLogs", "HistoryFiles"] as const;
+const TabKeys = ["DashBoard", "Colleagues", "Friends", "Groups", "ChatLogs", "HistoryFiles"] as const;
 
 export type TabKey = (typeof TabKeys)[number];
 
@@ -52,6 +55,12 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
   ref,
 ) => {
   const [activeKey, setActiveKey] = useState<TabKey>("DashBoard");
+  const [employees, setEmployees] = useState<DirectoryPerson[]>([]);
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [employeeError, setEmployeeError] = useState("");
+  const [employeeTotal, setEmployeeTotal] = useState(0);
+  const [employeePage, setEmployeePage] = useState(1);
+  const employeeGeneration = useRef(0);
   const [friends, setFriends] = useState<SearchData<FriendUserItem>>({
     data: [],
     loading: false,
@@ -77,7 +86,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
 
   useEffect(() => {
     if (isOverlayOpen && location.hash.startsWith("#/contact")) {
-      setActiveKey("Friends");
+      setActiveKey("Colleagues");
     }
   }, [isOverlayOpen]);
 
@@ -133,12 +142,26 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
     [],
   );
 
+  const searchEmployees = async (keyword: string, page = 1) => {
+    const attempt = ++employeeGeneration.current;
+    setEmployees([]); setEmployeeLoading(true); setEmployeeError(""); setEmployeePage(page);
+    try {
+      const result = await getDirectory({ keyword, page, pageSize: 20 });
+      if (attempt !== employeeGeneration.current || latestKeyword.current !== keyword) return;
+      setEmployees(result.items ?? []); setEmployeeTotal(result.total ?? 0);
+    } catch (_) {
+      if (attempt === employeeGeneration.current) setEmployeeError("员工搜索暂不可用，请重试");
+    } finally { if (attempt === employeeGeneration.current) setEmployeeLoading(false); }
+  };
+  const employeePanel = (summary = false) => <DirectoryPanel people={employees} loading={employeeLoading} error={employeeError} total={employeeTotal} page={employeePage} searched={Boolean(latestKeyword.current)} summary={summary}
+    onPage={page => searchEmployees(latestKeyword.current, page)} onMore={() => setActiveKey("Colleagues")}
+    onOpen={person => { closeOverlay(); emitter.emit("OPEN_USER_CARD", { userID: person.userID }); }} />;
   const items = [
     {
       key: "DashBoard",
       label: t("placeholder.overview"),
       children: (
-        <DashboardPanel
+        <div className="flex h-full flex-col">{employeePanel(true)}<div className="min-h-0 flex-1"><DashboardPanel
           isActive={activeKey === "DashBoard"}
           friends={friends}
           groups={groups}
@@ -147,9 +170,10 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
           closeOverlay={closeOverlay}
           toggleTab={toggleTab}
           toggleChatLogActive={toggleChatLogActive}
-        />
+        /></div></div>
       ),
     },
+    { key: "Colleagues", label: "企业同事", children: employeePanel() },
     {
       key: "Friends",
       label: t("placeholder.contacts"),
@@ -317,6 +341,8 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
   };
 
   const resetState = () => {
+    employeeGeneration.current++;
+    setEmployees([]); setEmployeeLoading(false); setEmployeeError(""); setEmployeeTotal(0); setEmployeePage(1);
     latestKeyword.current = "";
     setFriends({
       data: [],
@@ -342,6 +368,8 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
     keyword = keyword.trim();
     latestKeyword.current = keyword;
     if (!keyword) {
+      employeeGeneration.current++;
+      setEmployees([]); setEmployeeLoading(false); setEmployeeError(""); setEmployeeTotal(0);
       setFriends({ data: [], loading: false });
       setGroups({ data: [], loading: false });
       setChatLogs({ data: [], loading: false });
@@ -349,6 +377,7 @@ const GlobalSearchModal: ForwardRefRenderFunction<OverlayVisibleHandle, unknown>
       return;
     }
     searchFriend(keyword);
+    searchEmployees(keyword);
     searchGroup(keyword);
     searchChatLogs(keyword);
     searchHistoryFiles(keyword);
@@ -426,6 +455,7 @@ const SearchBar: ForwardRefRenderFunction<
   return (
     <div className="px-6">
       <Input
+        placeholder="搜索手机号、姓名、工号或聊天内容"
         allowClear
         prefix={<SearchOutlined />}
         value={keyword}

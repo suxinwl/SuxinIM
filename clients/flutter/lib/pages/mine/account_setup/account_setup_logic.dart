@@ -4,6 +4,7 @@ import 'package:openim/routes/app_navigator.dart';
 import 'package:openim_common/openim_common.dart';
 
 import '../../../core/controller/im_controller.dart';
+import '../../login/password_change_page.dart';
 
 class AccountSetupLogic extends GetxController {
   final imLogic = Get.find<IMController>();
@@ -107,14 +108,11 @@ class AccountSetupLogic extends GetxController {
   void blacklist() => AppNavigator.startBlacklist();
 
   void clearChatHistory() async {
-    var confirm = await Get.dialog(CustomDialog(
-      title: StrRes.confirmClearChatHistory,
-    ));
-    if (confirm == true) {
-      LoadingView.singleton.wrap(asyncFunction: () async {
-        await AppIm.iMManager.messageManager.deleteAllMsgFromLocalAndSvr();
-      });
-    }
+    await Get.to(() => LocalArchivePage(onRestored: () async {
+          await imLogic.logout();
+          await DataSp.removeLoginCertificate();
+          AppNavigator.startLogin();
+        }));
   }
 
   void languageSetting() => AppNavigator.startLanguageSetup();
@@ -136,5 +134,11 @@ class AccountSetupLogic extends GetxController {
 
   void unlockSetup() => AppNavigator.startUnlockSetup();
 
-  void changePwd() => AppNavigator.startChangePassword();
+  void changePwd() async {
+    if (await Get.to<bool>(() => const PasswordChangePage()) == true) {
+      await imLogic.logout(revokeSession: false);
+      await DataSp.removeLoginCertificate();
+      AppNavigator.startLogin();
+    }
+  }
 }

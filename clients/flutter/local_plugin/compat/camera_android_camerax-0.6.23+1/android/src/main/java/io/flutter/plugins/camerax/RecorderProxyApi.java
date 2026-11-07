@@ -7,6 +7,8 @@ package io.flutter.plugins.camerax;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.camera.video.FileOutputOptions;
+import androidx.camera.video.FileDescriptorOutputOptions;
+import android.os.ParcelFileDescriptor;
 import androidx.camera.video.PendingRecording;
 import androidx.camera.video.QualitySelector;
 import androidx.camera.video.Recorder;
@@ -60,14 +62,12 @@ class RecorderProxyApi extends PigeonApiRecorder {
   @NonNull
   @Override
   public PendingRecording prepareRecording(Recorder pigeonInstance, @NonNull String path) {
-    final File temporaryCaptureFile = openTempFile(path);
-    final FileOutputOptions fileOutputOptions =
-        new FileOutputOptions.Builder(temporaryCaptureFile).build();
-
-    final PendingRecording pendingRecording =
-        pigeonInstance.prepareRecording(getPigeonRegistrar().getContext(), fileOutputOptions);
-
-    return pendingRecording;
+    ProtectedRecording resource=ProtectedRecording.open(path);
+    try {
+      final FileDescriptorOutputOptions output=new FileDescriptorOutputOptions.Builder(resource.descriptor).build();
+      PendingRecording pending=pigeonInstance.prepareRecording(getPigeonRegistrar().getContext(),output);
+      ProtectedRecording.put(pending,resource);return pending;
+    }catch(RuntimeException rejected){resource.finish();throw rejected;}
   }
 
   @NonNull

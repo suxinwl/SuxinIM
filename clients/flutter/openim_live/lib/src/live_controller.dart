@@ -15,6 +15,17 @@ import 'package:uuid/uuid.dart';
 
 import '../openim_live.dart';
 
+/// Safe to show in a toast. The original failure stays in memory for diagnosis;
+/// it is never interpolated into user messages or logs.
+class CallSignalingFailure implements Exception {
+  CallSignalingFailure._(this.code, this.cause, this.originalStack);
+  final String code;
+  final Object cause;
+  final StackTrace originalStack;
+  @override
+  String toString() => code;
+}
+
 /// 信令
 mixin OpenIMLive {
   final signalingSubject = PublishSubject<CallEvent>();
@@ -330,12 +341,14 @@ mixin OpenIMLive {
     );
   }
 
-  onError(error, stack) {
-    Logger.print('onError=====> $error $stack');
+  void onError(error, stack) {
+    final cause = error is CallSignalingFailure ? error.cause : error;
+    final diagnostic = error is CallSignalingFailure ? error.code : 'CALL_CONNECTION_FAILED';
+    Logger.print('Call failed: $diagnostic');
     OpenIMLiveClient().close();
     _stopSound();
-    if (error is PlatformException) {
-      if (int.tryParse(error.code) == SDKErrorCode.hasBeenBlocked) {
+    if (cause is PlatformException) {
+      if (int.tryParse(cause.code) == SDKErrorCode.hasBeenBlocked) {
         IMViews.showToast(StrRes.callFail);
         return;
       }
@@ -349,36 +362,50 @@ mixin OpenIMLive {
     );
   }
 
+  Future<SignalingCertificate> _signalingCertificate(
+    String code,
+    Future<SignalingCertificate> Function() request,
+  ) async {
+    try {
+      return await request();
+    } catch (error, stack) {
+      final failure = CallSignalingFailure._(code, error, stack);
+      try {
+        onError(failure, stack);
+      } catch (_) {
+        Logger.print('Call failure observer failed');
+      }
+      Error.throwWithStackTrace(failure, stack);
+    }
+  }
+
   /// 拨向单人
   Future<SignalingCertificate> onDialSingle(SignalingInfo signaling) =>
-      AppIm.iMManager.signalingManager
-          .signalingInvite(
+      _signalingCertificate('CALL_SIGNAL_INVITE_FAILED', () =>
+          AppIm.iMManager.signalingManager.signalingInvite(
             info: signaling
               ..invitation?.timeout = 30
               ..offlinePushInfo =
                   (Config.offlinePushInfo..title = StrRes.offlineCallMessage),
-          )
-          .catchError(onError);
+          ));
 
   /// 拨向多人
   Future<SignalingCertificate> onDialGroup(SignalingInfo signaling) =>
-      AppIm.iMManager.signalingManager
-          .signalingInviteInGroup(
+      _signalingCertificate('CALL_SIGNAL_GROUP_INVITE_FAILED', () =>
+          AppIm.iMManager.signalingManager.signalingInviteInGroup(
             info: signaling
               ..invitation?.timeout = 30
               ..offlinePushInfo =
                   (Config.offlinePushInfo..title = StrRes.offlineCallMessage),
-          )
-          .catchError(onError);
+          ));
 
   /// 接听
   Future<SignalingCertificate> onTapPickup(SignalingInfo signaling) {
-    _beCalledEvent = null; // ios bug
+    _beCalledEvent = null;
     _autoPickup = false;
     _stopSound();
-    return AppIm.iMManager.signalingManager
-        .signalingAccept(info: signaling)
-        .catchError(onError);
+    return _signalingCertificate('CALL_SIGNAL_ACCEPT_FAILED', () =>
+        AppIm.iMManager.signalingManager.signalingAccept(info: signaling));
   }
 
   /// 拒绝

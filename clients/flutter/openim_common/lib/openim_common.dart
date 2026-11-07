@@ -1,6 +1,13 @@
 library openim_common;
 
+export 'src/native_local_vault.dart';
+export 'src/utils/protected_resource_image.dart';
+export 'src/widgets/local_archive_page.dart';
+export 'src/brand.g.dart';
+
 export 'src/apis.dart';
+export 'src/hrm_sso.dart';
+export 'src/hrm_directory.dart';
 export 'src/bridge/package_bridge.dart';
 export 'src/config.dart';
 export 'src/controller/cache_controller.dart';
@@ -116,3 +123,6 @@ export 'src/widgets/unread_count_view.dart';
 export 'src/widgets/verify_code_send_button.dart';
 export 'src/utils/safe_ringtone.dart';
 export 'src/widgets/views.dart';
+export 'src/widgets/protected_file_page.dart';
+export 'src/native_media_asset.dart';
+export 'src/widgets/protected_camera.dart';

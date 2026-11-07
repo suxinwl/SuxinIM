@@ -1,0 +1,15 @@
+{
+	admin off
+	persist_config off
+	auto_https off
+	storage file_system {
+		root ./storage/caddy
+	}
+}
+
+# Replace the hostname and supply your certificate/key outside Git.
+https://attendance.example.com:9880 {
+	bind 0.0.0.0
+	tls ./runtime/tls/site/cert.pem ./runtime/tls/site/key.pem
+	reverse_proxy 127.0.0.1:19880
+}

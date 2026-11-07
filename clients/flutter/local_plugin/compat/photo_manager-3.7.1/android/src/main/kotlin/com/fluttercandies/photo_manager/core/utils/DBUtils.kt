@@ -249,7 +249,14 @@ object DBUtils : IDBUtils {
 
     override fun getFilePath(context: Context, id: String, origin: Boolean): String {
         val assetEntity = getAssetEntity(context, id) ?: throwIdNotFound(id)
-        return assetEntity.path
+        // Android 7/8 legacy MediaStore has a real external source path. Read
+        // the explicitly selected original directly into encrypted storage;
+        // never hand a plaintext path to the shared sender/player pipeline.
+        val source=File(assetEntity.path)
+        val name=assetEntity.displayName.ifEmpty { source.name }
+        return Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles")
+            .getMethod("importUri",Context::class.java,android.net.Uri::class.java,String::class.java)
+            .invoke(null,context,android.net.Uri.fromFile(source),name) as String
     }
 
     override fun copyToGallery(context: Context, assetId: String, galleryId: String): AssetEntity {

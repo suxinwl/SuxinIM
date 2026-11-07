@@ -32,7 +32,7 @@ class PendingRecordingProxyApi extends PigeonApiPendingRecording {
   @NonNull
   @Override
   public PendingRecording asPersistentRecording(PendingRecording pigeonInstance) {
-    return pigeonInstance.asPersistentRecording();
+    PendingRecording next=pigeonInstance.asPersistentRecording();ProtectedRecording.transfer(pigeonInstance,next);return next;
   }
 
   @NonNull
@@ -42,17 +42,20 @@ class PendingRecordingProxyApi extends PigeonApiPendingRecording {
         && ContextCompat.checkSelfPermission(
                 getPigeonRegistrar().getContext(), Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED) {
-      return pigeonInstance.withAudioEnabled(false);
+      PendingRecording next=pigeonInstance.withAudioEnabled(false);ProtectedRecording.transfer(pigeonInstance,next);return next;
     }
 
-    return pigeonInstance.withAudioEnabled(true);
+    PendingRecording next=pigeonInstance.withAudioEnabled(true);ProtectedRecording.transfer(pigeonInstance,next);return next;
   }
 
   @NonNull
   @Override
   public Recording start(
       PendingRecording pigeonInstance, @NonNull VideoRecordEventListener listener) {
-    return pigeonInstance.start(
-        ContextCompat.getMainExecutor(getPigeonRegistrar().getContext()), listener::onEvent);
+    ProtectedRecording resource=ProtectedRecording.take(pigeonInstance);
+    try{
+      Recording recording=pigeonInstance.start(ContextCompat.getMainExecutor(getPigeonRegistrar().getContext()),event->{try{listener.onEvent(event);}finally{if(event instanceof androidx.camera.video.VideoRecordEvent.Finalize)resource.finish();}});
+      resource.bind(recording);return recording;
+    }catch(RuntimeException rejected){resource.finish();throw rejected;}
   }
 }

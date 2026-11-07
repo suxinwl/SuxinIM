@@ -1,0 +1,60 @@
+{
+  "builtInImageEditing": true,
+  "prompt": "Remove only black exterior corners into true alpha transparency; preserve original blue rounded icon, badges and text; LOGO2 is the transparency reference.",
+  "files": [
+    {
+      "name": "IM.png",
+      "beforeSHA256": "a113a7dc502e7213d0492ce6dfda8851c1c0e38f006ed9c0b9b3e073e44f7c18",
+      "sha256": "647fa79d564a21d17b5af78740cc2d7d28728727f803d906120760fa63067730",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "name": "HR.png",
+      "beforeSHA256": "52ac7cfeaef6d8c65d2d0e3e2923312e215322499686391c4fe2efd808be9cd0",
+      "sha256": "709ebee9d5d43669a1636d9107d8c727f669d8cf01841eac21af4ea8ea5c4477",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "name": "Suxin.png",
+      "beforeSHA256": "fdfbe13a811c26b692687fc02e71a78f28b5b776b6592c7f0b688cd1cb9fe8f2",
+      "sha256": "1b587d12e0f78cf9641243d264488282ac2693d492ca4076b04a026c317476cd",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "name": "OA.png",
+      "beforeSHA256": "6bcf2a97c41b8715ffdc18394b6a869934226b37275706ec37a07f74a76cdc37",
+      "sha256": "a8dce40bf2cc548e47584afd7102cb2f15f662a3dd59aadb41f34a00430f89a3",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "name": "小工具.png",
+      "beforeSHA256": "e6959a956ac8d65719b5e920a61541a05466849f6b09cfb7b7a178af6ec15007",
+      "sha256": "589b36b15d82032ce0277d08e784d41e6f097f5feefdc137b6d7c8674d06fe39",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA"
+    }
+  ],
+  "referenceLOGO2SHA256": "e213b10a08a1b2f331c7040790b4435812b05de1d0db15f80600c0efed9ba205",
+  "referenceUnchanged": true,
+  "originalBackup": "E:\\suxinlogo\\backup-before-transparent-20261103",
+  "whiteAndDarkBackgroundPreview": ".cache/transparent-brand-qa/preview.png"
+}

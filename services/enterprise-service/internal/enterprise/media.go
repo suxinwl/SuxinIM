@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"openim38.local/identity"
 	"strings"
 	"time"
 
@@ -48,8 +49,14 @@ func NewLiveKit(base, public, key, secret string) (*LiveKit, error) {
 	lk.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, e error) { writeError(w, e) }
 	return lk, nil
 }
-func (l *LiveKit) GatewayURL() string                           { return l.PublicURL }
-func (l *LiveKit) Proxy(w http.ResponseWriter, r *http.Request) { l.proxy.ServeHTTP(w, r) }
+func (l *LiveKit) GatewayURL() string { return l.PublicURL }
+func (l *LiveKit) Proxy(w http.ResponseWriter, r *http.Request) {
+	if identity.Required() && isSignalUpgrade(r) {
+		l.proxySignal(w, r)
+		return
+	}
+	l.proxy.ServeHTTP(w, r)
+}
 func (l *LiveKit) Token(room, user string, sources []string, lease, metadata string) (string, error) {
 	g := &auth.VideoGrant{RoomJoin: true, Room: room, CanPublishSources: sources}
 	g.SetCanPublish(len(sources) > 0)
@@ -237,6 +244,9 @@ func (s *Server) issueMediaToken(ctx context.Context, a Actor, r Room) (any, err
 	if err != nil {
 		return nil, err
 	}
+	// Persist only the trusted issuance context, never a caller-supplied Actor
+	// field or an origin/source-IP inference. Background checks have no ingress.
+	a.EntryZone = identity.EntryZoneFromContext(ctx)
 	encrypted, err := s.Cipher.seal(a)
 	if err != nil {
 		return nil, err
@@ -257,7 +267,11 @@ func (s *Server) issueMediaToken(ctx context.Context, a Actor, r Room) (any, err
 	}); err != nil {
 		return nil, err
 	}
-	return map[string]any{"token": token, "roomID": r.RoomID, "liveURL": s.Media.GatewayURL(), "meetingInfo": r.MeetingInfo}, nil
+	liveURL := s.Media.GatewayURL()
+	if a.EntryOrigin != "" {
+		liveURL = strings.Replace(a.EntryOrigin, "https://", "wss://", 1) + "/livekit"
+	}
+	return map[string]any{"token": token, "roomID": r.RoomID, "liveURL": liveURL, "meetingInfo": r.MeetingInfo}, nil
 }
 func (s *Server) mediaGateway(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("access_token")
@@ -292,11 +306,19 @@ func (s *Server) mediaGateway(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if identity.Required() {
+		currentIP, e := identity.ClientIP(r)
+		if e != nil {
+			writeError(w, forbidden("client address unavailable"))
+			return
+		}
+		actor.IP = currentIP
+	}
 	req, _ := http.NewRequestWithContext(r.Context(), "POST", "http://internal/session", nil)
 	req.Header.Set("token", actor.IMToken)
 	req.Header.Set("chatToken", actor.ChatToken)
 	req.Header.Set("X-Real-IP", actor.IP)
-	if _, err = s.Auth.Authenticate(r.Context(), req, false); err != nil {
+	if err = s.authenticateMediaActor(r.Context(), actor, req); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -341,6 +363,39 @@ func (s *Server) mediaGateway(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("Authorization", "Bearer "+upToken)
 	r.URL.Path = p
 	r.URL.RawPath = ""
+	if identity.Required() && isSignalUpgrade(r) {
+		ctx, cancel := context.WithCancel(r.Context())
+		defer cancel()
+		r = r.WithContext(ctx)
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					checkCtx, done := context.WithTimeout(ctx, 3*time.Second)
+					authErr := s.authenticateMediaActor(checkCtx, actor, req)
+					current, _, stateErr := load[Room](checkCtx, s.Store, "room:"+grant.RoomID)
+					done()
+					if authErr == nil && stateErr == nil && !current.ended() && current.CurrentLease[grant.UserID] == lease {
+						continue
+					}
+					// A delayed monitor may only remove its own current lease.
+					// Closing this captured socket is safe even if a newer lease won.
+					cancel()
+					if authErr != nil && stateErr == nil && current.CurrentLease[grant.UserID] == lease {
+						removeCtx, stop := context.WithTimeout(context.Background(), 2*time.Second)
+						_ = s.Media.Remove(removeCtx, grant.MediaRoom, grant.UserID)
+						stop()
+					}
+					cancel()
+					return
+				}
+			}
+		}()
+	}
 	s.Media.Proxy(w, r)
 }
 func (s *Server) participantMetadata(ctx context.Context, user string, r Room) (string, error) {

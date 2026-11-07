@@ -1,0 +1,13 @@
+import { build } from "esbuild";
+import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+const result = await build({ entryPoints: ["electron/main/localStore/crypto.ts"], bundle: true, write: false, platform: "node", format: "esm" });
+const { seal, unseal, CHUNK_SIZE } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`);
+const master = Buffer.alloc(32, 17), noncePrefix = Buffer.from("0001020304050607", "hex"), context = { account: "test_interop", type: "attachment", objectID: "synthetic-object-1" };
+const small = Buffer.from("PUTY 合成附件 / synthetic only\n"), large = Buffer.alloc(CHUNK_SIZE + 21, 97);
+const ciphertext = seal(master, context, small, noncePrefix), largeCipher = seal(master, context, large, noncePrefix);
+if (!unseal(master, context, ciphertext).equals(small)) throw new Error("Vector roundtrip failed");
+const fixture = { format: "PUTY-LOCAL-STORE-1", syntheticOnly: true, masterHex: master.toString("hex"), noncePrefixHex: noncePrefix.toString("hex"), context, plainBase64: small.toString("base64"), ciphertextBase64: ciphertext.toString("base64"), largeVector: { plainByte: 97, plainLength: large.length, ciphertextSHA256: createHash("sha256").update(largeCipher).digest("hex") } };
+await mkdir("../../sdks/local-store-fixtures", { recursive: true });
+await writeFile("../../sdks/local-store-fixtures/format-v1.json", JSON.stringify(fixture, null, 2) + "\n");
+console.log(JSON.stringify({ syntheticOnly: true, fixture: "sdks/local-store-fixtures/format-v1.json", smallBytes: ciphertext.length, largeCiphertextSHA256: fixture.largeVector.ciphertextSHA256 }));

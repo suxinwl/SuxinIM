@@ -1,9 +1,14 @@
 module github.com/openimsdk/open-im-server/v3
 
+replace openim38.local/identity => ../identity
+
+require openim38.local/identity v0.0.0
+
 go 1.25.0
 
 require (
 	firebase.google.com/go/v4 v4.14.1
+	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/dtm-labs/rockscache v0.1.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.20.0
@@ -26,6 +31,8 @@ require (
 
 require github.com/google/uuid v1.6.0
 
+require github.com/yuin/gopher-lua v1.1.1 // indirect
+
 require (
 	github.com/IBM/sarama v1.43.0
 	github.com/fatih/color v1.14.1
@@ -36,7 +43,7 @@ require (
 	github.com/kelindar/bitmap v1.5.2
 	github.com/likexian/gokit v0.25.13
 	github.com/openimsdk/gomake v0.0.17
-	github.com/redis/go-redis/v9 v9.4.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/viper v1.18.2

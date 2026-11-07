@@ -19,6 +19,7 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"openim38.local/identity"
 
 	"github.com/openimsdk/chat/pkg/common/constant"
 	"github.com/openimsdk/chat/pkg/common/mctx"
@@ -26,6 +27,9 @@ import (
 )
 
 func (o *chatSvr) ResetPassword(ctx context.Context, req *chat.ResetPasswordReq) (*chat.ResetPasswordResp, error) {
+	if identity.Required() {
+		return nil, errs.ErrNoPermission.WrapMsg("passwords are managed by HRM")
+	}
 	if req.Password == "" {
 		return nil, errs.ErrArgs.WrapMsg("password must be set")
 	}
@@ -71,6 +75,9 @@ func (o *chatSvr) ResetPassword(ctx context.Context, req *chat.ResetPasswordReq)
 }
 
 func (o *chatSvr) ChangePassword(ctx context.Context, req *chat.ChangePasswordReq) (*chat.ChangePasswordResp, error) {
+	if identity.Required() {
+		return nil, errs.ErrNoPermission.WrapMsg("passwords are managed by HRM")
+	}
 	if req.NewPassword == "" {
 		return nil, errs.ErrArgs.WrapMsg("new password must be set")
 	}

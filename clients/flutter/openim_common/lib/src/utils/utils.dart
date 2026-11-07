@@ -2,6 +2,7 @@ import 'package:video_compress/video_compress.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:android_path_provider/android_path_provider.dart';
 import 'package:azlistview/azlistview.dart';
@@ -33,6 +34,7 @@ import 'package:sprintf/sprintf.dart';
 import 'package:uri_to_file/uri_to_file.dart';
 
 import '../widgets/chat/chat_preview_merge_message.dart';
+import '../widgets/private_crop_page.dart';
 
 /// 间隔时间完成某事
 class IntervalDo {
@@ -70,36 +72,15 @@ class MediaSource {
 class IMUtils {
   IMUtils._();
 
-  static Future<CroppedFile?> uCrop(String path) {
-    return ImageCropper().cropImage(
-      sourcePath: path,
-      uiSettings: [
-        AndroidUiSettings(
-          aspectRatioPresets: [
-        CropAspectRatioPreset.square,
-        CropAspectRatioPreset.ratio3x2,
-        CropAspectRatioPreset.original,
-        CropAspectRatioPreset.ratio4x3,
-        CropAspectRatioPreset.ratio16x9
-      ],
-          toolbarTitle: '',
-          toolbarColor: Styles.c_0089FF,
-          toolbarWidgetColor: Colors.white,
-          initAspectRatio: CropAspectRatioPreset.square,
-          lockAspectRatio: false,
-        ),
-        IOSUiSettings(
-          aspectRatioPresets: [
-        CropAspectRatioPreset.square,
-        CropAspectRatioPreset.ratio3x2,
-        CropAspectRatioPreset.original,
-        CropAspectRatioPreset.ratio4x3,
-        CropAspectRatioPreset.ratio16x9
-      ],
-          title: '',
-        ),
-      ],
-    );
+  static String messageSourceName(Message message,String source){
+    if(message.isFileType&&message.fileElem?.fileName?.isNotEmpty==true)return message.fileElem!.fileName!;
+    try{final extra=jsonDecode(message.ex??'{}');if(extra is Map&&extra['putySourceName'] is String&&(extra['putySourceName'] as String).isNotEmpty)return extra['putySourceName'] as String;}catch(_){}
+    final uri=Uri.tryParse(source);return uri?.pathSegments.isNotEmpty==true?uri!.pathSegments.last:'附件.bin';
+  }
+
+  static Future<CroppedFile?> uCrop(String path) async {
+    final result=await Get.to<String>(()=>PrivateCropPage(path));
+    return result==null?null:CroppedFile(result);
   }
 
   static String getSuffix(String url) {
@@ -162,11 +143,7 @@ class IMUtils {
     return info;
   }
 
-  static saveMediaToGallery(String mimeType, String cachePath) async {
-    if (mimeType.contains('video') || mimeType.contains('image')) {
-      await ImageGallerySaver.saveFile(cachePath);
-    }
-  }
+  static saveMediaToGallery(String mimeType,String cachePath)async{throw StateError('附件只允许通过客户端加密保存');}
 
   static String? emptyStrToNull(String? str) => (null != str && str.trim().isEmpty) ? null : str;
 
@@ -181,18 +158,19 @@ class IMUtils {
 
   /// 获取视频缩略图
   static Future<File> getVideoThumbnail(File file) async {
-    final thumbnail = await VideoCompress.getFileThumbnail(file.path, quality: 80, position: 0);
-    if (!await thumbnail.exists() || await thumbnail.length() == 0) {
+    final thumbnail = Platform.isIOS?File(await NativeLocalVault.nativeThumbnail(file.path)):await VideoCompress.getFileThumbnail(file.path, quality: 80, position: 0);
+    if ((await NativeLocalVault.sourceInfo(thumbnail.path))['size'] == 0) {
       throw StateError('Unable to create video thumbnail');
     }
     return thumbnail;
   }
 
   static Future<File?> compressVideoAndGetFile(File file) async {
+    if(Platform.isIOS){final result=await NativeLocalVault.nativeCompress(file.path,"compress-${DateTime.now().microsecondsSinceEpoch}");return result==null?null:File(result['path'] as String);}
     final info = await VideoCompress.compressVideo(file.path,
       quality: VideoQuality.MediumQuality, deleteOrigin: false, includeAudio: true);
     final output = info?.file;
-    if (output == null || !await output.exists() || await output.length() == 0) {
+    if (output == null || (await NativeLocalVault.sourceInfo(output.path))['size'] == 0) {
       return null; // Cancelled/failed conversions must never send a broken output.
     }
     return output;
@@ -202,47 +180,29 @@ class IMUtils {
 
   ///  compress file and get file.
   static Future<File?> compressImageAndGetFile(File file, {int quality = 80}) async {
-    var path = file.path;
-    var name = path.substring(path.lastIndexOf("/") + 1);
-    var targetPath = await createTempFile(name: name, dir: 'pic');
-    if (name.endsWith('.gif')) {
-      return file;
-    }
-
-    CompressFormat format = CompressFormat.jpeg;
-    if (name.endsWith(".jpg") || name.endsWith(".jpeg")) {
-      format = CompressFormat.jpeg;
-    } else if (name.endsWith(".png")) {
-      format = CompressFormat.png;
-    } else if (name.endsWith(".heic")) {
-      format = CompressFormat.heic;
-    } else if (name.endsWith(".webp")) {
-      format = CompressFormat.webp;
-    }
-
-    var result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      targetPath,
-      quality: quality,
-      minWidth: 480,
-      minHeight: 800,
-      // minHeight: 1920,
-      // minWidth: 1080,
-      format: format,
-    );
-    return result != null ? File(result.path) : file;
+    final path=await NativeLocalVault.importSource(file.path);
+    final metadata=await NativeLocalVault.sourceInfo(path);
+    final name=metadata['name'] as String;
+    final extension=name.split('.').last.toLowerCase();
+    // Keep formats that the compressor cannot preserve exactly. Original names
+    // describe actual bytes, including GIF animation and HEIC imports.
+    if(!['jpg','jpeg','png'].contains(extension))return File(path);
+    final bytes=await NativeLocalVault.readSource(path);
+    try{
+      final result=Uint8List.fromList(await FlutterImageCompress.compressWithList(bytes,quality:quality,minWidth:480,minHeight:800,format:extension=='png'?CompressFormat.png:CompressFormat.jpeg));
+      try{
+        final output=await NativeLocalVault.sourceBytes(result,name);
+        if(output!=path)await NativeLocalVault.discard(path);
+        return File(output);
+      }finally{result.fillRange(0,result.length,0);}
+    }finally{bytes.fillRange(0,bytes.length,0);}
   }
 
   static Future<String> createTempFile({
     required String dir,
     required String name,
   }) async {
-    final storage = await createTempDir(dir: dir);
-    File file = File('$storage/$name');
-    if (!(await file.exists())) {
-      file.create();
-    }
-    return file.path;
+    return NativeLocalVault.scratch(name);
   }
 
   static Future<String> createTempDir({
@@ -276,14 +236,8 @@ class IMUtils {
     return diff;
   }
 
-  static int getPlatform() {
-    final context = Get.context!;
-    if (Platform.isAndroid) {
-      return context.isTablet ? 8 : 2;
-    } else {
-      return context.isTablet ? 9 : 1;
-    }
-  }
+  // Unified HRM sessions use one platform identity for phones and tablets.
+  static int getPlatform() => Platform.isAndroid ? 2 : 1;
 
   // md5 加密
   static String? generateMD5(String? data) {
@@ -1049,50 +1003,10 @@ class IMUtils {
   static void previewFile(Message message) async {
     final fileElem = message.fileElem;
     if (null != fileElem) {
-      final sourcePath = fileElem.filePath;
       final url = fileElem.sourceUrl;
       final fileName = fileElem.fileName;
-      final fileSize = fileElem.fileSize;
-      final dir = await getDownloadFileDir();
-      final cachePath = '$dir/${message.clientMsgID}_$fileName';
-      Logger.print('cachePath:$cachePath');
-      // 原路径
-      final isExitSourcePath = await isExitFile(sourcePath);
-      // 自己下载保存路径
-      final isExitCachePath = await isExitFile(cachePath);
-      // 网络地址
-      final isExitNetwork = isUrlValid(url);
-      String? availablePath;
-      if (isExitSourcePath) {
-        availablePath = sourcePath;
-      } else if (isExitCachePath) {
-        availablePath = cachePath;
-      }
-      final isAvailableFileSize = isExitSourcePath || isExitCachePath ? (await File(availablePath!).length() == fileSize) : false;
-      Logger.print('previewFile isAvailableFileSize: $isAvailableFileSize   isExitNetwork: $isExitNetwork');
-      if (isAvailableFileSize) {
-        String? mimeType = lookupMimeType(fileName ?? '');
-        if (null != mimeType && mimeType.contains('video')) {
-          previewVideo(Message()
-            ..clientMsgID = message.clientMsgID
-            ..contentType = MessageType.video
-            ..videoElem = VideoElem(videoPath: availablePath, videoUrl: url));
-        } else if (null != mimeType && mimeType.contains('image')) {
-          previewPicture(Message()
-            ..clientMsgID = message.clientMsgID
-            ..contentType = MessageType.picture
-            ..pictureElem = PictureElem(sourcePath: availablePath, sourcePicture: PictureInfo(url: url)));
-        } else {
-          openFileByOtherApp(availablePath);
-        }
-      } else {
-        if (isExitNetwork) {
-          if (Get.isRegistered<DownloadController>()) {
-            final controller = Get.find<DownloadController>();
-            controller.clickFileMessage(url!, cachePath);
-          }
-        }
-      }
+      if(url==null||fileName==null)return;
+      await Get.to(()=>ProtectedFilePage(name:fileName,source:url,message:message));
     }
   }
 
@@ -1105,6 +1019,7 @@ class IMUtils {
       ValueChanged<int>? onPageChanged,
       ValueChanged<OperateType>? onOperate}) {
     late PhotoBrowser photoBrowser;
+    final protectedBrowserController=PhotoBrowserController();
 
     void showBottomBar(int index) {
       if (onOperate == null) {
@@ -1116,21 +1031,7 @@ class IMUtils {
           final msg = mediaMessages[index];
           switch (type) {
             case OperateType.save:
-              if (msg.isVideoType) {
-                final cachedVideoControllerService = CachedVideoControllerService(DefaultCacheManager());
-                final cached = await cachedVideoControllerService.getCacheFile(msg.videoElem!.videoUrl!);
-
-                if (cached != null) {
-                  HttpUtil.saveFileToGallerySaver(cached);
-                } else {
-                  HttpUtil.saveUrlVideo(msg.videoElem!.videoUrl!);
-                }
-              } else {
-                final url = msg.pictureElem?.sourcePicture?.url;
-                if (url?.isNotEmpty == true) {
-                  HttpUtil.saveUrlPicture(url!);
-                }
-              }
+              await Get.find<DownloadController>().addDownloadForMessage(msg);
               break;
             case OperateType.forward:
               onOperate.call(type);
@@ -1168,14 +1069,7 @@ class IMUtils {
         bottom: 20,
         child: GestureDetector(
             onTap: () async {
-              if (msg.isVideoType) {
-                HttpUtil.saveUrlPicture(msg.videoElem!.videoUrl!);
-              } else {
-                final url = msg.pictureElem?.sourcePicture?.url;
-                if (url?.isNotEmpty == true) {
-                  HttpUtil.saveUrlPicture(url!);
-                }
-              }
+              await Get.find<DownloadController>().addDownloadForMessage(msg);
             },
             child: const Icon(
               Icons.download_sharp,
@@ -1199,7 +1093,7 @@ class IMUtils {
     photoBrowser = PhotoBrowser(
       itemCount: mediaMessages.length,
       initIndex: currentIndex,
-      // controller: logic.browserController,
+      controller:protectedBrowserController,
       allowSwipeDownToPop: false,
       // If allowPullDownToPop is true, the allowSwipeDownToPop setting is invalid.
       allowPullDownToPop: true,
@@ -1221,22 +1115,22 @@ class IMUtils {
         final msg = mediaMessages[index];
         final localPath = msg.pictureElem?.sourcePath;
         if (localPath != null && File(localPath).existsSync()) {
-          return ExtendedFileImageProvider(File(localPath));
+          return ProtectedResourceImage(localPath);
         }
         final url = msg.pictureElem?.bigPicture?.url ?? '';
 
-        return ExtendedNetworkImageProvider(url, cache: true);
+        return ProtectedResourceImage(url);
       },
       // Thumbnails setting.
       thumbImageProviderBuilder: (index) {
         final msg = mediaMessages[index];
         final localPath = msg.pictureElem?.sourcePath;
         if (localPath != null && File(localPath).existsSync()) {
-          return ExtendedFileImageProvider(File(localPath));
+          return ProtectedResourceImage(localPath);
         }
         final url = msg.pictureElem?.snapshotPicture?.url?.adjustThumbnailAbsoluteString(540) ?? '';
 
-        return ExtendedNetworkImageProvider(url, cache: true);
+        return ProtectedResourceImage(url);
       },
       // Called when the display type is DisplayType.custom.
       customChildBuilder: (int index) {
@@ -1286,19 +1180,11 @@ class IMUtils {
       },
     );
 
-    return photoBrowser.push(context);
+    final invalidated=NativeLocalVault.invalidated.listen((_){protectedBrowserController.closeProtected();});
+    return photoBrowser.push(context).whenComplete(()async{await invalidated.cancel();protectedBrowserController.dispose();});
   }
 
-  static openFileByOtherApp(String path) async {
-    OpenResult result = await OpenFilex.open(path);
-    if (result.type == ResultType.noAppToOpen) {
-      IMViews.showToast("没有可支持的应用");
-    } else if (result.type == ResultType.permissionDenied) {
-      IMViews.showToast("无权限访问");
-    } else if (result.type == ResultType.fileNotFound) {
-      IMViews.showToast("文件已失效");
-    }
-  }
+  static openFileByOtherApp(String path)async{throw StateError('本机密文附件只能在当前授权客户端内打开');}
 
   static void previewLocation(Message message) {
     var location = message.locationElem;
@@ -1396,7 +1282,7 @@ class IMUtils {
       case ".mp4":
         return "video/mp4";
       case ".mov":
-        return "video/mov";
+        return "video/quicktime";
       case ".htm":
       case ".html":
         return "text/html";

@@ -1,3 +1,5 @@
+import { logoutSSO } from "@/api/sso";
+import { webDisplayTitle } from "@/config/brand";
 import { t } from "i18next";
 import { create } from "zustand";
 
@@ -57,6 +59,7 @@ export const useUserStore = create<UserStore>()((set, get) => ({
       console.error("get app config err");
     }
     set((state) => ({ appConfig: { ...state.appConfig, ...config } }));
+    document.title = webDisplayTitle(useUserStore.getState().appConfig);
   },
   updateAppSettings: (settings: Partial<AppSettings>) => {
     if (settings.locale) {
@@ -65,7 +68,8 @@ export const useUserStore = create<UserStore>()((set, get) => ({
     set((state) => ({ appSettings: { ...state.appSettings, ...settings } }));
   },
   userLogout: async (force?: boolean) => {
-    await IMSDK.logout({localOnly:Boolean(force)});
+    if (!force) await logoutSSO();
+    await IMSDK.logout({localOnly:true});
     window.dispatchEvent(new Event("enterprise-disconnect"));
     await clearIMProfile();
     set({ selfInfo: {} as BusinessUserInfo });

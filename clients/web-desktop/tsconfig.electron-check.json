@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {"target":"ES2022","strict":true,"noImplicitAny":false,"composite":false,"noEmit":true},
+  "include":["electron/main/localStore","electron/main/downloadManage.ts","electron/main/localProtocol.ts","electron/preload","src/types","src/vite-env.d.ts","src/api/typings.d.ts"],
+  "references":[]
+}

@@ -14,17 +14,21 @@ A new Flutter project.
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
+  s.public_header_files = 'Classes/FlutterOpenimSdkPlugin.h', 'Classes/PMFragmentMuxer.h', 'Classes/PMEncryptedEncoder.h'
   s.dependency 'Flutter'
-  s.platform = :ios, '11.0'
+  s.platform = :ios, '13.0'
 
-  s.dependency 'OpenIMSDKCore', '3.8.3-hotfix.15'
+  # Local controlled core is mandatory: the old remote framework has plaintext
+  # SQLite and must never be a silent fallback. Build this on macOS first.
+  s.vendored_frameworks = 'Framework/OpenIMCore.xcframework', 'Framework/SQLCipher.xcframework'
   s.static_framework = true
   s.library = 'resolv'
+  s.frameworks = 'AVFoundation', 'AVKit', 'Photos', 'VideoToolbox', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'CoreImage', 'ImageIO', 'Security', 'CryptoKit', 'MobileCoreServices', 'Network'
 
   # s.vendored_frameworks = 'Framework/*.xcframework'
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
 
-  s.resource_bundles = {'flutter_openim_sdk_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
+  s.resource_bundles = {'flutter_openim_sdk_privacy' => ['Resources/PrivacyInfo.xcprivacy', 'Resources/puty_enterprise_root_ca.der']}
 end

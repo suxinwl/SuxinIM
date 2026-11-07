@@ -135,7 +135,8 @@ class FileUtils {
         boolean success = false;
         try {
             inputStream = context.getContentResolver().openInputStream(uri);
-            file = File.createTempFile("image_picker", "jpg", context.getCacheDir());
+            try{file=(File)Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles").getMethod("createTempFile",String.class,String.class).invoke(null,"image_cropper_source",".jpg");}
+            catch(ReflectiveOperationException rejected){throw new IOException("Encrypted crop input unavailable",rejected);}
             outputStream = new FileOutputStream(file);
             if (inputStream != null) {
                 copy(inputStream, outputStream);

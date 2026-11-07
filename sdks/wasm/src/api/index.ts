@@ -5,7 +5,7 @@ import { DatabaseErrorCode } from '@/constant';
 let rpc: RPC | undefined;
 let worker: Worker | undefined;
 let debug = false;
-const DATABASE_RPC_TIMEOUT_MS = 4500;
+const DATABASE_RPC_TIMEOUT_MS = typeof window !== 'undefined' && (window as any).electronAPI ? 120000 : 4500;
 
 function supportsModuleWorkers() {
   if (typeof Worker !== 'undefined' && 'type' in Worker.prototype) {
@@ -60,6 +60,18 @@ function initWorker() {
   worker = new Worker(workerUrl, {
     type: isSupportModuleWorker ? 'module' : 'classic',
   });
+  if ((window as any).electronAPI) {
+    const activeWorker = worker;
+    activeWorker.addEventListener('message', (event: MessageEvent) => {
+      if (event.data?.putyStore !== 'request') return;
+      const { id, operation, data } = event.data;
+      Promise.resolve((window as any).electronAPI.ipcInvoke('puty-store', operation, data)).then(
+        result => activeWorker.postMessage({ putyStore: 'response', id, data: result }),
+        () => activeWorker.postMessage({ putyStore: 'response', id, error: '本地加密存储不可用，请检查存储目录并在线重新登录' })
+      );
+    });
+    activeWorker.postMessage({ putyStore: 'configure', enabled: true });
+  }
   // This is only required because Safari doesn't support nested
   // workers. This installs a handler that will proxy creating web
   // workers through the main thread
@@ -155,6 +167,9 @@ export function initDatabaseAPI(isLogStandardOutput = true): void {
     return;
   }
   debug = isLogStandardOutput;
+  (window as any).putyLocalCleanup = registeMethodOnWindow('putyLocalCleanup', undefined, false);
+  (window as any).putyLocalCleanupPreview=registeMethodOnWindow('putyLocalCleanupPreview',undefined,false);
+  (window as any).putyLocalCheckpoint=registeMethodOnWindow('putyLocalCheckpoint',undefined,false);
 
   // upload
   window.wasmOpen = registeMethodOnWindow('wasmOpen');

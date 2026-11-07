@@ -1,0 +1,14 @@
+{
+  "name": "suxin-biz-suite-admin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/browser.test.mjs tests/openim-manager.test.mjs tests/attendance-windows.test.mjs tests/attendance-work-schedule.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "livekit-client": "2.15.6"
+  }
+}

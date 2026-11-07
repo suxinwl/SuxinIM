@@ -1,0 +1,199 @@
+// Copyright 2019 gf Author(https://github.com/gogf/gf). All Rights Reserved.
+//
+// This Source Code Form is subject to the terms of the MIT License.
+// If a copy of the MIT was not distributed with this file,
+// You can obtain one at https://github.com/gogf/gf.
+
+package mssql_test
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/suxinwl/GoSuxin/framework/container/garray"
+	"github.com/suxinwl/GoSuxin/framework/database/gdb"
+	"github.com/suxinwl/GoSuxin/framework/frame/g"
+	"github.com/suxinwl/GoSuxin/framework/os/gtime"
+	"github.com/suxinwl/GoSuxin/framework/test/gtest"
+)
+
+var (
+	db     gdb.DB
+	dblink gdb.DB
+	dbErr  gdb.DB
+	ctx    context.Context
+)
+
+const (
+	TableSize        = 10
+	TableName        = "t_user"
+	TestSchema       = "test"
+	TableNamePrefix1 = "gf_"
+	TestDbUser       = "sa"
+	TestDbPass       = "LoremIpsum86"
+	CreateTime       = "2018-10-24 10:00:00"
+)
+
+func init() {
+	// First connect to master database to create test database
+	nodemaster := gdb.ConfigNode{
+		Host:             "127.0.0.1",
+		Port:             "1433",
+		User:             TestDbUser,
+		Pass:             TestDbPass,
+		Name:             "master",
+		Type:             "mssql",
+		Role:             "master",
+		Charset:          "utf8",
+		Weight:           1,
+		MaxIdleConnCount: 10,
+		MaxOpenConnCount: 10,
+	}
+
+	tempDb, err := gdb.New(nodemaster)
+	if err != nil {
+		gtest.Fatal(err)
+	}
+
+	// Create test database
+	if _, err := tempDb.Exec(context.Background(), fmt.Sprintf(`
+		IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '%s')
+		CREATE DATABASE [%s]
+	`, TestSchema, TestSchema)); err != nil {
+		gtest.Fatal(err)
+	}
+
+	node := gdb.ConfigNode{
+		Host:             "127.0.0.1",
+		Port:             "1433",
+		User:             TestDbUser,
+		Pass:             TestDbPass,
+		Name:             TestSchema,
+		Type:             "mssql",
+		Role:             "master",
+		Charset:          "utf8",
+		Weight:           1,
+		MaxIdleConnCount: 10,
+		MaxOpenConnCount: 10,
+	}
+
+	nodeLink := gdb.ConfigNode{
+		Type: "mssql",
+		Name: "master",
+		Link: fmt.Sprintf(
+			"mssql:%s:%s@tcp(%s:%s)/%s?encrypt=disable",
+			node.User, node.Pass, node.Host, node.Port, node.Name,
+		),
+	}
+
+	nodeErr := gdb.ConfigNode{
+		Type: "mssql",
+		Link: fmt.Sprintf(
+			"mssql:%s:%s@tcp(%s:%s)/%s?encrypt=disable",
+			node.User, "node.Pass", node.Host, node.Port, node.Name),
+	}
+
+	gdb.AddConfigNode(gdb.DefaultGroupName, node)
+	if r, err := gdb.New(node); err != nil {
+		gtest.Fatal(err)
+	} else {
+		db = r
+	}
+
+	gdb.AddConfigNode("dblink", nodeLink)
+	if r, err := gdb.New(nodeLink); err != nil {
+		gtest.Fatal(err)
+	} else {
+		dblink = r
+	}
+
+	gdb.AddConfigNode("dbErr", nodeErr)
+	if r, err := gdb.New(nodeErr); err != nil {
+		gtest.Fatal(err)
+	} else {
+		dbErr = r
+	}
+
+	ctx = context.Background()
+}
+
+func createTable(table ...string) (name string) {
+	if len(table) > 0 {
+		name = table[0]
+	} else {
+		name = fmt.Sprintf("user_%d", gtime.Timestamp())
+	}
+
+	dropTable(name)
+
+	if _, err := db.Exec(context.Background(), fmt.Sprintf(`
+		IF NOT EXISTS (SELECT * FROM sys.objects WHERE name='%s' and type='U')
+		CREATE TABLE [%s] (
+		ID numeric(10,0) NOT NULL,
+		PASSPORT VARCHAR(45)  NULL,
+		PASSWORD VARCHAR(32)  NULL,
+		NICKNAME VARCHAR(45)  NULL,
+		CREATE_TIME datetime NULL,
+		CREATED_AT datetimeoffset NULL,
+		UPDATED_AT datetimeoffset NULL,
+		PRIMARY KEY (ID))
+	`, name, name)); err != nil {
+		gtest.Fatal(err)
+	}
+
+	return
+}
+
+func createInitTable(table ...string) (name string) {
+	name = createTable(table...)
+	array := garray.New(true)
+	for i := 1; i <= TableSize; i++ {
+		array.Append(g.Map{
+			"id":          i,
+			"passport":    fmt.Sprintf(`user_%d`, i),
+			"password":    fmt.Sprintf(`pass_%d`, i),
+			"nickname":    fmt.Sprintf(`name_%d`, i),
+			"create_time": "2018-10-24 10:00:00",
+		})
+	}
+	result, err := db.Insert(context.Background(), name, array.Slice())
+	gtest.AssertNil(err)
+
+	n, e := result.RowsAffected()
+	gtest.Assert(e, nil)
+	gtest.Assert(n, TableSize)
+	return
+}
+
+func dropTable(table string) {
+	if _, err := db.Exec(context.Background(), fmt.Sprintf(`
+		IF EXISTS (SELECT * FROM sys.objects WHERE name='%s' and type='U')
+		DROP TABLE [%s]
+	`, table, table)); err != nil {
+		gtest.Fatal(err)
+	}
+}
+
+// createInsertAndGetIdTableForTest tests InsertAndGetId functionality
+func createInsertAndGetIdTableForTest() (name string) {
+
+	if _, err := db.Exec(context.Background(), `
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name='ip_to_id' and type='U')
+begin
+	CREATE TABLE [ip_to_id](
+		[id] [int] IDENTITY(1,1) NOT NULL,
+		[ip] [varchar](128) NULL,
+	 CONSTRAINT [PK_ip_to_id] PRIMARY KEY CLUSTERED 
+	(
+		[id] ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+end
+	`); err != nil {
+		gtest.Fatal(err)
+	}
+
+	db.Schema(db.GetConfig().Name)
+	name = "ip_to_id"
+	return
+}

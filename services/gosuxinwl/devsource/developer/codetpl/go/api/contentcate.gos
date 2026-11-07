@@ -1,0 +1,52 @@
+package packageName
+
+import (
+	"github.com/suxinwl/GoSuxin/utility/gf"
+
+	"github.com/suxinwl/GoSuxin/framework/frame/g"
+)
+
+// 分类列表
+type CateListReq struct {
+	g.Meta `path:"{path}/cateList" tags:"cateList" method:"get" summary:"分类列表"`
+}
+
+type CateListRes struct {
+	*gf.R
+}
+
+// 添加、编辑
+type CateSaveReq struct {
+	g.Meta `path:"{path}/save" tags:"save" method:"post" summary:"添加、编辑分类"`
+	Id     int64 `p:"id" d:"0" dc:"数据id，新增时为0"`
+	Name   string `p:"name" v:"required#名称不能为空" dc:"名称"`
+	Pid    int64  `p:"pid" d:"0" dc:"上级"`
+	weigh  int64  `p:"weigh" d:"1" dc:"排序"`
+	Status int64  `p:"status" d:"0" dc:"状态"`
+	Remark string `p:"remark" d:"0" dc:"备注"`
+}
+
+type CateSaveRes struct {
+	*gf.R
+}
+
+// 更新状态
+type CateStatusReq struct {
+	g.Meta `path:"{path}/upStatus" tags:"upStatus" method:"post" summary:"更新状态"`
+	Id     int64 `p:"id"  v:"required#id不能为空" dc:"更新id"`
+	Status uint  `p:"status" v:"required#status不能为空" dc:"状态"`
+}
+
+type CateStatusRes struct {
+	*gf.R
+}
+
+// 删除
+type CateDelReq struct {
+	g.Meta `path:"{path}/del" tags:"Del" method:"delete" summary:"删除"`
+	Ids    g.Array `p:"ids"`
+}
+
+type CateDelRes struct {
+	*gf.R
+}

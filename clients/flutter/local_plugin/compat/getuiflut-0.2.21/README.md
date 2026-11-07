@@ -52,8 +52,8 @@ dependencies {
 ```dart
    Getuiflut().startSdk(
       appId: "8eLAkGIYnGAwA9fVYZU93A",
-      appKey: "VFX8xYxvVF6w59tsvY6XN",
-      appSecret: "Kv3TeED8z19QwnMLdzdI35"
+      appKey: "YOUR_GETUI_APP_KEY",
+      appSecret: "YOUR_GETUI_CLIENT_PARAMETER"
    );
 ```
 启用notification：xcode主工程配置 > Signing & Capabilities > +Push Noticifations

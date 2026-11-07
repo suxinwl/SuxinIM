@@ -17,6 +17,7 @@ import rtc from "@/assets/images/chatFooter/rtc.png";
 import video from "@/assets/images/chatFooter/video.png";
 import { insertAtCursor } from "@/components/EditableDiv";
 import { ExMessageItem } from "@/store";
+import { fileMessageErrorKey } from "@/im/local-media";
 import { base64toFile } from "@/utils/common";
 import emitter from "@/utils/events";
 
@@ -159,10 +160,15 @@ const SendActionBar = ({
       antdMessage.warning(t("empty.fileContentEmpty"));
       return;
     }
-    const message = await createFileMessage(fileEl);
-    sendMessage({
-      message,
-    });
+    try {
+      const message = await createFileMessage(fileEl);
+      await sendMessage({ message, throwOnError: true });
+      options.onSuccess?.({});
+    } catch (error) {
+      // SDK upload errors may contain signed URLs. Display a fixed translation.
+      antdMessage.error(t(fileMessageErrorKey(error)));
+      options.onError?.(new Error("FILE_PREPARATION_OR_SEND_FAILED"));
+    }
   };
 
   return (

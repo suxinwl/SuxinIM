@@ -20,21 +20,7 @@ class Apis {
     String? password,
     String? verificationCode,
   }) async {
-    try {
-      var data = await HttpUtil.post(Urls.login, data: {
-        "areaCode": areaCode,
-        'phoneNumber': phoneNumber,
-        'email': email,
-        'password': null != password ? IMUtils.generateMD5(password) : null,
-        'platform': IMUtils.getPlatform(),
-        'verifyCode': verificationCode,
-        // 'operationID': operationID,
-      });
-      return LoginCertificate.fromJson(data!);
-    } catch (e, s) {
-      Logger.print('e:$e s:$s');
-      return Future.error(e);
-    }
+    return HrmSSO.login(email ?? phoneNumber ?? '',password ?? '');
   }
 
   /// register
@@ -50,31 +36,7 @@ class Apis {
     required String verificationCode,
     String? invitationCode,
   }) async {
-    assert(phoneNumber != null || email != null);
-    try {
-      var data = await HttpUtil.post(Urls.register, data: {
-        'deviceID': DataSp.getDeviceID(),
-        'verifyCode': verificationCode,
-        'platform': IMUtils.getPlatform(),
-        // 'operationID': operationID,
-        'invitationCode': invitationCode,
-        'autoLogin': true,
-        'user': {
-          "nickname": nickname,
-          "faceURL": faceURL,
-          'birth': birth,
-          'gender': gender,
-          'email': email,
-          "areaCode": areaCode,
-          'phoneNumber': phoneNumber,
-          'password': IMUtils.generateMD5(password),
-        },
-      });
-      return LoginCertificate.fromJson(data!);
-    } catch (e, s) {
-      Logger.print('e:$e s:$s');
-      return Future.error(e);
-    }
+    throw StateError('账号及密码由人事系统统一管理');
   }
 
   /// reset password
@@ -85,19 +47,7 @@ class Apis {
     required String password,
     required String verificationCode,
   }) async {
-    return HttpUtil.post(
-      Urls.resetPwd,
-      data: {
-        "areaCode": areaCode,
-        'phoneNumber': phoneNumber,
-        'email': email,
-        'password': IMUtils.generateMD5(password),
-        'verifyCode': verificationCode,
-        'platform': IMUtils.getPlatform(),
-        // 'operationID': operationID,
-      },
-      options: chatTokenOptions,
-    );
+    throw StateError('账号及密码由人事系统统一管理');
   }
 
   /// change password
@@ -106,23 +56,7 @@ class Apis {
     required String currentPassword,
     required String newPassword,
   }) async {
-    try {
-      await HttpUtil.post(
-        Urls.changePwd,
-        data: {
-          "userID": userID,
-          'currentPassword': IMUtils.generateMD5(currentPassword),
-          'newPassword': IMUtils.generateMD5(newPassword),
-          'platform': IMUtils.getPlatform(),
-          // 'operationID': operationID,
-        },
-        options: chatTokenOptions,
-      );
-      return true;
-    } catch (e, s) {
-      Logger.print('e:$e s:$s');
-      return false;
-    }
+    throw StateError('账号及密码由人事系统统一管理');
   }
 
   /// update user info
@@ -141,6 +75,9 @@ class Apis {
     int? allowBeep,
     int? allowVibration,
   }) async {
+    if ([account,phoneNumber,areaCode,email,nickname,faceURL,gender,birth,level].any((x)=>x!=null)) {
+      throw StateError('个人资料由人事系统统一管理');
+    }
     Map<String, dynamic> param = {'userID': userID};
     void put(String key, dynamic value) {
       if (null != value) {
@@ -339,6 +276,24 @@ class Apis {
     return result['config'] ?? {};
   }
 
+  /// Existing public route, intentionally without an account credential. Only
+  /// display fields are consumed before login; no management route is opened.
+  static Future<Map<String, dynamic>> getPublicBrand() async {
+    final origin = Config.serverBaseUrl;
+    final response = await dio.post<Map<String, dynamic>>('$origin/chat/client_config/get', data: {}, options: Options(
+      headers: {'operationID': HttpUtil.operationID, 'Content-Type': 'application/json'}, followRedirects: false,
+    ));
+    final value = response.data;
+    if (value == null || value['errCode'] != 0 || origin != Config.serverBaseUrl) throw StateError('Public brand is unavailable');
+    final config = value['data']?['config'];
+    final result = <String, dynamic>{};
+    for (final key in ['appName', 'webTitle']) {
+      final text = config is Map ? config[key] : null;
+      if (text is String && text.trim().isNotEmpty && text.length <= 128 && !RegExp(r'[\x00-\x1f\x7f]').hasMatch(text)) result[key] = text.trim();
+    }
+    return result;
+  }
+
   static _handleStatus(
     List<OnlineStatus> list, {
     Function(Map<String, String>)? onlineStatusDescCallback,
@@ -381,15 +336,11 @@ class Apis {
   }
 
   static Future<List<UniMPInfo>> queryUniMPList() async {
-    var result = await HttpUtil.post(
-      Urls.uniMPUrl,
-      data: {
-        // 'operationID': operationID,
-      },
-      options: chatTokenOptions,
-      showErrorToast: false,
-    );
-    return (result as List).map((e) => UniMPInfo.fromJson(e)).toList();
+    final result=await AppIm.enterprise.request('/discovery/list',{});
+    final items=result['items'] as List? ?? [];
+    return items.whereType<Map>().where((item)=>item['enabled']!=false).map((item)=>UniMPInfo.fromJson({
+      'id':item['id'],'name':item['title'],'url':item['url'],'icon':item['icon'],
+    })).toList();
   }
 
   /// 查询tag组

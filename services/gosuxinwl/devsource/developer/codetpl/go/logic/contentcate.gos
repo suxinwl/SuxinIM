@@ -1,0 +1,75 @@
+// =================================================================================
+// 实现层分类文件
+// =================================================================================
+package packageName
+
+import (
+	"context"
+
+	"github.com/suxinwl/GoSuxin/api/{api_apth}"
+	"github.com/suxinwl/GoSuxin/internal/dao"
+	"github.com/suxinwl/GoSuxin/utility/gf"
+)
+
+func (s *s{serviceName}) CateList(ctx context.Context, req *{module}.CateListReq) (res *gf.R) {
+	list, err := dao.{daoTableName}.Ctx(ctx).Order("id asc").All()
+	if err != nil {
+		res = gf.Failed().SetMsg(err.Error())
+	} else {
+		for _, val := range list {
+			val["key"] = val["id"]
+		}
+		list = gf.GetMenuChildrenArray(list, 0, "pid")
+		res = gf.Success().SetMsg("获取分类树形列表").SetData(list)
+	}
+	return
+}
+
+// 添加、编辑
+func (s *s{serviceName}) CateSave(ctx context.Context, req *{module}.CateSaveReq) (res *gf.R) {
+	if req.Id == gf.ZeroValue {
+		addId, err := dao.{daoTableName}.Ctx(ctx).Data(req).InsertAndGetId()
+		if err != nil {
+			res = gf.Failed().SetMsg("添加失败").SetData(err)
+		} else {
+			if addId != 0 {
+				dao.{daoTableName}.Ctx(ctx).Where("id", addId).Update(map[string]interface{}{"weigh": addId})
+			}
+			res = gf.Success().SetMsg("添加成功！")
+		}
+	} else {
+		result, err := dao.{daoTableName}.Ctx(ctx).Data(req).Where("id", req.Id).Update()
+		if err != nil {
+			res = gf.Failed().SetMsg("更新失败").SetData(err)
+		} else {
+			res = gf.Success().SetMsg("更新成功！").SetData(result)
+		}
+	}
+	return
+}
+
+// 更新状态
+func (s *s{serviceName}) CateStatus(ctx context.Context, req *{module}.CateStatusReq) (res *gf.R) {
+	result, err := dao.{daoTableName}.Ctx(ctx).Where("id", req.Id).Update(gf.Map{"status": req.Status})
+	if err != nil {
+		res = gf.Failed().SetMsg("更新失败").SetData(err)
+		return
+	}
+	msg := "更新成功！"
+	if result == nil {
+		msg = "暂无数据更新"
+	}
+	res = gf.Success().SetMsg(msg)
+	return
+}
+
+// 删除
+func (s *s{serviceName}) CateDel(ctx context.Context, req *{module}.CateDelReq) (res *gf.R) {
+	result, err := dao.{daoTableName}.Ctx(ctx).WhereIn("id", req.Ids).Delete()
+	if err != nil {
+		res = gf.Failed().SetMsg("删除失败").SetData(err)
+		return
+	}
+	res = gf.Success().SetMsg("删除成功").SetData(result)
+	return
+}

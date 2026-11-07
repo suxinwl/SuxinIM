@@ -1,6 +1,8 @@
 import { toLocalFileURL, isLocalFileURL, localFilePath } from "@/im/local-files";
 import { useLatest } from "ahooks";
-import { Empty, Image } from "antd";
+import { Empty } from "antd";
+import ProtectedPreviewGroup from "@/components/ProtectedPreviewGroup";
+import { previewImageSource } from "@/im/preview-source";
 import clsx from "clsx";
 import { isThisMonth, isThisWeek } from "date-fns";
 import { t } from "i18next";
@@ -199,19 +201,6 @@ const MediaMessagePane = ({
         (img) => img.clientMsgID === clientMsgID,
       );
       if (current < 0) return;
-
-      if (
-        window.electronAPI &&
-        loadState.previewItems[current].url.startsWith("http")
-      ) {
-        downloadFile(loadState.previewItems[current].url, {
-          clientMsgID,
-          conversationID,
-          isMediaMessage: true,
-          saveType: "image",
-          showError: true,
-        });
-      }
 
       galleryRef.current?.setAlbumCurrent(current);
       galleryRef.current?.setAlbumVisible(true);
@@ -443,18 +432,11 @@ const PreviewGallery: ForwardRefRenderFunction<
     [],
   );
 
-  const previewList = previewItems.map((image) => {
-    if (!window.electronAPI || isLocalFileURL(image.url) || !image.thumbUrl) {
-      return image.url;
-    }
-    return imageCache[image.thumbUrl ?? ""]
-      ? toLocalFileURL(imageCache[image.thumbUrl ?? ""])
-      : image.thumbUrl;
-  });
+  const previewList = previewItems.map(image => previewImageSource(image, Boolean(window.electronAPI), imageCache));
 
   return (
     <div style={{ display: "none" }}>
-      <Image.PreviewGroup
+      <ProtectedPreviewGroup
         items={previewList}
         preview={{
           current: albumCurrent,
@@ -470,7 +452,7 @@ const PreviewGallery: ForwardRefRenderFunction<
           onChange: (next) => setAlbumCurrent(next),
           onVisibleChange: (vis) => setAlbumVisible(vis),
         }}
-      ></Image.PreviewGroup>
+      ></ProtectedPreviewGroup>
     </div>
   );
 };

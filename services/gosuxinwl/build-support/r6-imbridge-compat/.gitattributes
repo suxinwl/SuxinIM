@@ -1,0 +1,2 @@
+# Preserve the exact frozen source bytes on Windows and Linux checkouts.
+_source/** -text

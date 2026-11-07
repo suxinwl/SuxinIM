@@ -1,196 +1,113 @@
 package com.zero.app_installer;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.provider.Settings;
 import android.text.TextUtils;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
-
 import java.io.File;
-
+import java.io.IOException;
+import java.util.Map;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 
-/**
- * AppInstallerPlugin
- */
+/** APK installation handoff. The system installer retains user consent. */
 public class AppInstallerPlugin implements FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandler, PluginRegistry.ActivityResultListener {
-
     private Context applicationContext;
-    private Activity mActivity;
-    private MethodChannel methodChannel;
+    private Activity activity;
+    private ActivityPluginBinding activityBinding;
+    private MethodChannel channel;
 
-    @Override
-    public void onAttachedToEngine(FlutterPluginBinding binding) {
-        onAttachedToEngine(binding.getApplicationContext(), binding.getBinaryMessenger());
+    @Override public void onAttachedToEngine(FlutterPluginBinding binding) {
+        applicationContext=binding.getApplicationContext();
+        channel=new MethodChannel(binding.getBinaryMessenger(),"app_installer");
+        channel.setMethodCallHandler(this);
+    }
+    @Override public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        detachActivity();applicationContext=null;
+        if(channel!=null)channel.setMethodCallHandler(null);
+        channel=null;
+    }
+    @Override public void onAttachedToActivity(ActivityPluginBinding binding) {
+        detachActivity();activityBinding=binding;activity=binding.getActivity();
+        binding.addActivityResultListener(this);
+    }
+    @Override public void onDetachedFromActivityForConfigChanges(){detachActivity();}
+    @Override public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding){onAttachedToActivity(binding);}
+    @Override public void onDetachedFromActivity(){detachActivity();}
+    private void detachActivity(){
+        if(activityBinding!=null)activityBinding.removeActivityResultListener(this);
+        activityBinding=null;activity=null;
+    }
+    private boolean activityReady(){
+        return applicationContext!=null&&activity!=null&&!activity.isFinishing()
+            &&(Build.VERSION.SDK_INT<17||!activity.isDestroyed());
     }
 
-    private void onAttachedToEngine(Context applicationContext, BinaryMessenger messenger) {
-        this.applicationContext = applicationContext;
-        methodChannel = new MethodChannel(messenger, "app_installer");
-        methodChannel.setMethodCallHandler(this);
+    @Override public void onMethodCall(MethodCall call,@NonNull Result target){
+        OnceResult result=new OnceResult(target);
+        try{handle(call,result);}
+        catch(SecurityException failure){result.error("INSTALLER_URI_PERMISSION_DENIED","Cannot grant temporary APK read access",null);}
+        catch(ActivityNotFoundException failure){result.error("INSTALLER_NOT_AVAILABLE","System package installer is unavailable",null);}
+        catch(IllegalArgumentException failure){result.error("INSTALLER_FILE_NOT_SHARED","APK is outside the configured installation cache",null);}
+        catch(IOException failure){result.error("INSTALLER_FILE_UNREADABLE","Downloaded APK cannot be read",null);}
+        catch(Exception|LinkageError failure){result.error("INSTALLER_UNAVAILABLE","System installation handoff failed",null);}
     }
-
-    @Override
-    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        this.applicationContext = null;
-        methodChannel.setMethodCallHandler(null);
-        methodChannel = null;
-    }
-
-    @Override
-    public void onAttachedToActivity(ActivityPluginBinding binding) {
-        onAttachedToActivity(binding.getActivity());
-        binding.addActivityResultListener(getActivityResultListener());
-    }
-
-    private void onAttachedToActivity(Activity activity) {
-        this.mActivity = activity;
-    }
-
-    @Override
-    public void onDetachedFromActivityForConfigChanges() {
-
-    }
-
-    @Override
-    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
-        onAttachedToActivity(binding);
-        binding.removeActivityResultListener(getActivityResultListener());
-        binding.addActivityResultListener(getActivityResultListener());
-
-    }
-
-    @Override
-    public void onDetachedFromActivity() {
-        this.mActivity = null;
-    }
-
-    /**
-     * 创建 ActivityResult 监听
-     *
-     * @return ActivityResult 监听
-     */
-    private PluginRegistry.ActivityResultListener getActivityResultListener() {
-        return this;
-    }
-
-    @Override
-    public void onMethodCall(MethodCall call,@NonNull Result result) {
-        String method = call.method;
-        if (method.equals("goStore")) {
-            String appId = (String) call.argument("androidAppId");
-            goAppStore(mActivity, appId);
-            result.success(true);
-        } else if (method.equals("installApk")) {
-            String filePath = call.argument("apkPath");
-            if (!TextUtils.isEmpty(filePath)) {
-                installProcess(new File(filePath), result);
-            } else {
-                result.error("installApk", "apkPath is null", null);
+    private void handle(MethodCall call,Result result)throws IOException{
+        if("installApk".equals(call.method)){
+            if(!(call.arguments instanceof Map)){result.error("INSTALLER_ARGUMENT_INVALID","An APK file is required",null);return;}
+            Object path=call.argument("apkPath");
+            if(!(path instanceof String)||TextUtils.isEmpty((String)path)){
+                result.error("INSTALLER_ARGUMENT_INVALID","An APK file is required",null);return;
             }
-        } else {
-            result.notImplemented();
+            install(new File((String)path).getCanonicalFile(),result);return;
         }
-    }
-
-    /**
-     * 去应用商店
-     *
-     * @param appId appId
-     */
-    private void goAppStore(Activity activity, String appId) {
-        String appPackageName;
-        // 获取包名
-        if (appId != null) {
-            appPackageName = appId;
-        } else {
-            appPackageName = activity.getPackageName();
+        if("goStore".equals(call.method)){
+            if(!activityReady()){result.error("INSTALLER_ACTIVITY_UNAVAILABLE","Open the application before installing",null);return;}
+            Object value=call.arguments instanceof Map?call.argument("androidAppId"):null;
+            if(value!=null&&!(value instanceof String)){result.error("INSTALLER_ARGUMENT_INVALID","An application identifier is required",null);return;}
+            String name=value==null?activity.getPackageName():(String)value;
+            Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse("market://details?id="+Uri.encode(name)));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY|Intent.FLAG_ACTIVITY_NEW_DOCUMENT|Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            activity.startActivity(intent);result.success(true);return;
         }
-        // 去应用商店
-        Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
-        marketIntent.addFlags(
-                Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        activity.startActivity(marketIntent);
+        result.notImplemented();
     }
-
-    // 安装apkFile
-    private File apkFile;
-    // 回调处理
-    private Result result;
-
-    /**
-     * 安装应用的流程
-     *
-     * @param apkFile apk 文件
-     * @param result  返回结果
-     */
-    private void installProcess(File apkFile, Result result) {
-        this.apkFile = apkFile;
-        this.result = result;
-        installApk(apkFile, result);
+    private void install(File file,Result result){
+        if(!activityReady()){result.error("INSTALLER_ACTIVITY_UNAVAILABLE","Open the application before installing",null);return;}
+        if(!file.isFile()||!file.canRead()||file.length()<=0){result.error("INSTALLER_FILE_UNREADABLE","Downloaded APK cannot be read",null);return;}
+        Intent intent=new Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N){
+            Uri uri=FileProvider.getUriForFile(applicationContext,applicationContext.getPackageName()+".fileProvider",file);
+            intent.setDataAndType(uri,"application/vnd.android.package-archive");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            // Preserve the same narrowly scoped grant if an OEM installer
+            // forwards the content URI. No write or persistent grant is used.
+            intent.setClipData(ClipData.newRawUri("APK update",uri));
+        }else intent.setDataAndType(Uri.fromFile(file),"application/vnd.android.package-archive");
+        activity.startActivity(intent);
+        result.success(true); // Handoff accepted; not installation success.
     }
-
-    /**
-     * 设置安装未知来源App权限
-     */
-    @TargetApi(Build.VERSION_CODES.O)
-    private void startInstallPermissionSettingActivity() {
-        Uri packageURI = Uri.parse("package:" + applicationContext.getPackageName());
-        // 注意这个是8.0新API
-        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageURI);
-        this.mActivity.startActivityForResult(intent, 10086);
-    }
-
-    /**
-     * 安装Apk
-     *
-     * @param apkFile 安装文件
-     */
-    private void installApk(File apkFile, Result result) {
-        if (apkFile != null && apkFile.exists() && apkFile.length() > 0) {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                Uri contentUri = FileProvider.getUriForFile(applicationContext,
-                        applicationContext.getPackageName() + ".fileProvider", apkFile);
-                intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-            } else {
-                intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
-            }
-            mActivity.startActivity(intent);
-            if (result != null) {
-                result.success(true);
-            }
-        } else {
-            if (result != null) {
-                result.success(false);
-            }
-        }
-        this.apkFile = null;
-        this.result = null;
-    }
-
-    @Override
-    public boolean onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if (requestCode == 10086 && resultCode == Activity.RESULT_OK) {
-            installProcess(apkFile, result);
-            return true;
-        }
+    @Override public boolean onActivityResult(int requestCode,int resultCode,Intent intent){
+        // This plugin has no pending settings activity. Never replay an old
+        // MethodChannel reply after rotation or an unrelated activity result.
         return false;
     }
-
+    private static final class OnceResult implements Result{
+        private final Result target;private boolean completed;
+        OnceResult(Result target){this.target=target;}
+        @Override public synchronized void success(Object value){if(completed)return;completed=true;target.success(value);}
+        @Override public synchronized void error(String code,String message,Object details){if(completed)return;completed=true;target.error(code,message,details);}
+        @Override public synchronized void notImplemented(){if(completed)return;completed=true;target.notImplemented();}
+    }
 }

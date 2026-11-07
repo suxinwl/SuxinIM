@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -40,12 +39,12 @@ class _ChatVoiceRecordLayoutState extends State<ChatVoiceRecordLayout> {
 
   void _completed(int sec, String path) {
     if (_isCancelSend) {
-      File(path).delete();
+      NativeLocalVault.discard(path);
       _status = RecordBarStatus.holdTalk;
       _isCancelSend = false;
     } else {
       if (sec == 0) {
-        File(path).delete();
+        NativeLocalVault.discard(path);
         IMViews.showToast(StrRes.talkTooShort);
       } else {
         widget.onCompleted?.call(sec, path);

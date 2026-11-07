@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import os from "os";
 import { DataPath, IElectronAPI } from "./../../src/types/globalExpose.d";
 import { contextBridge, ipcRenderer, shell } from "electron";
@@ -51,21 +49,19 @@ const ipcSendSync = (channel: string, ...arg: any) => {
 };
 
 const fileExists = (path: string) => {
-  return fs.existsSync(path);
+  return Boolean(ipcRenderer.sendSync("puty-file-exists", path));
 };
 
 const openFile = (path: string) => {
-  shell.openPath(path);
+  void ipcRenderer.invoke("puty-store", "export-file", {path}).catch(()=>{});
 };
 
 const showInFinder = (path: string) => {
-  shell.showItemInFolder(path);
+  void ipcRenderer.invoke("puty-store", "show-folder", {path}).catch(()=>{});
 };
 
 const getTempFileURL = (path: string) => {
-  const file = fs.readFileSync(path);
-  const bolb = new Blob([file]);
-  return URL.createObjectURL(bolb);
+  return `openim38://app/__local?path=${encodeURIComponent(path)}`;
 };
 
 const saveFileToDisk = async ({
@@ -78,28 +74,13 @@ const saveFileToDisk = async ({
   sync?: boolean;
 }): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
-  const saveDir = ipcRenderer.sendSync("getDataPath", type);
-  const savePath = path.join(saveDir, file.name);
-  if (!fs.existsSync(saveDir)) {
-    fs.mkdirSync(saveDir, { recursive: true });
-  }
-  if (sync) {
-    await fs.promises.writeFile(savePath, Buffer.from(arrayBuffer));
-  } else {
-    fs.promises.writeFile(savePath, Buffer.from(arrayBuffer));
-  }
-  return savePath;
+  const saved=await ipcRenderer.invoke("puty-store","stash-file",{name:file.name,type:file.type,bytes:arrayBuffer});
+  return saved.path;
 };
 
 const getFileByPath = async (filePath: string) => {
-  try {
-    const filename = path.basename(filePath);
-    const data = await fs.promises.readFile(filePath);
-    return new File([data], filename);
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
+  try {const file=await ipcRenderer.invoke("puty-store","file-info",{path:filePath});return new File([file.bytes],file.name,{type:file.type});}
+  catch {return null;}
 };
 
 const Api: IElectronAPI = {

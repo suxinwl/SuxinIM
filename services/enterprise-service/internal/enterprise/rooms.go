@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"openim38.local/identity"
 	"regexp"
 	"sort"
 	"strings"
@@ -982,7 +983,7 @@ func (s *Server) reconcileRooms(ctx context.Context) error {
 			return err
 		}
 	}
-	if s.lastSessionCheck.IsZero() || s.now().Sub(s.lastSessionCheck) >= 10*time.Second {
+	if s.lastSessionCheck.IsZero() || s.now().Sub(s.lastSessionCheck) >= 5*time.Second {
 		s.lastSessionCheck = s.now()
 		return s.revalidateMediaSessions(ctx)
 	}
@@ -1020,11 +1021,15 @@ func (s *Server) revalidateMediaSessions(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		req, _ := http.NewRequestWithContext(ctx, "POST", "http://internal/session", nil)
+		// Restore the authenticated, encrypted issuance fact only for background
+		// revalidation. Live HTTP/WS checks keep their current ingress context;
+		// old or invalid sealed values fail closed as public access.
+		checkCtx := identity.WithEntryZone(ctx, a.EntryZone)
+		req, _ := http.NewRequestWithContext(checkCtx, "POST", "http://internal/session", nil)
 		req.Header.Set("token", a.IMToken)
 		req.Header.Set("chatToken", a.ChatToken)
 		req.Header.Set("X-Real-IP", a.IP)
-		_, err = s.Auth.Authenticate(ctx, req, false)
+		err = s.authenticateMediaActor(checkCtx, a, req)
 		if err == nil && room.Kind == "call" && room.Invitation.SessionType == 3 {
 			members, e := s.IM.GroupMembers(ctx, room.Invitation.GroupID)
 			if e != nil {
@@ -1044,7 +1049,7 @@ func (s *Server) revalidateMediaSessions(ctx context.Context) error {
 			continue
 		}
 		var ae *apiError
-		if !errors.As(err, &ae) || ae.Status >= 500 {
+		if (!errors.As(err, &ae) || ae.Status >= 500) && !identity.Required() {
 			continue
 		}
 		current, _, e := load[Room](ctx, s.Store, "room:"+g.RoomID)

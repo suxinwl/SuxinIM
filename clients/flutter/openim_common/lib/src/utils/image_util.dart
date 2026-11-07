@@ -1,3 +1,4 @@
+import 'package:app_im/app_im.dart';
 import 'dart:io';
 
 import 'package:extended_image/extended_image.dart';
@@ -39,15 +40,18 @@ class ImageUtil {
     Widget? errorWidget,
     BorderRadius? borderRadius,
   }) =>
-      ExtendedImage.network(
-        url,
+      FutureBuilder<String>(
+        future: AppIm.enterprise.authorizeResource(url),
+        builder: (context,snapshot) {
+          if(!snapshot.hasData) return SizedBox(width:width,height:height,child:errorWidget);
+          return ExtendedImage(
+        image: ResizeImage.resizeIfNeeded(_calculateCacheWidth(width, cacheWidth, lowMemory), _calculateCacheHeight(height, cacheHeight, lowMemory), ProtectedResourceImage(snapshot.data!)),
+        enableLoadState: true,
         width: width,
         height: height,
         fit: fit,
         borderRadius: borderRadius,
-        cacheWidth: _calculateCacheWidth(width, cacheWidth, lowMemory),
-        cacheHeight: _calculateCacheHeight(height, cacheHeight, lowMemory),
-        cache: true,
+
         clearMemoryCacheWhenDispose: clearMemoryCacheWhenDispose,
         handleLoadingProgress: true,
         clearMemoryCacheIfFailed: true,
@@ -88,6 +92,8 @@ class ImageUtil {
           }
         },
       );
+        },
+      );
 
   static Widget fileImage({
     required File file,
@@ -102,14 +108,12 @@ class ImageUtil {
     Widget? errorWidget,
     BorderRadius? borderRadius,
   }) =>
-      ExtendedImage.file(
-        file,
+      ExtendedImage(
+        image: ProtectedResourceImage(file.path),
         width: width,
         height: height,
         fit: fit,
         borderRadius: borderRadius,
-        cacheWidth: _calculateCacheWidth(width, cacheWidth, lowMemory),
-        cacheHeight: _calculateCacheHeight(height, cacheHeight, lowMemory),
         clearMemoryCacheWhenDispose: clearMemoryCacheWhenDispose,
         clearMemoryCacheIfFailed: true,
         loadStateChanged: (ExtendedImageState state) {

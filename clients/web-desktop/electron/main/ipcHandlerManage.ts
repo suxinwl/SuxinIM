@@ -24,7 +24,7 @@ import {
 } from "./windowManage";
 import { t } from "i18next";
 import { IpcMainToRender, IpcRenderToMain } from "../constants";
-import { getStore } from "./storeManage";
+import { getStore,flushPreferences } from "./storeManage";
 import { flicker, setTrayTitle } from "./trayManage";
 import { setUserCachePath } from "./appManage";
 import { downloadAndInstallUpdate } from "./verifiedUpdate";
@@ -42,6 +42,7 @@ export const clearChildWindows = () => {
     if (childWindow && !childWindow.isDestroyed()) {
       childWindow.close();
     }
+    delete childWindowMap[key];
   }
 };
 
@@ -75,12 +76,11 @@ export const setIpcMainListener = () => {
   });
 
   // window manage
-  ipcMain.handle("changeLanguage", (_, locale) => {
+  ipcMain.handle("changeLanguage", async (_, locale) => {
     store.set("language", locale);
-    changeLanguage(locale).then(() => {
+    await flushPreferences();await changeLanguage(locale);
       app.relaunch();
       app.exit(0);
-    });
   });
   ipcMain.handle("main-win-ready", () => {
     splashEnd();
@@ -127,7 +127,7 @@ export const setIpcMainListener = () => {
     const childWindow = BrowserWindow.getAllWindows().find(
       (win) => win.id === childWindowMap[key],
     );
-    if (childWindow.isDestroyed()) {
+    if (childWindow?.isDestroyed()) {
       delete childWindowMap[key];
     }
     if (childWindow && !childWindow.isDestroyed()) {
@@ -167,14 +167,15 @@ export const setIpcMainListener = () => {
       targetWebContents.send(IpcMainToRender.transferContactStoreData, data);
     }
   });
-  ipcMain.handle(IpcRenderToMain.setKeyStore, (_, { key, data }) => {
+  ipcMain.handle(IpcRenderToMain.setKeyStore, async (_, { key, data }) => {
     store.set(key, data);
+    await flushPreferences();
   });
   ipcMain.handle(IpcRenderToMain.getKeyStore, (_, { key }) => {
     return store.get(key);
   });
   ipcMain.on(IpcRenderToMain.getKeyStoreSync, (e, { key }) => {
-    e.returnValue = store.get(key);
+    try{e.returnValue = store.get(key);}catch{e.returnValue=undefined;}
   });
   ipcMain.handle(IpcRenderToMain.showInputContextMenu, () => {
     const menu = Menu.buildFromTemplate([

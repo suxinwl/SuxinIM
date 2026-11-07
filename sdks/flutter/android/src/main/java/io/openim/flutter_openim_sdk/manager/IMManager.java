@@ -27,12 +27,17 @@ public class IMManager extends BaseManager {
                     return;
                 }
 
-                boolean initialized = Open_im_sdk.initSDK(
-                        new OnConnListener(),
-                        value(methodCall, "operationID"),
-                        jsonValue(methodCall));
-                FlutterOpenimSdkPlugin.isInitialized = initialized;
-                CommonUtil.runMainThreadReturn(result, initialized);
+                try {
+                    boolean initialized = Open_im_sdk.initSDK(
+                            new OnConnListener(),
+                            value(methodCall, "operationID"),
+                            jsonValue(methodCall));
+                    FlutterOpenimSdkPlugin.isInitialized = initialized;
+                    CommonUtil.runMainThreadReturn(result, initialized);
+                } catch (Exception | LinkageError failure) {
+                    CommonUtil.runMainThreadReturnError(result,
+                            "SDK_INITIALIZATION_FAILED", failure.getClass().getSimpleName(), null);
+                }
             }
         });
     }
@@ -40,8 +45,16 @@ public class IMManager extends BaseManager {
     public void unInitSDK(MethodCall methodCall, MethodChannel.Result result) {
         SDK_INIT_EXECUTOR.execute(() -> {
             synchronized (SDK_INIT_LOCK) {
-                Open_im_sdk.unInitSDK(value(methodCall, "operationID"));
-                FlutterOpenimSdkPlugin.isInitialized = false;
+                try {
+                    Open_im_sdk.unInitSDK(value(methodCall, "operationID"));
+                    FlutterOpenimSdkPlugin.isInitialized = false;
+                    // Dart awaits teardown before reinitializing and releases
+                    // its serialized SDK queue only after this acknowledgement.
+                    CommonUtil.runMainThreadReturn(result, true);
+                } catch (Exception | LinkageError failure) {
+                    CommonUtil.runMainThreadReturnError(result,
+                            "SDK_DEINITIALIZATION_FAILED", failure.getClass().getSimpleName(), null);
+                }
             }
         });
     }

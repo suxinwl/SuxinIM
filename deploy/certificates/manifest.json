@@ -1,0 +1,8 @@
+{
+  "name": "PUTY Enterprise Internal Root CA 2026",
+  "version": 1,
+  "sha256": "836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69",
+  "fileSHA256": "9a135d11160e2179c6d396088b765143b60b9ed82c44a8acc2cd8735e6d3f183",
+  "allowedPrivateIP": "192.168.10.11",
+  "notAfter": "2036-10-30T15:16:43+00:00"
+}

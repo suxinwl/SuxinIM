@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 // Real epoch, SplashLogic and HomeLogic. SDK transport and Get dependencies are
 // inert doubles: this is not a native connection or end-to-end login test.
 import 'dart:async';
@@ -16,9 +18,16 @@ import 'package:openim/pages/splash/splash_logic.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'native_settings_mock.dart';
 
 // Get.find starts its dependency lifecycle. These fakes deliberately avoid the
 // unrelated audio, notifications, native SDK and push-service constructors.
+class _SSOAdapter implements HttpClientAdapter {
+ @override Future<ResponseBody> fetch(RequestOptions options,Stream<Uint8List>? stream,Future<void>? cancel)async =>
+   ResponseBody.fromString(jsonEncode({'code':0,'data':{'userID':'synthetic','imToken':'im-one','chatToken':'chat-one','sessionToken':'sso-one','expiresAt':DateTime.now().millisecondsSinceEpoch~/1000+14400}}),200,headers:{Headers.contentTypeHeader:['application/json']});
+ @override void close({bool force=false}){}
+}
+
 class _InertDependency extends Fake {
   final onStart = InternalFinalCallback<void>(callback: () {});
   final onDelete = InternalFinalCallback<void>(callback: () {});
@@ -76,7 +85,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
+    installNativeSettingsMock();
     Get.testMode = true;
+    dio=Dio()..httpClientAdapter=_SSOAdapter();
     SharedPreferences.setMockInitialValues({});
     await DataSp.init();
   });
@@ -144,11 +155,13 @@ void main() {
     final im = _IM();
     final push = _Push();
     _register(im, push);
-    await DataSp.putLoginCertificate(LoginCertificate.fromJson({
+    await tester.runAsync(()async=>await DataSp.putLoginCertificate(LoginCertificate.fromJson({
       'userID': 'synthetic',
       'imToken': 'im-one',
       'chatToken': 'chat-one',
-    }));
+      'sessionToken':'sso-one',
+      'expiresAt':DateTime.now().millisecondsSinceEpoch~/1000+14400,
+    })));
     await tester.pumpWidget(GetMaterialApp(
       initialRoute: '/splash',
       getPages: [
@@ -166,18 +179,23 @@ void main() {
       await im.initializedSubject.close();
     });
     im.initializedSubject.add(true);
-    await tester.pump();
+    // Alternate the widget clock and real platform-reply boundary. A native
+    // encrypted-preference ACK must complete before Splash reaches SDK login.
+    for(var i=0;i<50&&im.loginCalls==0;i++){
+      await tester.pump(const Duration(milliseconds:1));
+      await tester.runAsync(()=>Future<void>.delayed(const Duration(milliseconds:10)));
+    }
     expect(im.loginCalls, 1);
     final attempt = im.session.begin('synthetic', 'im-one', 'chat-one', 2);
     im.session.connected();
     im.session.activate(attempt);
     im.session.invalidate(); // real global callback invalidates synchronously
     final newer = im.session.begin('synthetic', 'im-two', 'chat-two', 2);
-    await DataSp.putLoginCertificate(LoginCertificate.fromJson({
+    await tester.runAsync(()async=>await DataSp.putLoginCertificate(LoginCertificate.fromJson({
       'userID': 'synthetic',
       'imToken': 'im-two',
       'chatToken': 'chat-two',
-    }));
+    })));
     im.pendingLogin.complete(attempt); // an old native/API success arrives late
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

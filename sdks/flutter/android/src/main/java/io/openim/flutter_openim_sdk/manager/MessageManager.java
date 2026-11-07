@@ -8,10 +8,18 @@ import io.openim.flutter_openim_sdk.listener.OnCustomBusinessListener;
 import io.openim.flutter_openim_sdk.listener.OnMsgSendListener;
 import io.openim.flutter_openim_sdk.util.CommonUtil;
 import open_im_sdk.Open_im_sdk;
+import io.openim.flutter_openim_sdk.EncryptedScratchFiles;
+import java.io.IOException;
 
 
 public class MessageManager extends BaseManager {
     private final static String KEY_ID = "id";
+    private String encryptedPath(MethodCall call,String key)throws IOException{
+        String path=value(call,key);if(path==null||path.isEmpty())return path;
+        if(EncryptedScratchFiles.owns(path))return EncryptedScratchFiles.stage(path);
+        if(path.startsWith("/proc/"))throw new IOException("Unknown protected media descriptor");
+        return path;
+    }
 
     public void setAdvancedMsgListener(MethodCall methodCall, MethodChannel.Result result) {
         String key = methodCall.argument(KEY_ID);
@@ -136,11 +144,11 @@ public class MessageManager extends BaseManager {
                         value(methodCall, "imagePath")));
     }
 
-    public void createImageMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) {
+    public void createImageMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) throws IOException {
         CommonUtil.runMainThreadReturn(result,
                 Open_im_sdk.createImageMessageFromFullPath(
                         value(methodCall, "operationID"),
-                        value(methodCall, "imagePath")));
+                        encryptedPath(methodCall, "imagePath")));
     }
 
     public void createSoundMessage(MethodCall methodCall, MethodChannel.Result result) {
@@ -151,11 +159,11 @@ public class MessageManager extends BaseManager {
                         int2long(methodCall, "duration")));
     }
 
-    public void createSoundMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) {
+    public void createSoundMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) throws IOException {
         CommonUtil.runMainThreadReturn(result,
                 Open_im_sdk.createSoundMessageFromFullPath(
                         value(methodCall, "operationID"),
-                        value(methodCall, "soundPath"),
+                        encryptedPath(methodCall, "soundPath"),
                         int2long(methodCall, "duration")));
     }
 
@@ -169,14 +177,14 @@ public class MessageManager extends BaseManager {
                         value(methodCall, "snapshotPath")));
     }
 
-    public void createVideoMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) {
+    public void createVideoMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) throws IOException {
         CommonUtil.runMainThreadReturn(result,
                 Open_im_sdk.createVideoMessageFromFullPath(
                         value(methodCall, "operationID"),
-                        value(methodCall, "videoPath"),
+                        encryptedPath(methodCall, "videoPath"),
                         value(methodCall, "videoType"),
                         int2long(methodCall, "duration"),
-                        value(methodCall, "snapshotPath")));
+                        encryptedPath(methodCall, "snapshotPath")));
     }
 
     public void createFileMessage(MethodCall methodCall, MethodChannel.Result result) {
@@ -187,11 +195,11 @@ public class MessageManager extends BaseManager {
                         value(methodCall, "fileName")));
     }
 
-    public void createFileMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) {
+    public void createFileMessageFromFullPath(MethodCall methodCall, MethodChannel.Result result) throws IOException {
         CommonUtil.runMainThreadReturn(result,
                 Open_im_sdk.createFileMessageFromFullPath(
                         value(methodCall, "operationID"),
-                        value(methodCall, "filePath"),
+                        encryptedPath(methodCall, "filePath"),
                         value(methodCall, "fileName")));
     }
 

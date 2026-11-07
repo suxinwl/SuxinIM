@@ -1,4 +1,4 @@
-import { RightOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, RightOutlined } from "@ant-design/icons";
 import { Badge, Divider, Layout, Popover, Upload } from "antd";
 import clsx from "clsx";
 import i18n, { t } from "i18next";
@@ -49,6 +49,12 @@ const NavList = [
     icon_active: moments_icon_active,
     title: t("placeholder.moments"),
     path: "/moments",
+  },
+  {
+    icon: contact_icon,
+    icon_active: contact_icon_active,
+    title: "组织架构",
+    path: "/organization",
   },
 ];
 
@@ -156,7 +162,7 @@ const NavItem = ({ nav: { icon, icon_active, title, path } }: { nav: NavItemType
         onClick={tryNavigate}
         onDoubleClick={tryJumpToUnread}
       >
-        <img width={20} src={isActive ? icon_active : icon} alt="" />
+        {path === "/organization" ? <ApartmentOutlined style={{ fontSize: 20, color: isActive ? "#0089ff" : "#687486" }} /> : <img width={20} src={isActive ? icon_active : icon} alt="" />}
         <div className="mt-1 text-xs text-gray-500">{title}</div>
       </div>
     </Badge>
@@ -270,11 +276,12 @@ const LeftNavBar = memo(() => {
         <Upload
           accept=".jpeg,.png,.webp"
           showUploadList={false}
+          disabled
           customRequest={customUpload as any}
         >
           <div className={styles["avatar-wrapper"]}>
             <OIMAvatar src={selfInfo.faceURL} text={selfInfo.nickname} />
-            <div className={styles["mask"]}>
+            <div className={styles["mask"]} hidden>
               <img src={change_avatar} width={19} alt="" />
             </div>
           </div>

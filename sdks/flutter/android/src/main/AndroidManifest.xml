@@ -1,3 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="io.openim.flutter_openim_sdk">
+  <application>
+    <provider android:name="io.openim.flutter_openim_sdk.EncryptedScratchProvider"
+      android:authorities="${applicationId}.puty-encrypted-scratch"
+      android:exported="false" android:grantUriPermissions="false" />
+  </application>
 </manifest>

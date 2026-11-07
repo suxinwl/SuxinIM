@@ -41,8 +41,8 @@ type CronTaskConfig struct {
 
 func Start(ctx context.Context, config *CronTaskConfig) error {
 	log.CInfo(ctx, "CRON-TASK server is initializing", "chatRecordsClearTime", config.CronTask.CronExecuteTime, "msgDestructTime", config.CronTask.RetainChatRecords)
-	if config.CronTask.RetainChatRecords < 1 {
-		return errs.New("msg destruct time must be greater than 1").Wrap()
+	if err := validateRetention(config.CronTask); err != nil {
+		return err
 	}
 	client, err := kdisc.NewDiscoveryRegister(&config.Discovery, &config.Share, nil)
 	if err != nil {
@@ -118,6 +118,16 @@ func (c *cronServer) registerDeleteMsg() error {
 }
 
 func (c *cronServer) registerClearUserMsg() error {
+	if c.config.CronTask.RetainChatRecords == 0 {
+		return nil
+	}
 	_, err := c.cron.AddFunc(c.config.CronTask.CronExecuteTime, c.clearUserMsg)
 	return errs.WrapMsg(err, "failed to register clear user msg cron task")
+}
+
+func validateRetention(c config.CronTask) error {
+	if c.RetainChatRecords < 0 || c.FileExpireTime < 0 {
+		return errs.New("retention days must be zero (permanent) or positive").Wrap()
+	}
+	return nil
 }

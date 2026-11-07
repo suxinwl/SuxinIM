@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"openim38.local/identity"
 	"strings"
 	"sync"
 	"time"
@@ -141,6 +142,9 @@ func (s *userServer) GetDesignateUsers(ctx context.Context, req *pbuser.GetDesig
 // deprecated:
 // UpdateUserInfo
 func (s *userServer) UpdateUserInfo(ctx context.Context, req *pbuser.UpdateUserInfoReq) (resp *pbuser.UpdateUserInfoResp, err error) {
+	if identity.Required() && !authverify.IsAppManagerUid(ctx, s.config.Share.IMAdminUserID) {
+		return nil, errs.ErrNoPermission.WrapMsg("employee profiles are managed by HRM")
+	}
 	resp = &pbuser.UpdateUserInfoResp{}
 	err = authverify.CheckAccessV3(ctx, req.UserInfo.UserID, s.config.Share.IMAdminUserID)
 	if err != nil {
@@ -168,6 +172,9 @@ func (s *userServer) UpdateUserInfo(ctx context.Context, req *pbuser.UpdateUserI
 }
 
 func (s *userServer) UpdateUserInfoEx(ctx context.Context, req *pbuser.UpdateUserInfoExReq) (resp *pbuser.UpdateUserInfoExResp, err error) {
+	if identity.Required() && !authverify.IsAppManagerUid(ctx, s.config.Share.IMAdminUserID) {
+		return nil, errs.ErrNoPermission.WrapMsg("employee profiles are managed by HRM")
+	}
 	resp = &pbuser.UpdateUserInfoExResp{}
 	err = authverify.CheckAccessV3(ctx, req.UserInfo.UserID, s.config.Share.IMAdminUserID)
 	if err != nil {

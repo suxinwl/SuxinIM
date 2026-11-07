@@ -1,5 +1,5 @@
 {
-  "sdk": "3.8.3-patch.15.1",
+  "sdk": "3.8.3-patch.15.2",
   "assets": [
     {
       "file": "openIM.wasm",

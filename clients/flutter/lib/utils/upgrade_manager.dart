@@ -1,4 +1,5 @@
 import 'release_policy.dart';
+import 'public_installer_update.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
@@ -57,28 +58,34 @@ class UpgradeManger {
       return;
     }
     _downloading = true;
-    String? path;
     try {
       if (info.sha256 == null ||
           !RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(info.sha256!) ||
           (info.size ?? 0) <= 0) {
         throw StateError('安装包校验元数据不完整');
       }
-      path = await IMUtils.createTempFile(
-          dir: 'apk',
-          name: 'openim-${info.buildVersion}-${info.buildVersionNo}.apk');
-      await HttpUtil.download(uri.toString(), cachePath: path,
-          onProgress: (count, total) {
-        if (total > 0 && !subject.isClosed) subject.add(count / total);
-      });
-      final file = File(path);
-      await ReleasePolicy.verifyPackage(file, info.size!, info.sha256!);
-      if (!await Permission.requestInstallPackages.isGranted)
-        await Permission.requestInstallPackages.request();
-      await AppInstaller.installApk(path);
+      await PublicInstallerUpdate().run(
+          fileName: uri.pathSegments.last,
+          expectedSize: info.size!,
+          expectedSHA256: info.sha256!,
+          download: (path) async {
+            await HttpUtil.downloadPublicInstaller(uri.toString(),
+                cachePath: path, onProgress: (count, total) {
+              if (total > 0 && !subject.isClosed) subject.add(count / total);
+            });
+          },
+          launch: (path) async {
+            if (!await Permission.requestInstallPackages.isGranted &&
+                !(await Permission.requestInstallPackages.request())
+                    .isGranted) {
+              throw StateError('Installer permission denied');
+            }
+            await AppInstaller.installApk(path);
+          });
     } catch (error) {
-      if (path != null && await File(path).exists()) await File(path).delete();
-      IMViews.showToast('更新失败，可重新点击更新：$error');
+      final code =
+          error is PublicInstallerFailure ? error.code : 'PUTY_UPDATE_METADATA';
+      IMViews.showToast('更新失败，可重新点击更新（$code）');
     } finally {
       _downloading = false;
     }

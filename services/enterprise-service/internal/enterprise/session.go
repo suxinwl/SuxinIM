@@ -5,6 +5,7 @@ import (
 	"errors"
 	"google.golang.org/grpc/metadata"
 	"net/http"
+	"openim38.local/identity"
 	"strconv"
 	"time"
 )
@@ -76,6 +77,24 @@ type sessionRevocation struct {
 func (s *Server) sessionLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		writeError(w, &apiError{405, 1001, "POST required"})
+		return
+	}
+	if identity.Required() {
+		if s.HRM == nil {
+			writeError(w, unavailable("HRM bridge unavailable"))
+			return
+		}
+		a, err := s.Auth.Authenticate(r.Context(), r, false)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		data, err := s.HRM.revoke(r.Context(), asRequest(map[string]any{"userID": a.UserID, "sessionID": a.SessionID}))
+		if err != nil {
+			writeError(w, err)
+		} else {
+			writeJSON(w, 200, data)
+		}
 		return
 	}
 	im, chat := r.Header.Get("token"), r.Header.Get("chatToken")

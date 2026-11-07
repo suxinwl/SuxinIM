@@ -1,0 +1,35 @@
+go 1.27.3
+
+use (
+	.
+	./framework
+	./framework/cmd/suxin
+	./framework/contrib/drivers/clickhouse
+	./framework/contrib/drivers/mssql
+	./framework/contrib/drivers/mysql
+	./framework/contrib/drivers/oracle
+	./framework/contrib/drivers/pgsql
+	./framework/contrib/drivers/sqlite
+	./framework/contrib/nosql/redis
+	./framework/contrib/sdk/httpclient
+)
+
+replace github.com/suxinwl/GoSuxin/framework v1.0.0 => ./framework
+
+replace github.com/suxinwl/GoSuxin/framework/cmd/suxin v1.0.0 => ./framework/cmd/suxin
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/mysql v1.0.0 => ./framework/contrib/drivers/mysql
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/pgsql v1.0.0 => ./framework/contrib/drivers/pgsql
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/sqlite v1.0.0 => ./framework/contrib/drivers/sqlite
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/mssql v1.0.0 => ./framework/contrib/drivers/mssql
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/oracle v1.0.0 => ./framework/contrib/drivers/oracle
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/drivers/clickhouse v1.0.0 => ./framework/contrib/drivers/clickhouse
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/nosql/redis v1.0.0 => ./framework/contrib/nosql/redis
+
+replace github.com/suxinwl/GoSuxin/framework/contrib/sdk/httpclient v1.0.0 => ./framework/contrib/sdk/httpclient

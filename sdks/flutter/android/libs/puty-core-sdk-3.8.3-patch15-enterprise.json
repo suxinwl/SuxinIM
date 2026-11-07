@@ -1,0 +1,21 @@
+{
+  "sdkBase": "3.8.3-patch15",
+  "upstreamCommit": "d6e0b549db904d0327d76ef7c9c283203879a095",
+  "go": "1.26.9",
+  "gomobile": "v0.0.0-20261011034528-197770444867",
+  "androidAPI": 24,
+  "abi": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "sha256": "0adc8b600e27aa596cf608b7b5260d9005892f6677c54fe92a0ec6a9f47838cb",
+  "size": 15644715,
+  "enterpriseRootDER_SHA256": "836c3d6c28d5078cc8da6ebeff8e5f9a7fb7f140554e6a7834011d72299c3d69",
+  "trustPaths": [
+    "HTTP API",
+    "WebSocket",
+    "HTTP signed S3"
+  ],
+  "privateKeysIncluded": false,
+  "deviceRuntimeAccepted": false
+}

@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "release": "public-access-r6",
+  "upstreamManifest": {
+    "name": "public-access-r6/hrm/build-manifest.json",
+    "sha256": "f95bc5b12ddb4076acf2c5c02d4faadecd7a37ac28be7d974effe9cfc19973b8",
+    "scope": "Only sourceSHA256 entries for internal/imbridge Go files and the two IM admin modules are retained."
+  },
+  "verifiedBaseline": {
+    "date": "2026-11-02",
+    "pluginVersion": "0.3.2-openim-r6.2-rule-cleanup.1",
+    "goVersion": "go1.27.3",
+    "GOOS": "linux",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0",
+    "workerSHA256": "d53fd408524ee65af022337ddaa62fa4198c6d93872bdc894bee0d64db10831b",
+    "hostSHA256": "09fdfd9ccc072160b85418007442d87590ca3ceb5f2639c57ec529feb5947a8d"
+  },
+  "files": {
+    "internal/imbridge/access_internal.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/access_internal.go",
+      "sha256": "cbafea51fe0f3476bdb4f8ba928ed129ef930bc64230ace16094e1b7301d662a"
+    },
+    "internal/imbridge/access_policy.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/access_policy.go",
+      "sha256": "fcb20cab8d0c17ec71cd83c43f57df1c243a275227e1dce18f2134fc18eda612"
+    },
+    "internal/imbridge/access_policy_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/access_policy_test.go",
+      "sha256": "ba168c4337a37ec08c14fde99268187c316354407cf042e29ef19557eec9aa3f"
+    },
+    "internal/imbridge/avatar_resource.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/avatar_resource.go",
+      "sha256": "782286bd23734b4eede75b0986326f7fcd0a7d229b098e292ffdeb07e0cce80e"
+    },
+    "internal/imbridge/avatar_resource_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/avatar_resource_test.go",
+      "sha256": "8bfb045f1ca4de856712a0f117a5040de47ad5313a727e32bc3cf36d44a8490d"
+    },
+    "internal/imbridge/cache.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/cache.go",
+      "sha256": "c5cd4fff98c7e253b3c57cf02b9cd18ae6795625e670a9ffd68af219f7696db9"
+    },
+    "internal/imbridge/certificate.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/certificate.go",
+      "sha256": "c7541cb20a970ba4b5eb151bd0ade6ad549c75f4d363adcefe6a0464c15cb5db"
+    },
+    "internal/imbridge/certificate_lock_linux.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/certificate_lock_linux.go",
+      "sha256": "7f67f34c8fc857a78b620a6d1c803d60562dc375a479438ff627426fbff39ca2"
+    },
+    "internal/imbridge/certificate_lock_other.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/certificate_lock_other.go",
+      "sha256": "81a2dcd1412bd248a66a4c44e4a7777c763cef064d7127f2a3cfeec33cb0738a"
+    },
+    "internal/imbridge/certificate_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/certificate_test.go",
+      "sha256": "e681e4f7301a241e6f8af7f43bbbe75412189529cc418808a40b6c2621380459"
+    },
+    "internal/imbridge/cors.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/cors.go",
+      "sha256": "9362c498dc331a575878ca704785a202c64fbb21a297391aaa8d635410cd542c"
+    },
+    "internal/imbridge/cors_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/cors_test.go",
+      "sha256": "70652c505511dd0f62791ba57072fbf3c6266626ca5bdbc060a2333a40f789c5"
+    },
+    "internal/imbridge/diagnostic.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/diagnostic.go",
+      "sha256": "b51303b0187b1aa426542cdfc0ec6d47a9731a1be371382df8dd1c6eadbc4c1c"
+    },
+    "internal/imbridge/host.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/host.go",
+      "sha256": "941fc7fb8a6cdec14f8559f4f1467079f12d7086b744617308bda71ac1a868a5"
+    },
+    "internal/imbridge/hrm_assets.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/hrm_assets.go",
+      "sha256": "382a47d4420ace395a482d4be68e0255facdddd7dfa3444f759f386bceee4064"
+    },
+    "internal/imbridge/hrm_assets_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/hrm_assets_test.go",
+      "sha256": "5e4d923391915885e6bfa7d5bebb7ad62c9e82269b01ecfbcb6b57d7f6ee7c86"
+    },
+    "internal/imbridge/hrm_backoffice.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/hrm_backoffice.go",
+      "sha256": "054fefa9b2028e6fe3c44210437d563b9c7c66661dd2b631619efb004bd3e78b"
+    },
+    "internal/imbridge/hrm_backoffice_http_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/hrm_backoffice_http_test.go",
+      "sha256": "bc7c4bf781931581e5e7c0e9d57f7f33ad6249c0b918c1ce428c67c2134ecb58"
+    },
+    "internal/imbridge/hrm_backoffice_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/hrm_backoffice_test.go",
+      "sha256": "c2015719d1b31b694f27ebc46bfe37168e3f06b205d0de373038c1efb1dbc834"
+    },
+    "internal/imbridge/integration_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/integration_test.go",
+      "sha256": "b93005ee4464ca2988c68d684c4e68074ed2e3c12444f7832b14cd51552f4d6b"
+    },
+    "internal/imbridge/log_safety.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/log_safety.go",
+      "sha256": "2b19eac4d9ff35a0cbe870b0cf629e3361ad5f8f87ffe64332ec65ef45f8793f"
+    },
+    "internal/imbridge/log_safety_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/log_safety_test.go",
+      "sha256": "9fc129f85b38b6aee5e8b81c5238e4315eb9380b739226deacf4782d07f3d35e"
+    },
+    "internal/imbridge/manager.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/manager.go",
+      "sha256": "93d81a19e8ff9767ad74fb3bf43e024644a6a6dd24f9621a9355b6d5d73d9997"
+    },
+    "internal/imbridge/manager_access.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/manager_access.go",
+      "sha256": "cc6ddd3d333f46242ede4015955173a1aff438479d52a4b918eabcb9933c10f2"
+    },
+    "internal/imbridge/manager_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/manager_test.go",
+      "sha256": "25ac6e5865b78df888aad06d996234cb233976c08df0b7edd406db8fed977f23"
+    },
+    "internal/imbridge/reconcile.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/reconcile.go",
+      "sha256": "3fb94e4f2173682c3cd1d74db13f6f5431e5b7d97b8b743580be062460bd0815"
+    },
+    "internal/imbridge/remote.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/remote.go",
+      "sha256": "8a753a277a60d03fa2a49256cfb6531279efce5ff99e616a56b20259409d88b0"
+    },
+    "internal/imbridge/remote_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/remote_test.go",
+      "sha256": "bb1c076b38b8109134f2b3f3b2be6749b45bd2551b6b03e32b1bb45c19a03b60"
+    },
+    "internal/imbridge/session.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/session.go",
+      "sha256": "2b544ed838ff074f6f7bce98fa9cf56823aaa7be6713517f901a06397655c393"
+    },
+    "internal/imbridge/store.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/store.go",
+      "sha256": "a42017d8a74ec7ad540b5a34dd0e7aee4e05743f85c263bf7c2999edc911dd7d"
+    },
+    "internal/imbridge/types.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/types.go",
+      "sha256": "b8884d1d3631cfa2b25a915bf7fc5fb254ab16757603e2e701420671494d349c"
+    },
+    "internal/imbridge/worker_health.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/worker_health.go",
+      "sha256": "c154997fe871d0edae20b230e699f6427a72387a9aed478bfcd6a18649f9abd1"
+    },
+    "internal/imbridge/worker_health_test.go": {
+      "kind": "go",
+      "source": "_source/internal/imbridge/worker_health_test.go",
+      "sha256": "bf769644fd38c75c5486c737e966cc9dd140f2bc54ccf1455ed3c071bf20df90"
+    },
+    "plugins/biz-suite/admin/assets/openim-access.js": {
+      "kind": "admin",
+      "source": "_source/plugins/biz-suite/admin/assets/openim-access.js",
+      "sha256": "7a85f3211b55a1e231a5b61502927295f895e15f37da4ac1da0a212051157491"
+    },
+    "plugins/biz-suite/admin/assets/openim.js": {
+      "kind": "admin",
+      "source": "_source/plugins/biz-suite/admin/assets/openim.js",
+      "sha256": "3c5b43614273f553ba27dd399eac5c4163eaf708b7a3f97ffeddb9a58bf556ca"
+    }
+  }
+}

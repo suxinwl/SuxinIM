@@ -1,3 +1,4 @@
+import 'package:openim_common/openim_common.dart';
 import 'dart:io';
 
 import 'package:extended_image/extended_image.dart';
@@ -28,11 +29,10 @@ class _ThumbnailViewerState extends State<ThumbnailViewer> {
       child: Center(
         child: showThumbnail
             ? (widget.thumbnailFile != null
-                ? ExtendedImage.file(
-                    widget.thumbnailFile!,
-                  )
-                : ExtendedImage.network(
-                    widget.thumbnailUrl!,
+                ? ExtendedImage(image:ProtectedResourceImage(widget.thumbnailFile!.path))
+                : ExtendedImage(
+        image: ProtectedResourceImage(widget.thumbnailUrl!),
+        enableLoadState: true,
                     fit: BoxFit.cover,
                     loadStateChanged: (state) {
                       if (state.extendedImageLoadState == LoadState.completed) {
@@ -44,9 +44,10 @@ class _ThumbnailViewerState extends State<ThumbnailViewer> {
                     },
                   ))
             : (widget.imageFile != null
-                ? ExtendedImage.file(widget.imageFile!)
-                : ExtendedImage.network(
-                    widget.imageUrl!,
+                ? ExtendedImage(image:ProtectedResourceImage(widget.imageFile!.path))
+                : ExtendedImage(
+        image: ProtectedResourceImage(widget.imageUrl!),
+        enableLoadState: true,
                   )),
       ),
     );

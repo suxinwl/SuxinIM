@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +25,7 @@ class AssetFile {
 }
 
 class PublishLogic extends GetxController {
+  final _protectedSources=<String>{};
   final inputCtrl = TextEditingController();
   final focusNode = FocusNode();
   late PublishType type;
@@ -41,6 +43,8 @@ class PublishLogic extends GetxController {
   void onClose() {
     inputCtrl.dispose();
     focusNode.dispose();
+    for(final asset in assetsList){if(asset is NativeMediaAsset)_protectedSources.add(asset.protectedPath);}
+    for(final path in _protectedSources){unawaited(NativeLocalVault.discard(path).catchError((Object _){}));}_protectedSources.clear();
     super.onClose();
   }
 
@@ -83,6 +87,7 @@ class PublishLogic extends GetxController {
       );
 
   _selectAssetsFromAlbum() async {
+    if(Platform.isIOS){final items=await NativeLocalVault.nativePickAssets(multiple:isPicture,images:isPicture,videos:!isPicture);for(final item in items.take(maxAssetsCount-assetsList.length)){assetsList.add(NativeMediaAsset(item));}return;}
     Permissions.storage(() async {
       final assets2 = assetsList;
       final count = maxAssetsCount - assetsList.length;
@@ -113,28 +118,9 @@ class PublishLogic extends GetxController {
     });
   }
 
-  _selectAssetsFromCamera() async {
-    Permissions.camera(() async {
-      final AssetEntity? assetEntity = await CameraPicker.pickFromCamera(
-        Get.context!,
-        locale: Get.locale,
-        pickerConfig: CameraPickerConfig(
-          enableAudio: true,
-          enableScaledPreview: true,
-          resolutionPreset: ResolutionPreset.medium,
-          maximumRecordingDuration: 15.seconds,
-          onlyEnableRecording: type == PublishType.video,
-          enableRecording: type == PublishType.video,
-          onMinimumRecordDurationNotMet: () {
-            IMViews.showToast(StrRes.tapTooShort);
-          },
-        ),
-      );
-
-      if (null != assetEntity) {
-        assetsList.add(assetEntity);
-      }
-    });
+  _selectAssetsFromCamera()async{
+    final asset=await ProtectedCamera.capture(Get.context!,video:!isPicture,onlyVideo:!isPicture,maxDuration:15,locale:Get.locale);
+    if(asset!=null)assetsList.add(asset);
   }
 
   previewSelectedPicture(int index) =>
@@ -225,6 +211,7 @@ class PublishLogic extends GetxController {
       // 处理图片的压缩
       await Future.forEach<AssetEntity>(assetsList.value, (element) async {
         var file = await element.file;
+        if(file!=null)_protectedSources.add(file.path);
         // var original = await element.originFile;
         // 图片需要压缩
         if (type == PublishType.picture) {
@@ -233,11 +220,14 @@ class PublishLogic extends GetxController {
             metas.add({'thumb': file.path, 'original': file.path});
           } else {
             file = await IMUtils.compressImageAndGetFile(file);
+            if(file!=null)_protectedSources.add(file.path);
             metas.add({'thumb': file!.path, 'original': file.path});
           }
         } else {
           file = await IMUtils.compressVideoAndGetFile(file!);
+          if(file!=null)_protectedSources.add(file.path);
           final thumbPic = await IMUtils.getVideoThumbnail(file!);
+          _protectedSources.add(thumbPic.path);
           metas.add({'thumb': thumbPic.path, 'original': file.path});
         }
       });

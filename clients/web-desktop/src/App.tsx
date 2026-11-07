@@ -1,7 +1,7 @@
 import { App as AntdApp, ConfigProvider, theme } from "antd";
 import enUS from "antd/locale/en_US";
 import zhCN from "antd/locale/zh_CN";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { RouterProvider } from "react-router-dom";
@@ -9,19 +9,24 @@ import { RouterProvider } from "react-router-dom";
 import AntdGlobalComp from "./AntdGlobalComp";
 import router from "./routes";
 import { useUserStore } from "./store";
+import { subscribeResourceSession } from "./im/resource-session";
 
 function App() {
   const locale = useUserStore((state) => state.appSettings.locale);
-  const queryClient = new QueryClient({
+  const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
       },
     },
-  });
+  }));
   useEffect(() => {
-    // document.documentElement.classList.add("dark")
-  }, []);
+    return subscribeResourceSession(() => {
+      void queryClient.cancelQueries();
+      queryClient.clear();
+      useUserStore.getState().clearImageCache();
+    });
+  }, [queryClient]);
 
   return (
     <ConfigProvider

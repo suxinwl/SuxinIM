@@ -35,6 +35,7 @@ class ConversationLogic extends GetxController {
   @override
   void onInit() {
     scrollController = AutoScrollController(axis: Axis.vertical);
+    _subscriptions.add(NativeLocalVault.invalidated.listen((_){list.clear();if(!isClosed&&NativeLocalVault.unlocked)onRefresh();}));
     _subscriptions.add(imLogic.conversationAddedSubject.listen(onChanged));
     _subscriptions.add(imLogic.conversationChangedSubject.listen(onChanged));
     homeLogic.onScrollToUnreadMessage = scrollTo;
@@ -300,12 +301,13 @@ class ConversationLogic extends GetxController {
       AppIm.iMManager.conversationManager.simpleSort(list);
 
   void onRefresh() async {
+    final generation=NativeLocalVault.generation;
     final attempt = imLogic.session.attempt;
     if (attempt == null || !imLogic.session.established(attempt) || isClosed)
       return;
     try {
       final list = await _request(0);
-      if (isClosed || !imLogic.session.established(attempt)) return;
+      if (isClosed || !imLogic.session.established(attempt)||generation!=NativeLocalVault.generation||!NativeLocalVault.unlocked) return;
       this.list.assignAll(list);
       if (list.isEmpty || list.length < pageSize) {
         refreshController.loadNoData();
@@ -321,12 +323,13 @@ class ConversationLogic extends GetxController {
   }
 
   void onLoading() async {
+    final generation=NativeLocalVault.generation;
     final attempt = imLogic.session.attempt;
     if (attempt == null || !imLogic.session.established(attempt) || isClosed)
       return;
     try {
       final list = await _request(this.list.length);
-      if (isClosed || !imLogic.session.established(attempt)) return;
+      if (isClosed || !imLogic.session.established(attempt)||generation!=NativeLocalVault.generation||!NativeLocalVault.unlocked) return;
       this.list.addAll(list);
       if (list.isEmpty || list.length < pageSize) {
         refreshController.loadNoData();

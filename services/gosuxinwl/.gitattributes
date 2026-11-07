@@ -1,0 +1,6 @@
+# Keep binary assets binary; let GitHub detect source languages accurately.
+*.zip binary
+*.png binary
+*.ico binary
+*.jpg binary
+*.exe binary

@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { message as antdMessage } from "@/AntdGlobalComp";
+import { refreshSSO, SSOError } from "@/api/sso";
 import { BusinessAllowType } from "@/api/login";
 import messageRing from "@/assets/audio/newMsg.mp3";
 import { getApiUrl, getWsUrl } from "@/config";
@@ -38,7 +39,7 @@ import { useContactStore } from "@/store/contact";
 import { feedbackToast } from "@/utils/common";
 import emitter from "@/utils/events";
 import { createNotification, initStore, isGroupSession } from "@/utils/imCommon";
-import { clearIMProfile, getIMToken, getIMUserID } from "@/utils/storage";
+import { clearIMProfile, getIMToken, getIMUserID, getSSOSession } from "@/utils/storage";
 
 import { IMSDK } from "./MainContentWrap";
 
@@ -113,7 +114,9 @@ export function useGlobalEvent() {
     loginCheck();
     cacheConversationList = [];
     setIMListener();
+    const renewal = window.setInterval(() => { void renewSSO(); }, 60000);
     return () => {
+      window.clearInterval(renewal);
       disposeIMListener();
     };
   }, []);
@@ -227,7 +230,18 @@ export function useGlobalEvent() {
       navigate("/login");
       return;
     }
-    tryLogin();
+    try { await refreshSSO(true); await tryLogin(); }
+    catch (error) { if (error instanceof SSOError && [401,403].includes(error.status)) { await clearIMProfile(); navigate("/login"); } else { feedbackToast({msg:"统一账号服务暂不可用，请检查网络后重新打开",error}); } }
+  };
+
+  const renewSSO = async () => {
+    try {
+      const old = await getSSOSession();
+      const renewed = await refreshSSO();
+      if (old?.imToken !== renewed.imToken) {
+        await IMSDK.renewCredentials({userID:renewed.userID,token:renewed.imToken,platformID:window.electronAPI?.getPlatform() ?? 5,apiAddr:getApiUrl(),wsAddr:getWsUrl(),logLevel:LogLevel.Error,isLogStandardOutput:false});
+      }
+    } catch (error) { if (error instanceof SSOError && [401,403].includes(error.status)) tryOut("统一账号会话已失效，请重新登录"); }
   };
 
   const tryLogin = async () => {
@@ -332,9 +346,11 @@ export function useGlobalEvent() {
 
   // sync
   const syncStartHandler = () => {
+    if(window.electronAPI){window.dispatchEvent(new Event("puty-archive-locked"));void window.electronAPI.ipcInvoke("puty-store","sync-state",{state:"syncing"});}
     setConnectState((state) => ({ ...state, isSyncing: true }));
   };
-  const syncFinishHandler = () => {
+  const syncFinishHandler = async () => {
+    if(window.electronAPI){try{await window.electronAPI.ipcInvoke("puty-store","sync-state",{state:"ready"});window.dispatchEvent(new Event("puty-archive-ready"));}catch(error){feedbackToast({error});return;}}
     // Login resolves before the 3.8 initial SQLite sync; load stores again after sync.
     initStore();
     window.electronAPI?.ipcInvoke(
@@ -344,6 +360,7 @@ export function useGlobalEvent() {
     setConnectState((state) => ({ ...state, isSyncing: false }));
   };
   const syncFailedHandler = () => {
+    if(window.electronAPI){window.dispatchEvent(new Event("puty-archive-locked"));void window.electronAPI.ipcInvoke("puty-store","sync-state",{state:"failed"});}
     feedbackToast({ msg: t("toast.syncFailed"), error: t("toast.syncFailed") });
     setConnectState((state) => ({ ...state, isSyncing: false }));
   };

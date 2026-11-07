@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"openim38.local/identity"
 	pathpkg "path"
 	"strconv"
 	"strings"
@@ -17,6 +18,10 @@ func (s *Server) adminRoutes(w http.ResponseWriter, r *http.Request, path string
 	clean := pathpkg.Clean(path)
 	if !strings.HasPrefix(path, prefix) && !strings.HasPrefix(clean, prefix) {
 		return false
+	}
+	if identity.Required() {
+		writeError(w, forbidden("use the HRM management gateway"))
+		return true
 	}
 	// Resolve harmless aliases before classifying login or applying deny rules.
 	// The HTTP server has already URL-decoded Path once. Literal percent escapes

@@ -54,7 +54,13 @@ public abstract class SystemServicesManager {
   /** Returns a path to be used to create a temp file in the current cache directory. */
   @NonNull
   public String getTempFilePath(@NonNull String prefix, @NonNull String suffix) throws IOException {
-    final File path = File.createTempFile(prefix, suffix, getContext().getCacheDir());
+    final File path;
+    try {
+      path=(File)Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles")
+          .getMethod("createTempFile",String.class,String.class).invoke(null,prefix,suffix);
+    } catch(ReflectiveOperationException rejected) {
+      throw new IOException("Encrypted camera scratch unavailable",rejected);
+    }
     return path.toString();
   }
 }

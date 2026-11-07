@@ -185,7 +185,6 @@ class IMManager {
           dynamic data = call.arguments['data'];
           switch (type) {
             case 'onSyncServerStart':
-              print('dart onSyncServerStart: $data');
               conversationManager.listener.syncServerStart(data);
               break;
             case 'onSyncServerProgress':
@@ -424,6 +423,9 @@ class IMManager {
   void unInitSDK() {
     _channel.invokeMethod('unInitSDK', _buildParam({}));
   }
+  Future<void> unInitSDKAndWait() async {
+    await _channel.invokeMethod('unInitSDK', _buildParam({}));
+  }
 
   /// Login
   /// [userID] User ID
@@ -457,7 +459,6 @@ class IMManager {
     try {
       return this.userInfo = await userManager.getSelfUserInfo();
     } catch (error, stackTrace) {
-      log('login e: $error  s: $stackTrace');
       if (null != defaultValue) {
         return this.userInfo = await (defaultValue.call());
       }
@@ -497,6 +498,9 @@ class IMManager {
   /// Get the current logged-in user information
   Future<UserInfo> getLoginUserInfo() async => userInfo;
 
+  final Map<String,Future<String>> _protectedImports={};
+  final Map<String,int> _protectedUploadUsers={};
+  final Set<String> _failedProtectedUploads={};
   /// [id] Same as [OnUploadFileListener] ID, to distinguish which file callback it is
   Future uploadFile({
     required String id,
@@ -505,18 +509,25 @@ class IMManager {
     String? contentType,
     String? cause,
     String? operationID,
-  }) =>
-      _channel.invokeMethod(
-        'uploadFile',
-        _buildParam({
-          'id': id,
-          'filePath': filePath,
-          'name': fileName,
-          'contentType': contentType,
-          'cause': cause,
-          'operationID': Utils.checkOperationID(operationID),
-        }),
-      );
+  }) async {
+      const vault=MethodChannel('puty/local_store');
+      if((_protectedUploadUsers[filePath]??0)==0)_failedProtectedUploads.remove(filePath);
+      _protectedUploadUsers[filePath]=(_protectedUploadUsers[filePath]??0)+1;
+      final imported=_protectedImports.putIfAbsent(filePath,()async{final path=await vault.invokeMethod<String>('source/import',{'path':filePath});if(path==null||path.isEmpty)throw StateError('Encrypted upload source unavailable');return path;});
+      String? secured;bool succeeded=false;
+      try{
+        secured=await imported;
+        final info=await vault.invokeMapMethod<String,dynamic>('source/info',{'path':secured});
+        final name=fileName.contains('/')||fileName.contains('\\')?(info?['name'] as String? ?? 'upload.bin'):fileName;
+        final result=await _channel.invokeMethod('uploadFile',_buildParam({'id':id,'filePath':secured,'name':name,'contentType':contentType,'cause':cause,'operationID':Utils.checkOperationID(operationID)}));
+        succeeded=true;return result;
+      }finally{
+        if(!succeeded)_failedProtectedUploads.add(filePath);
+        final remaining=(_protectedUploadUsers[filePath]??1)-1;
+        if(remaining>0){_protectedUploadUsers[filePath]=remaining;}
+        else{_protectedUploadUsers.remove(filePath);if(succeeded&&!_failedProtectedUploads.remove(filePath)){_protectedImports.remove(filePath);if(secured!=null)await vault.invokeMethod('source/discard',{'path':secured});}else if(secured==null){_protectedImports.remove(filePath);_failedProtectedUploads.remove(filePath);}}
+      }
+  }
 
   /// Update the Firebase client registration token
   /// [fcmToken] Firebase token

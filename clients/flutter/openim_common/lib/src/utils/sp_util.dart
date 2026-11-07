@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'encrypted_preferences.dart';
 
 class SpUtil {
-  SharedPreferences? prefs;
+  EncryptedPreferences? prefs;
 
   SpUtil._();
 
@@ -13,7 +13,7 @@ class SpUtil {
   factory SpUtil() => _singleton;
 
   Future init() async {
-    prefs = await SharedPreferences.getInstance();
+    prefs = await EncryptedPreferences.open();
     return prefs;
   }
 
@@ -151,7 +151,7 @@ class SpUtil {
   }
 
   /// get Sp.
-  SharedPreferences? getSp() {
+  EncryptedPreferences? getSp() {
     return prefs;
   }
 }

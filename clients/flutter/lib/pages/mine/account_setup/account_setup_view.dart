@@ -70,13 +70,12 @@ class AccountSetupPage extends StatelessWidget {
                   isTopRadius: true,
                 ),
                 _buildItemView(
-                  label: StrRes.changePassword,
+                  label: '修改本人密码',
                   showRightArrow: true,
                   onTap: logic.changePwd,
                 ),
                 _buildItemView(
-                  label: StrRes.clearChatHistory,
-                  textStyle: Styles.ts_FF381F_17sp,
+                  label: '本机档案与备份',
                   onTap: logic.clearChatHistory,
                   showRightArrow: true,
                   isBottomRadius: true,

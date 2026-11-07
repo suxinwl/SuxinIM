@@ -12,8 +12,15 @@ buildscript {
     }
 }
 
+def putyCoreRepository = file('libs')
 rootProject.allprojects {
     repositories {
+        ivy {
+            url = uri(putyCoreRepository)
+            patternLayout { artifact('[artifact].[ext]') }
+            metadataSources { artifact() }
+            content { includeGroup('io.puty') }
+        }
         google()
         mavenCentral()
     }
@@ -24,7 +31,7 @@ apply plugin: "com.android.library"
 android {
     namespace = "io.openim.flutter_openim_sdk"
 
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -36,7 +43,8 @@ android {
     }
 
     dependencies {
-        implementation 'io.openim:core-sdk:3.8.3-patch15@aar'
+        implementation 'io.puty:puty-core-sdk-3.8.3-patch15-enterprise:1@aar'
+        implementation 'io.puty:puty-sqlcipher-android-4.19.1:1@aar'
         testImplementation("junit:junit:4.13.2")
         testImplementation("org.mockito:mockito-core:5.0.0")
     }

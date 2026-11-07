@@ -1,0 +1,36 @@
+// =================================================================================
+// 控制层文件
+// =================================================================================
+package packageName
+
+import (
+	"context"
+
+	"github.com/suxinwl/GoSuxin/api/{api_apth}"
+	"github.com/suxinwl/GoSuxin/internal/service"
+)
+
+func (c *Controller{firstModule}) {fileName}List(ctx context.Context, req *{moduleFileName}ListReq) (res *{moduleFileName}ListRes, err error) {
+	res = &{moduleFileName}ListRes{R: service.{serviceName}().{fileName}List(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) {fileName}Save(ctx context.Context, req *{moduleFileName}SaveReq) (res *{moduleFileName}SaveRes, err error) {
+	res = &{moduleFileName}SaveRes{R: service.{serviceName}().{fileName}Save(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) {fileName}Status(ctx context.Context, req *{moduleFileName}StatusReq) (res *{moduleFileName}StatusRes, err error) {
+	res = &{moduleFileName}StatusRes{R: service.{serviceName}().{fileName}Status(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) {fileName}Del(ctx context.Context, req *{moduleFileName}DelReq) (res *{moduleFileName}DelRes, err error) {
+	res = &{moduleFileName}DelRes{R: service.{serviceName}().{fileName}Del(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) {fileName}Content(ctx context.Context, req *{moduleFileName}ContentReq) (res *{moduleFileName}ContentRes, err error) {
+	res = &{moduleFileName}ContentRes{R: service.{serviceName}().{fileName}Content(ctx, req)}
+	return
+}
+func (c *Controller{firstModule}) {fileName}ExportExcel(ctx context.Context, req *{moduleFileName}ExportExcelReq) (res *{moduleFileName}ExportExcelRes, err error) {
+	res = &{moduleFileName}ExportExcelRes{R: service.{serviceName}().{fileName}ExportExcel(ctx, req)}
+	return
+}

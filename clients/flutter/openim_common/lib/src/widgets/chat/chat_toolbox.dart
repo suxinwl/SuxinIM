@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:openim_common/openim_common.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class ChatToolBox extends StatelessWidget {
   const ChatToolBox({
@@ -14,6 +11,7 @@ class ChatToolBox extends StatelessWidget {
     this.onTapCard,
     this.onTapFile,
     this.onTapLocation,
+    this.attachmentBusy = false,
   }) : super(key: key);
   final Function()? onTapAlbum;
   final Function()? onTapCamera;
@@ -21,6 +19,7 @@ class ChatToolBox extends StatelessWidget {
   final Function()? onTapFile;
   final Function()? onTapCard;
   final Function()? onTapLocation;
+  final bool attachmentBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +27,8 @@ class ChatToolBox extends StatelessWidget {
       ToolboxItemInfo(
         text: StrRes.toolboxAlbum,
         icon: ImageRes.toolboxAlbum,
-        onTap: () {
-          if (Platform.isAndroid) {
-            Permissions.storage(onTapAlbum);
-          } else {
-            Permissions.photos(onTapAlbum);
-          }
-        },
+        // AssetPicker handles modern and limited photo authorization itself.
+        onTap: attachmentBusy ? null : onTapAlbum,
       ),
       ToolboxItemInfo(
         text: StrRes.toolboxCamera,
@@ -49,9 +43,13 @@ class ChatToolBox extends StatelessWidget {
       ToolboxItemInfo(
         text: StrRes.toolboxFile,
         icon: ImageRes.toolboxFile,
-        onTap: () => Permissions.storage(onTapFile),
+        // The system document picker grants access to the selected URI.
+        onTap: attachmentBusy ? null : onTapFile,
       ),
-      ToolboxItemInfo(text: StrRes.toolboxCard, icon: ImageRes.toolboxCard, onTap: onTapCard),
+      ToolboxItemInfo(
+          text: StrRes.toolboxCard,
+          icon: ImageRes.toolboxCard,
+          onTap: onTapCard),
       ToolboxItemInfo(
         text: StrRes.toolboxLocation,
         icon: ImageRes.toolboxLocation,
@@ -134,15 +132,19 @@ class ChatToolBox extends StatelessWidget {
     required String icon,
     Function()? onTap,
   }) =>
-      Column(
-        children: [
-          icon.toImage
-            ..width = 58.w
-            ..height = 58.h
-            ..onTap = onTap,
-          10.verticalSpace,
-          text.toText..style = Styles.ts_0C1C33_12sp,
-        ],
+      GestureDetector(
+        key: ValueKey('chat-toolbox-$text'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Column(
+          children: [
+            icon.toImage
+              ..width = 58.w
+              ..height = 58.h,
+            10.verticalSpace,
+            text.toText..style = Styles.ts_0C1C33_12sp,
+          ],
+        ),
       );
 }
 

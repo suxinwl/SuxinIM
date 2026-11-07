@@ -69,6 +69,7 @@ type msgServer struct {
 	config                 *Config                          // Global configuration settings.
 	webhookClient          *webhook.Client
 	conversationClient     *rpcli.ConversationClient
+	peerAuthorize          func(context.Context, string, string) error
 }
 
 func (m *msgServer) addInterceptorHandler(interceptorFunc ...MessageInterceptorFunc) {

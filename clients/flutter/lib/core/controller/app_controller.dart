@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
@@ -149,8 +150,8 @@ class AppController extends SuperController with UpgradeManger {
         final id = seq;
 
         const androidPlatformChannelSpecifics = AndroidNotificationDetails(
-            'chat', 'OpenIM聊天消息',
-            channelDescription: '来自OpenIM的信息',
+            'chat', '${AppBrand.displayName}聊天消息',
+            channelDescription: '来自${AppBrand.displayName}的信息',
             importance: Importance.max,
             priority: Priority.high,
             ticker: 'ticker');
@@ -170,7 +171,7 @@ class AppController extends SuperController with UpgradeManger {
   Future<void> _startForegroundService() async {
     await getAppInfo();
     const androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'pro', 'OpenIM后台进程',
+        'pro', '${AppBrand.displayName}后台进程',
         channelDescription: '保证app能收到信息',
         importance: Importance.max,
         priority: Priority.high,
@@ -316,6 +317,10 @@ class AppController extends SuperController with UpgradeManger {
     return clientConfigMap;
   }
 
+  Future<void> queryPublicBrand() async {
+    try { clientConfigMap.addAll(await Apis.getPublicBrand()); } catch (_) { /* Keep the offline brand. */ }
+  }
+
   @override
   void onDetached() {
     // TODO: implement onDetached
@@ -333,7 +338,7 @@ class AppController extends SuperController with UpgradeManger {
 
   @override
   void onResumed() {
-    // TODO: implement onResumed
+    unawaited(Get.find<IMController>().resumeAfterVaultBackground());
     autoCheckVersionUpgrade();
   }
 

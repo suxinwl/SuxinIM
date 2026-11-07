@@ -20,6 +20,7 @@ import (
 	"github.com/openimsdk/chat/pkg/eerrs"
 	"github.com/openimsdk/protocol/wrapperspb"
 	"github.com/openimsdk/tools/utils/stringutil"
+	"openim38.local/identity"
 	"strconv"
 	"strings"
 	"time"
@@ -156,6 +157,9 @@ func (o *chatSvr) UpdateUserInfo(ctx context.Context, req *chat.UpdateUserInfoRe
 	if err != nil {
 		return nil, err
 	}
+	if identity.Required() && userType == constant.NormalUser && (req.Account != nil || req.PhoneNumber != nil || req.AreaCode != nil || req.Email != nil || req.Nickname != nil || req.FaceURL != nil || req.Gender != nil || req.Birth != nil || req.Level != nil) {
+		return nil, errs.ErrNoPermission.WrapMsg("employee profiles are managed by HRM")
+	}
 
 	if err = o.checkUpdateInfo(ctx, req); err != nil {
 		return nil, err
@@ -205,6 +209,11 @@ func (o *chatSvr) FindUserPublicInfo(ctx context.Context, req *chat.FindUserPubl
 }
 
 func (o *chatSvr) AddUserAccount(ctx context.Context, req *chat.AddUserAccountReq) (*chat.AddUserAccountResp, error) {
+	if identity.Required() {
+		if _, err := mctx.CheckAdmin(ctx); err != nil || req.User == nil || !identity.Managed(req.User.UserID) {
+			return nil, errs.ErrNoPermission.WrapMsg("accounts are managed by HRM")
+		}
+	}
 	if _, _, err := mctx.Check(ctx); err != nil {
 		return nil, err
 	}

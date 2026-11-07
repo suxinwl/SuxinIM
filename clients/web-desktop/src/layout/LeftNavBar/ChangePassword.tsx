@@ -5,7 +5,7 @@ import { t } from "i18next";
 import md5 from "md5";
 import { forwardRef, ForwardRefRenderFunction, memo } from "react";
 
-import { modifyPassword } from "@/api/login";
+import { changeOwnPassword } from "@/api/sso";
 import { useUserStore } from "@/store";
 import { feedbackToast } from "@/utils/common";
 
@@ -59,15 +59,14 @@ export const ChangePasswordContent = ({
   form?: FormInstance;
   closeOverlay?: () => void;
 }) => {
-  const { runAsync, loading: passwordUpdating } = useRequest(modifyPassword, {
+  const { runAsync, loading: passwordUpdating } = useRequest((params: {oldPassword:string;newPassword:string}) => changeOwnPassword(params.oldPassword, params.newPassword), {
     manual: true,
   });
 
   const onFinish = (value: PasswordFormData) => {
     runAsync({
-      currentPassword: md5(value.oldPassword),
+      oldPassword: md5(value.oldPassword),
       newPassword: md5(value.newPassword),
-      userID: useUserStore.getState().selfInfo.userID,
     })
       .then(() => {
         closeOverlay?.();

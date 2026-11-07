@@ -20,6 +20,13 @@ const router = createHashRouter([
         element: <MainContentLayout />,
         children: [
           {
+            path: "/organization",
+            async lazy() {
+              const { Organization } = await import("@/pages/organization");
+              return { Component: Organization };
+            },
+          },
+          {
             path: "/chat",
             async lazy() {
               const { Chat } = await import("@/pages/chat");

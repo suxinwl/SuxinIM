@@ -1,6 +1,8 @@
 import "xgplayer/dist/index.min.css";
 
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
+import { useProtectedResource } from "@/im/useProtectedResource";
+import { t } from "i18next";
 import { SimplePlayer } from "xgplayer";
 import { I18N } from "xgplayer";
 import ZH from "xgplayer/es/lang/zh-cn";
@@ -24,17 +26,24 @@ const VideoPlayer = ({
   autoplay?: boolean;
   poster?: string;
 }) => {
+  const resource = useProtectedResource(url, { forceOnLoad: true });
+  const posterResource = useProtectedResource(poster);
+  const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    new SimplePlayer({
-      id: "video_player",
-      url,
+    if (!resource.src || !element.current) return;
+    const player = new SimplePlayer({
+      el: element.current,
+      url: resource.src,
       autoplay,
-      poster,
+      poster: posterResource.src,
       plugins: [Start, PC, Mobile, Progress, Play, Time, Error, Fullscreen],
     });
-  }, [url]);
+    player.on("error", resource.onError);
+    return () => { player.destroy(); };
+  }, [resource.src, resource.onError, posterResource.src, autoplay]);
 
-  return <div id="video_player" />;
+  if (resource.failed) return <span role="status">{t("toast.imageLoadFailed")} <button type="button" onClick={resource.retry}>{t("retry", { defaultValue: "重试" })}</button></span>;
+  return <div key={resource.src ?? "pending"} ref={element} id="video_player" />;
 };
 
 export default memo(VideoPlayer);

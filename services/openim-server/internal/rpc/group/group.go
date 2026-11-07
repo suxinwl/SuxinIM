@@ -205,6 +205,9 @@ func (s *groupServer) GenGroupID(ctx context.Context, groupID *string) error {
 }
 
 func (s *groupServer) CreateGroup(ctx context.Context, req *pbgroup.CreateGroupReq) (*pbgroup.CreateGroupResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupInfo.GroupID); err != nil {
+		return nil, err
+	}
 	if req.GroupInfo.GroupType != constant.WorkingGroup {
 		return nil, errs.ErrArgs.WrapMsg(fmt.Sprintf("group type only supports %d", constant.WorkingGroup))
 	}
@@ -361,6 +364,9 @@ func (s *groupServer) GetJoinedGroupList(ctx context.Context, req *pbgroup.GetJo
 }
 
 func (s *groupServer) InviteUserToGroup(ctx context.Context, req *pbgroup.InviteUserToGroupReq) (*pbgroup.InviteUserToGroupResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	if len(req.InvitedUserIDs) == 0 {
 		return nil, errs.ErrArgs.WrapMsg("user empty")
 	}
@@ -541,6 +547,9 @@ func (s *groupServer) GetGroupMemberList(ctx context.Context, req *pbgroup.GetGr
 }
 
 func (s *groupServer) KickGroupMember(ctx context.Context, req *pbgroup.KickGroupMemberReq) (*pbgroup.KickGroupMemberResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	group, err := s.db.TakeGroup(ctx, req.GroupID)
 	if err != nil {
 		return nil, err
@@ -913,6 +922,9 @@ func (s *groupServer) GroupApplicationResponse(ctx context.Context, req *pbgroup
 }
 
 func (s *groupServer) JoinGroup(ctx context.Context, req *pbgroup.JoinGroupReq) (*pbgroup.JoinGroupResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	user, err := s.userClient.GetUserInfo(ctx, req.InviterUserID)
 	if err != nil {
 		return nil, err
@@ -991,6 +1003,9 @@ func (s *groupServer) JoinGroup(ctx context.Context, req *pbgroup.JoinGroupReq) 
 }
 
 func (s *groupServer) QuitGroup(ctx context.Context, req *pbgroup.QuitGroupReq) (*pbgroup.QuitGroupResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	if req.UserID == "" {
 		req.UserID = mcontext.GetOpUserID(ctx)
 	} else {
@@ -1036,6 +1051,9 @@ func (s *groupServer) setMemberJoinSeq(ctx context.Context, groupID string, user
 }
 
 func (s *groupServer) SetGroupInfo(ctx context.Context, req *pbgroup.SetGroupInfoReq) (*pbgroup.SetGroupInfoResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupInfoForSet.GroupID); err != nil {
+		return nil, err
+	}
 	var opMember *model.GroupMember
 	if !authverify.IsAppManagerUid(ctx, s.config.Share.IMAdminUserID) {
 		var err error
@@ -1129,6 +1147,9 @@ func (s *groupServer) SetGroupInfo(ctx context.Context, req *pbgroup.SetGroupInf
 }
 
 func (s *groupServer) SetGroupInfoEx(ctx context.Context, req *pbgroup.SetGroupInfoExReq) (*pbgroup.SetGroupInfoExResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	var opMember *model.GroupMember
 
 	if !authverify.IsAppManagerUid(ctx, s.config.Share.IMAdminUserID) {
@@ -1244,6 +1265,9 @@ func (s *groupServer) SetGroupInfoEx(ctx context.Context, req *pbgroup.SetGroupI
 }
 
 func (s *groupServer) TransferGroupOwner(ctx context.Context, req *pbgroup.TransferGroupOwnerReq) (*pbgroup.TransferGroupOwnerResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	group, err := s.db.TakeGroup(ctx, req.GroupID)
 	if err != nil {
 		return nil, err
@@ -1429,6 +1453,9 @@ func (s *groupServer) GetUserReqApplicationList(ctx context.Context, req *pbgrou
 }
 
 func (s *groupServer) DismissGroup(ctx context.Context, req *pbgroup.DismissGroupReq) (*pbgroup.DismissGroupResp, error) {
+	if err := s.guardHRMGroup(ctx, req.GroupID); err != nil {
+		return nil, err
+	}
 	owner, err := s.db.TakeGroupOwner(ctx, req.GroupID)
 	if err != nil {
 		return nil, err
@@ -1588,6 +1615,12 @@ func (s *groupServer) SetGroupMemberInfo(ctx context.Context, req *pbgroup.SetGr
 	isAppManagerUid := authverify.IsAppManagerUid(ctx, s.config.Share.IMAdminUserID)
 	groupMembers := make(map[string][]*pbgroup.SetGroupMemberInfo)
 	for i, member := range req.Members {
+		if member == nil {
+			return nil, errs.ErrArgs.WrapMsg("member empty")
+		}
+		if err := s.guardHRMGroupMemberInfo(ctx, member); err != nil {
+			return nil, err
+		}
 		if member.RoleLevel != nil {
 			switch member.RoleLevel.Value {
 			case constant.GroupOwner:
@@ -1621,6 +1654,19 @@ func (s *groupServer) SetGroupMemberInfo(ctx context.Context, req *pbgroup.SetGr
 			if member.UserID == opUserID {
 				opUserIndex = i
 				break
+			}
+		}
+		for _, member := range members {
+			if member.RoleLevel == nil {
+				continue
+			}
+			for _, current := range dbMembers {
+				if current.UserID == member.UserID && current.RoleLevel == constant.GroupOwner {
+					return nil, errs.ErrNoPermission.WrapMsg("group owner must be changed through ownership transfer")
+				}
+			}
+			if hrmDepartmentGroup(groupID) && !isAppManagerUid && (opUserIndex < 0 || dbMembers[opUserIndex].RoleLevel != constant.GroupOwner) {
+				return nil, errs.ErrNoPermission.WrapMsg("only department group owner can change administrator roles")
 			}
 		}
 		switch len(userIDs) - len(dbMembers) {
@@ -1670,7 +1716,7 @@ func (s *groupServer) SetGroupMemberInfo(ctx context.Context, req *pbgroup.SetGr
 						}
 					}
 				}
-				for _, member := range req.Members {
+				for _, member := range members {
 					if member.UserID == opUserID {
 						reqSelf = member
 						break

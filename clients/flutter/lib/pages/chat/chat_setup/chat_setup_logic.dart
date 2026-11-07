@@ -239,20 +239,8 @@ class ChatSetupLogic extends GetxController {
   }
 
   void clearChatHistory() async {
-    var confirm = await Get.dialog(CustomDialog(
-      title: StrRes.confirmClearChatHistory,
-      rightText: StrRes.clearAll,
-    ));
-    if (confirm == true) {
-      await LoadingView.singleton.wrap(
-        asyncFunction: () => AppIm.iMManager.conversationManager
-            .clearConversationAndDeleteAllMsg(
-          conversationID: conversationID,
-        ),
-      );
-      chatLogic.clearAllMessage();
-      IMViews.showToast(StrRes.clearSuccessfully);
-    }
+    await Get.to(()=>LocalArchivePage(conversationID:conversationID));
+    chatLogic.clearAllMessage();
   }
 
   void createGroup() => AppNavigator.startCreateGroup(defaultCheckedList: [

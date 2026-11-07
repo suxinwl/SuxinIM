@@ -70,11 +70,14 @@ func (m *msgServer) DeleteMsgs(ctx context.Context, req *msg.DeleteMsgsReq) (*ms
 	}
 	isSyncSelf, isSyncOther := m.validateDeleteSyncOpt(req.DeleteSyncOpt)
 	if isSyncOther {
-		if err := m.MsgDatabase.DeleteMsgsPhysicalBySeqs(ctx, req.ConversationID, req.Seqs); err != nil {
-			return nil, err
-		}
+		// Lookup is scoped to the authenticated request owner. A caller that
+		// does not own this conversation must be rejected before changing
+		// messages shared with its actual participants.
 		conv, err := m.conversationClient.GetConversation(ctx, req.ConversationID, req.UserID)
 		if err != nil {
+			return nil, err
+		}
+		if err := m.MsgDatabase.DeleteMsgsPhysicalBySeqs(ctx, req.ConversationID, req.Seqs); err != nil {
 			return nil, err
 		}
 		tips := &sdkws.DeleteMsgsTips{UserID: req.UserID, ConversationID: req.ConversationID, Seqs: req.Seqs}
@@ -93,6 +96,9 @@ func (m *msgServer) DeleteMsgs(ctx context.Context, req *msg.DeleteMsgsReq) (*ms
 }
 
 func (m *msgServer) DeleteMsgPhysicalBySeq(ctx context.Context, req *msg.DeleteMsgPhysicalBySeqReq) (*msg.DeleteMsgPhysicalBySeqResp, error) {
+	if err := authverify.CheckAdmin(ctx, m.config.Share.IMAdminUserID); err != nil {
+		return nil, err
+	}
 	err := m.MsgDatabase.DeleteMsgsPhysicalBySeqs(ctx, req.ConversationID, req.Seqs)
 	if err != nil {
 		return nil, err

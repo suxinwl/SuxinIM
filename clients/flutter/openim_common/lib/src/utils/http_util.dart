@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:openim_common/openim_common.dart';
-import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:uuid/uuid.dart';
 
 var dio = Dio();
@@ -31,17 +30,6 @@ class HttpUtil {
       //   responseBody: kDebugMode,
       //   responseHeader: kDebugMode,
       // ))
-      ..interceptors.add(
-        TalkerDioLogger(
-          settings: const TalkerDioLoggerSettings(
-            printRequestHeaders: kDebugMode,
-            printRequestData: kDebugMode,
-            printResponseMessage: kDebugMode,
-            printResponseData: kDebugMode,
-            printResponseHeaders: kDebugMode,
-          ),
-        ),
-      )
       ..interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
         // Do something before request is sent
         return handler.next(options); //continue
@@ -162,16 +150,38 @@ class HttpUtil {
     required String cachePath,
     CancelToken? cancelToken,
     Function(int count, int total)? onProgress,
-  }) {
-    return dio.download(
-      url,
-      cachePath,
-      options: Options(
-        receiveTimeout: const Duration(minutes: 10),
-      ),
-      cancelToken: cancelToken,
-      onReceiveProgress: onProgress,
-    );
+  }) async {
+    final sourceName=cachePath.replaceAll('\\','/').split('/').last;
+    return NativeLocalVault.save(url,sourceName);
+  }
+
+  /// Public release packages must remain downloadable before account login.
+  /// Use an isolated HTTPS transport so session headers and attachment grants
+  /// cannot be mixed into the signed-package update flow.
+  static Future downloadPublicInstaller(
+    String url, {
+    required String cachePath,
+    Function(int count, int total)? onProgress,
+    Dio? client,
+  }) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https' || uri.userInfo.isNotEmpty ||
+        ![Config.lanOrigin, Config.wanOrigin].contains(uri.origin) ||
+        uri.pathSegments.length != 2 || uri.pathSegments.first != 'downloads' ||
+        !RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]*\.apk$').hasMatch(uri.pathSegments.last)) {
+      throw StateError('安装包地址必须是受信服务器的公开 HTTPS 下载地址');
+    }
+    final transport = client ?? Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(minutes: 10),
+    ));
+    try {
+      return await transport.download(url, cachePath,
+        options: Options(followRedirects: false),
+        onReceiveProgress: onProgress);
+    } finally {
+      if (client == null) transport.close();
+    }
   }
 
   static Future saveUrlPicture(
@@ -179,54 +189,12 @@ class HttpUtil {
     CancelToken? cancelToken,
     Function(int count, int total)? onProgress,
   }) async {
-    final name = url.substring(url.lastIndexOf('/') + 1);
-    final cachePath = await IMUtils.createTempFile(dir: 'picture', name: name);
-    var intervalDo = IntervalDo();
-
-    return download(
-      url,
-      cachePath: cachePath,
-      cancelToken: cancelToken,
-      onProgress: (int count, int total) async {
-        if (total == -1) {
-          intervalDo.drop(
-              fun: () async {
-                await ImageGallerySaver.saveFile(cachePath);
-                IMViews.showToast("${StrRes.saveSuccessfully}($cachePath)",
-                    duration: const Duration(milliseconds: 3000));
-              },
-              milliseconds: 1500);
-        }
-        if (count == total) {
-          final result = await ImageGallerySaver.saveFile(cachePath);
-          if (result != null) {
-            var tips = StrRes.saveSuccessfully;
-            if (Platform.isAndroid) {
-              final filePath = result['filePath'].split('//').last;
-              tips = '${StrRes.saveSuccessfully}:$filePath';
-            }
-            IMViews.showToast(tips);
-          }
-        }
-      },
-    );
+    final result=await NativeLocalVault.save(url,Uri.parse(url).pathSegments.last);
+    IMViews.showToast('已加密保存：${result['name']}');return result;
   }
 
   static Future saveImage(Image image) async {
-    var byteData = await image.toByteData(format: ImageByteFormat.png);
-    if (byteData != null) {
-      Uint8List uint8list = byteData.buffer.asUint8List();
-      var result =
-          await ImageGallerySaver.saveImage(Uint8List.fromList(uint8list));
-      if (result != null) {
-        var tips = StrRes.saveSuccessfully;
-        if (Platform.isAndroid) {
-          final filePath = result['filePath'].split('//').last;
-          tips = '${StrRes.saveSuccessfully}:$filePath';
-        }
-        IMViews.showToast(tips);
-      }
-    }
+    throw StateError('请从消息的加密保存入口保存原附件');
   }
 
   static Future saveUrlVideo(
@@ -234,37 +202,11 @@ class HttpUtil {
     CancelToken? cancelToken,
     Function(int count, int total)? onProgress,
   }) async {
-    final name = url.substring(url.lastIndexOf('/') + 1);
-    final cachePath = await IMUtils.createTempFile(dir: 'video', name: name);
-    return download(
-      url,
-      cachePath: cachePath,
-      cancelToken: cancelToken,
-      onProgress: (int count, int total) async {
-        if (count == total) {
-          final result = await ImageGallerySaver.saveFile(cachePath);
-          if (result != null) {
-            var tips = StrRes.saveSuccessfully;
-            if (Platform.isAndroid) {
-              final filePath = result['filePath'].split('//').last;
-              tips = '${StrRes.saveSuccessfully}:$filePath';
-            }
-            IMViews.showToast(tips);
-          }
-        }
-      },
-    );
+    final result=await NativeLocalVault.save(url,Uri.parse(url).pathSegments.last);
+    IMViews.showToast('已加密保存：${result['name']}');return result;
   }
 
   static void saveFileToGallerySaver(File file) async {
-    final result = await ImageGallerySaver.saveFile(file.path);
-    if (result != null) {
-      var tips = StrRes.saveSuccessfully;
-      if (Platform.isAndroid) {
-        final filePath = result['filePath'].split('//').last;
-        tips = '${StrRes.saveSuccessfully}:$filePath';
-      }
-      IMViews.showToast(tips);
-    }
+    IMViews.showToast('请从消息的加密保存入口保存原附件');
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@openim/wasm-client-sdk",
-  "version": "3.8.3-patch.15.1",
+  "version": "3.8.3-patch.15.3",
   "description": "open im sdk for web",
   "source": "src/index.ts",
   "main": "lib/index.js",
@@ -26,7 +26,7 @@
     "build": "rimraf lib && rollup -c && tsc-alias",
     "cm": "cz",
     "lint": "eslint ./src/ --fix",
-    "prepare": "husky install",
+    "prepare": "node -e \"if(require('fs').existsSync('.git'))require('husky').install()\"",
     "semantic-release": "semantic-release",
     "test:watch": "jest --watch --testPathIgnorePatterns=/tests/e2e/",
     "test": "jest --coverage --passWithNoTests --testPathIgnorePatterns=/tests/e2e/",

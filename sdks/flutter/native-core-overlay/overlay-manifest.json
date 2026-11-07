@@ -1,0 +1,109 @@
+{
+  "baseCommit": "d6e0b549db904d0327d76ef7c9c283203879a095",
+  "files": [
+    {
+      "path": "go.mod",
+      "sha256": "9619ccb6d081b8f4a1c19a710dc32b4931479acc31722519b6fd1ea40f7531e1"
+    },
+    {
+      "path": "go.sum",
+      "sha256": "bb6233ca6ac36d8fa091ab5e70e9f317b08151472db5423e13da4788a18f6117"
+    },
+    {
+      "path": "internal/conversation_msg/api.go",
+      "sha256": "b22c8176e0849e172446bbd47927944d289516a6f95f697b1eb1c913b85f6acd"
+    },
+    {
+      "path": "internal/conversation_msg/conversation_msg.go",
+      "sha256": "51fb6095638fbb242b3c4a10d414e8137082eb0b4ab4a10a656cb0210f8138bd"
+    },
+    {
+      "path": "internal/conversation_msg/create_message.go",
+      "sha256": "485753bb8bf7ae24016a4d3fe47b5f12cb6be7fd3fb4c419a32543a6053d3b1e"
+    },
+    {
+      "path": "internal/conversation_msg/image.go",
+      "sha256": "ef8b8b3db60c9a2a95e3d24ed59ca1bbfd281e26d8ac114345977c6a99f8dd19"
+    },
+    {
+      "path": "internal/conversation_msg/local_archive_mobile.go",
+      "sha256": "bd8f48eb24111abdd3e04e0539c1337be891f1e123bafe5cd23eca9594e27852"
+    },
+    {
+      "path": "internal/conversation_msg/local_archive_other.go",
+      "sha256": "cb9e901d88955e60aaa85d2584617bc0548e9cbf177fdba5011c0de69f91967a"
+    },
+    {
+      "path": "internal/conversation_msg/notification.go",
+      "sha256": "43bfe76b6676e5002cab6290c0e4776346ca3e0a0001d8683e833158cb798d6f"
+    },
+    {
+      "path": "internal/interaction/ws_default.go",
+      "sha256": "3d1a6bc5dbe75a59f30fd39b566f692355296006a948742e2f32627a59efae8f"
+    },
+    {
+      "path": "internal/third/file/cb.go",
+      "sha256": "d0dea8e258f22c1736ebae429f00f3842f14570db50c24df114dd725809b760f"
+    },
+    {
+      "path": "internal/third/file/file_default.go",
+      "sha256": "136e4832d83321cdb00e8ca502b54196e1435334199815ed3a2b8aecac3d2320"
+    },
+    {
+      "path": "internal/third/file/file_mobile.go",
+      "sha256": "fea458efd7e4849c964d08c90b439749b0bfb220eb1ec75fd049767c7beb121c"
+    },
+    {
+      "path": "open_im_sdk/caller.go",
+      "sha256": "513a138befe4e0a31ea80f989d8dfec27172e8fcb008ee14ed0165bd5830603b"
+    },
+    {
+      "path": "open_im_sdk/init_login.go",
+      "sha256": "3ae4da504dc4cb961e3fc355e0eca0cb27b9c9e6662be52d5bfc472b6a74e45f"
+    },
+    {
+      "path": "open_im_sdk/local_store_mobile.go",
+      "sha256": "6ed2603c593d1c4699422a428b27a42e419d2cd615f552ab65216681d09a5965"
+    },
+    {
+      "path": "open_im_sdk/private_logging_mobile.go",
+      "sha256": "6315c5a433e88d2323a21f6e6dc6ebce1ee458f2ddd21e019ff831c23f589bf4"
+    },
+    {
+      "path": "open_im_sdk/private_logging_other.go",
+      "sha256": "939c92284ddac373f3ac732384e8a7568925889f0898ac2335c67c59b30bb50c"
+    },
+    {
+      "path": "pkg/db/chat_log_model.go",
+      "sha256": "79cc46550eb5618c3320d840fc5c103819f9cf65d6b34d903a14a16afc1c040b"
+    },
+    {
+      "path": "pkg/db/db_init.go",
+      "sha256": "ff5ce875c889dc0b20f91ced5c22eb7b98952272510959eaea50fc8549e03476"
+    },
+    {
+      "path": "pkg/db/local_store_mobile.go",
+      "sha256": "062b2b560598930fbef1efd6a3b3768a0711f83ef4260e2771d0a60ea8c42a58"
+    },
+    {
+      "path": "pkg/db/local_store_other.go",
+      "sha256": "98ac10d660a6b15e860136b4adeae98522add90f84258f08661b577547a29a44"
+    },
+    {
+      "path": "pkg/db/local_store_restore_lifecycle_test.go",
+      "sha256": "08317a1853312ae087da8f3994f90e7f748752327295f4dc3a2772cf4d27d4b4"
+    },
+    {
+      "path": "pkg/enterprise_trust/puty_enterprise_root_ca.crt",
+      "sha256": "9a135d11160e2179c6d396088b765143b60b9ed82c44a8acc2cd8735e6d3f183"
+    },
+    {
+      "path": "pkg/enterprise_trust/trust.go",
+      "sha256": "beeda592a88d983a14ee7c40e59d102b8b2dd82757edded15a7b10116e1456db"
+    },
+    {
+      "path": "pkg/network/http_client.go",
+      "sha256": "ffe9be6b215a75d078cd55c081eebf9db8d1e3cbe08eae0986acda2e3a3f8b32"
+    }
+  ]
+}

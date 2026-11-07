@@ -9,7 +9,8 @@ import buildVersion from "../../build-version.json";
 type Metadata={url:string;size:number;sha256:string;version:string;build:number;metadataOrigin:string;platform?:string;applicationID?:string};
 export async function downloadAndInstallUpdate(meta:Metadata) {
  if(process.platform!=="win32")throw new Error("Only Windows installer updates are enabled");
- const origin=new URL(process.env.OPENIM38_UPDATE_ORIGIN || "https://192.168.10.11:29880");
+ const origin=new URL(meta.metadataOrigin);
+ if(!["https://192.168.10.11:9885","https://im.szputy.com:9885"].includes(origin.origin))throw new Error("Untrusted update origin");
  const authoritative=await net.fetch(new URL("/enterprise/v1/application/latest",origin).href,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform:"windows",version:app.getVersion(),build:buildVersion.build}),redirect:"error",signal:AbortSignal.timeout(25000)});
  if(!authoritative.ok)throw new Error("Release metadata is unavailable");
  const body=await authoritative.json() as any;const published=body.data;

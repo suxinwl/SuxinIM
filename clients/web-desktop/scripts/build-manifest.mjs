@@ -17,6 +17,6 @@ for(const file of (await readdir("release")).sort()){
  else history.push({...item,status:"withdrawn",purpose:"Historical validation fixture; not part of the current delivery or recommended for installation"});
 }
 if(artifacts.length!==1)throw new Error(`Expected exactly one installer for current application ${current.version}`);
-const metadata={application:"OpenIM38 Enterprise",node:process.version,sdk:"3.8.3-patch.15.1"};
+const metadata={application:"OpenIM38 Enterprise",node:process.version,sdk:"3.8.3-patch.15.2"};
 await writeFile("release-manifest.json",JSON.stringify({...metadata,version:current.version,build:current.build,status:"current",historicalManifest:"release-history-manifest.json",artifacts},null,2));
 await writeFile("release-history-manifest.json",JSON.stringify({...metadata,status:"withdrawn",artifacts:history},null,2));

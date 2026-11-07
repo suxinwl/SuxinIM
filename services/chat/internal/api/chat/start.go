@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/openimsdk/tools/apiresp"
 	"net/http"
+	"openim38.local/identity"
 	"os"
 	"os/signal"
 	"syscall"
@@ -126,6 +128,14 @@ func Start(ctx context.Context, index int, cfg *Config) error {
 
 func SetChatRoute(router gin.IRouter, chat *Api, mw *chatmw.MW) {
 	account := router.Group("/account")
+	account.Use(func(c *gin.Context) {
+		if identity.Required() {
+			apiresp.GinError(c, errs.ErrNoPermission.WrapMsg("use HRM account management"))
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
 	account.POST("/code/send", chat.SendVerifyCode)                      // Send verification code
 	account.POST("/code/verify", chat.VerifyCode)                        // Verify the verification code
 	account.POST("/register", mw.CheckAdminOrNil, chat.RegisterUser)     // Register

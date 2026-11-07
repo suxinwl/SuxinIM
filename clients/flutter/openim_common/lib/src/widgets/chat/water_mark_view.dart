@@ -38,7 +38,7 @@ class WaterMarkBgView extends StatelessWidget {
         alignment: Alignment.center,
         fit: StackFit.expand,
         children: [
-          if (path?.isNotEmpty == true) Image.file(File(path!), fit: BoxFit.cover),
+          if (path?.isNotEmpty == true) ImageUtil.fileImage(file:File(path!), fit: BoxFit.cover),
           if (text.isNotEmpty) _buildWaterMarkTextView(context: context),
           Column(
             children: [

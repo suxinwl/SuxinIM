@@ -1,4 +1,6 @@
 cronExecuteTime: 0 2 * * *
-retainChatRecords: 365
-fileExpireTime: 180
-deleteObjectType: ["msg-picture","msg-file", "msg-voice","msg-video","msg-video-snapshot","sdklog"]
+# Zero disables automatic message/user-history cleanup and keeps server data.
+# Deliberate user/admin deletion and revocation retain their existing semantics.
+retainChatRecords: 0
+fileExpireTime: 0
+deleteObjectType: []

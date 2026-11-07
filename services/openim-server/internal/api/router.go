@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"openim38.local/identity"
 	"strings"
 
 	"github.com/openimsdk/open-im-server/v3/pkg/rpcli"
@@ -299,6 +300,7 @@ func newGinRouter(ctx context.Context, client discovery.SvcDiscoveryRegistry, co
 
 func GinParseToken(authClient *rpcli.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		bindRequestEntry(c)
 		switch c.Request.Method {
 		case http.MethodPost:
 			for _, wApi := range Whitelist {
@@ -322,6 +324,19 @@ func GinParseToken(authClient *rpcli.AuthClient) gin.HandlerFunc {
 				return
 			}
 			c.Set(constant.OpUserPlatform, constant.PlatformIDToName(int(resp.PlatformID)))
+			if identity.Required() && identity.Managed(resp.UserID) {
+				v, e := identity.Validate(c.Request.Context(), token, resp.UserID, "im", int(resp.PlatformID))
+				ip, ipErr := identity.ClientIP(c.Request)
+				action := "connect"
+				if strings.HasPrefix(c.Request.URL.Path, "/object/") && c.Request.URL.Path != "/object/access_url" {
+					action = "upload"
+				}
+				if e != nil || ipErr != nil || identity.CheckSessionAccess(c.Request.Context(), v, ip, action, "") != nil {
+					apiresp.GinError(c, servererrs.ErrNoPermission.WrapMsg("HRM access denied"))
+					c.Abort()
+					return
+				}
+			}
 			c.Set(constant.OpUserID, resp.UserID)
 			c.Next()
 		}

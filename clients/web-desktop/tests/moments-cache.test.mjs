@@ -18,6 +18,10 @@ const built = await build({
   bundle: true,
   format: "esm",
   platform: "node",
+  plugins: [{ name: "session-boundary", setup(builder) {
+    builder.onResolve({ filter: /^@\/im\/resource-session$/ }, () => ({ path: "scope", namespace: "synthetic" }));
+    builder.onLoad({ filter: /.*/, namespace: "synthetic" }, () => ({ contents: "export const getResourceSessionVersion=()=>globalThis.momentResourceScope || 0;" }));
+  } }],
 });
 const {
   momentKeys,
@@ -48,6 +52,21 @@ const client = () =>
     logger: { log() {}, warn() {}, error() {} },
   });
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+test("viewer/SID generations isolate keys and discard a late previous-session mutation", async () => {
+  const q=client();
+  const options=momentMutationOptions(q);
+  const oldKey=momentKeys.list();
+  q.setQueryData(oldKey,pages([moment()]));
+  globalThis.momentResourceScope=1;
+  try {
+    const currentKey=momentKeys.list(); assert.notDeepEqual(currentKey,oldKey);
+    q.setQueryData(currentKey,pages([moment('current-viewer')]));
+    await options.onSuccess({data:{workMoment:moment('stale-viewer')}});
+    assert.equal(q.getQueryData(momentKeys.detail('stale-viewer')),undefined);
+    assert.deepEqual(q.getQueryData(currentKey).pages[0].map(item=>item.workMomentID),['current-viewer']);
+  } finally { delete globalThis.momentResourceScope; q.clear(); }
+});
 
 test("confirmed likes update every cached feed/author page and the open detail, retaining pagination", () => {
   const q = client(),

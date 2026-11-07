@@ -20,6 +20,7 @@ export default defineConfig({
     baseURL: `http://${host}:${port}`,
     browserName: 'chromium',
     headless: true,
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {},
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

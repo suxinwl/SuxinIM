@@ -1,9 +1,9 @@
-import 'dart:developer';
 
 /// print full log
 class Logger {
   // Sample of abstract logging function
   static void print(dynamic text, {bool isError = false}) {
-    log('** $text, isError [$isError]', name: 'OpenIM-App');
+    // Legacy callers pass whole messages, tokens and signed URLs. They cannot
+    // enter logcat/OS crash logs. Native vault diagnostics use fixed codes only.
   }
 }

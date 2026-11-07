@@ -40,6 +40,11 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 class FileUtils {
+  static File encryptedTemporary(String name)throws IOException {
+    int dot=name.lastIndexOf('.');String prefix=dot>0?name.substring(0,dot):name,suffix=dot>0?name.substring(dot):".bin";
+    try{return (File)Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles").getMethod("createTempFile",String.class,String.class).invoke(null,prefix,suffix);}
+    catch(ReflectiveOperationException rejected){throw new IOException("Encrypted image scratch unavailable",rejected);}
+  }
   /**
    * Copies the file from the given content URI to a temporary directory, retaining the original
    * file name if possible.
@@ -61,28 +66,15 @@ class FileUtils {
    */
   String getPathFromUri(final Context context, final Uri uri) {
     try (InputStream inputStream = context.getContentResolver().openInputStream(uri)) {
-      String uuid = UUID.randomUUID().toString();
-      File targetDirectory = new File(context.getCacheDir(), uuid);
-      targetDirectory.mkdir();
-      // TODO(SynSzakala) according to the docs, `deleteOnExit` does not work reliably on Android; we should preferably
-      //  just clear the picked files after the app startup.
-      targetDirectory.deleteOnExit();
       String fileName = getImageName(context, uri);
       String extension = getImageExtension(context, uri);
 
       if (fileName == null) {
-        Log.w("FileUtils", "Cannot get file name for " + uri);
         if (extension == null) extension = ".jpg";
         fileName = "image_picker" + extension;
-      } else if (extension != null) {
-        fileName = getBaseName(fileName) + extension;
       }
-      String filePath = new File(targetDirectory, fileName).getPath();
-      File outputFile = saferOpenFile(filePath, targetDirectory.getCanonicalPath());
-      try (OutputStream outputStream = new FileOutputStream(outputFile)) {
-        copy(inputStream, outputStream);
-        return outputFile.getPath();
-      }
+      try{return (String)Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles").getMethod("importStream",InputStream.class,String.class).invoke(null,inputStream,fileName);}
+      catch(ReflectiveOperationException rejected){throw new IOException("Encrypted selected image unavailable");}
     } catch (IOException e) {
       // If closing the output stream fails, we cannot be sure that the
       // target file was written in full. Flushing the stream merely moves

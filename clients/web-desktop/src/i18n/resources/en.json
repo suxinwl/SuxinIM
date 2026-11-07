@@ -21,6 +21,9 @@
   "toast": {
     "accessSuccess": "Operation successful!",
     "accessFailed": "Operation failed!",
+    "mediaPreparationTimeout": "Reading the image or video timed out. Check the file and try again.",
+    "mediaDecodeFailed": "Cannot read this image or video. Choose a complete, supported file.",
+    "imageLoadFailed": "Image unavailable",
     "getConversationFailed": "Failed to get conversation list!",
     "getGroupInfoFailed": "Failed to get group information!",
     "getGroupMemberFailed": "Failed to get group member information!",
@@ -457,6 +460,28 @@
     "pending": "Pending Verification",
     "applyToJoin": "Apply to Join",
     "applyToFriend": "Applied to Add You as a Friend"
+  },
+  "screenshotShortcut": {
+    "title": "Screenshot shortcut",
+    "enabled": "Enable global screenshot shortcut",
+    "behavior": "Works while the client runs in the background. Confirmed screenshots are inserted into the current chat or copied to the clipboard; they are never sent automatically.",
+    "combination": "Shortcut combination",
+    "pressKeys": "Press a new shortcut combination…",
+    "hint": "Use Ctrl or Alt with a letter, number, or F1–F24. Shift is optional. System-reserved combinations are unavailable.",
+    "record": "Record shortcut",
+    "stopRecording": "Stop recording",
+    "restoreDefault": "Restore Ctrl + Alt + A",
+    "recording": "Recording; the current screenshot shortcut is temporarily suspended. Press Esc or switch windows to cancel. Click Save after recording a valid combination.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loadFailed": "Unable to load screenshot settings. Close this dialog and try again.",
+    "recordFailed": "Unable to complete recording. Stop recording or close this dialog and try again.",
+    "saveFailed": "The shortcut was not saved. Please try again.",
+    "invalid": "Use Ctrl or Alt with a letter, number, or F1–F24, and avoid system-reserved combinations.",
+    "reserved": "This combination is reserved by the system. Record another shortcut.",
+    "conflict": "The shortcut is in use by another application or cannot be registered on this system. Choose another combination and save.",
+    "storage": "Local preference storage is unavailable. Repair or reselect the data directory in Local Storage / Clear Chat History before saving.",
+    "busy": "A screenshot or another shortcut setting is in progress. Finish it and try again."
   },
   "errCode": {
     "passwordError": "Password error",

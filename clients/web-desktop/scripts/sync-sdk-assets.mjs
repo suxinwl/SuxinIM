@@ -9,6 +9,6 @@ for (const name of ["openIM.wasm", "sql-wasm.wasm", "wasm_exec.js"]) {
  await copyFile(source, new URL(`public/${name}`, root));
  records.push({file:name,sha256:createHash("sha256").update(data).digest("hex"),size:data.length});
 }
-await writeFile(new URL("public/sdk-assets.json", root), JSON.stringify({sdk:"3.8.3-patch.15.1",assets:records},null,2));
+await writeFile(new URL("public/sdk-assets.json", root), JSON.stringify({sdk:"3.8.3-patch.15.2",assets:records},null,2));
 
 await cp(new URL("extraResources/twemoji/",root),new URL("public/twemoji/",root),{recursive:true});

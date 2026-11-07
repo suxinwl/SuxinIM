@@ -23,11 +23,14 @@ import (
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/push"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/mcontext"
 	"github.com/openimsdk/tools/utils/jsonutil"
+	"openim38.local/identity"
 )
 
 const (
@@ -156,6 +159,15 @@ func (g *GrpcHandler) SendMessage(ctx context.Context, data *Req) ([]byte, error
 
 	if err := g.validate.Struct(&msgData); err != nil {
 		return nil, errs.WrapMsg(err, "SendMessage: message data validation failed", "action", "validate", "dataType", "MsgData")
+	}
+	if identity.Required() && msgData.SendID != mcontext.GetOpUserID(ctx) {
+		return nil, errs.ErrNoPermission.WrapMsg("message sender differs from authenticated connection")
+	}
+	if identity.Required() {
+		if msgData.ContentType >= constant.NotificationBegin && msgData.ContentType <= constant.NotificationEnd {
+			return nil, errs.ErrNoPermission.WrapMsg("server notifications cannot be sent by a client")
+		}
+		msgData.MsgFrom = constant.UserMsgType
 	}
 
 	req := msg.SendMsgReq{MsgData: &msgData}

@@ -1,247 +1,92 @@
-import { Button, Form, Input, QRCode, Select, Space, Tabs } from "antd";
-import { t } from "i18next";
+import { Alert, Button, Form, Input, Radio, Space } from "antd";
 import md5 from "md5";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import { useLogin, useSendSms } from "@/api/login";
-import login_pc from "@/assets/images/login/login_pc.png";
-import login_qr from "@/assets/images/login/login_qr.png";
-import {
-  getEmail,
-  getPhoneNumber,
-  setAreaCode,
-  setEmail,
-  setIMProfile,
-  setPhoneNumber,
-} from "@/utils/storage";
-
-import { areaCode } from "./areaCode";
-import type { FormType } from "./index";
-import styles from "./index.module.scss";
-
-// 0login 1resetPassword 2register
-enum LoginType {
-  Password,
-  VerifyCode,
-}
-
-type LoginFormProps = {
-  setFormType: (type: FormType) => void;
-  loginMethod: "phone" | "email";
-  updateLoginMethod: (method: "phone" | "email") => void;
-};
-
-const LoginForm = ({ loginMethod, setFormType, updateLoginMethod }: LoginFormProps) => {
+import { createPortal } from "react-dom";
+import { exchangeSSOTicket, loginSSO, ssoRequest, SSOError } from "@/api/sso";
+import { setIMProfile } from "@/utils/storage";
+import { appDisplayName } from "@/config/brand";
+import { useUserStore } from "@/store";
+import { getPublicBrand } from "@/api/public-brand";
+import { webDisplayTitle } from "@/config/brand";
+import { getNetwork, isNativeClient, Network, setNetwork } from "@/config";
+import ConfigModal from "./ConfigModal";
+import {localStorageIPCMessage} from './local-storage-error';
+type Captcha = { show?: boolean; enabled?: boolean; img?: string; image?: string; id?: string; captchaId?: string };
+export default function LoginForm({repairActionsContainer}:{repairActionsContainer?:HTMLElement|null}) {
+  const displayName = useUserStore(state => appDisplayName(state.appConfig));
   const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const [loginType, setLoginType] = useState<LoginType>(LoginType.Password);
-  const { mutate: login, isLoading: loginLoading } = useLogin();
-  const { mutate: semdSms } = useSendSms();
-
-  const [countdown, setCountdown] = useState(0);
+  const [busy, setBusy] = useState(false), [config, showConfig] = useState(false);
+  const [captcha, setCaptcha] = useState<Captcha>({});
+  const [failure, setFailure] = useState("");
+  const [migration,setMigration]=useState('');
+  const [changeTicket, setChangeTicket] = useState("");
+  const [network, selectNetwork] = useState<Network>(getNetwork);
+  useEffect(()=>window.electronAPI?.subscribe('puty-store-migration',(message:string)=>setMigration(message)),[]);
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown((prevCountdown) => prevCountdown - 1);
-        if (countdown === 1) {
-          clearTimeout(timer);
-          setCountdown(0);
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
+    let active = true;
+    void getPublicBrand().then(brand => {
+      if (!active) return;
+      useUserStore.setState(state => ({ appConfig: { ...state.appConfig, ...brand } }));
+      document.title = webDisplayTitle(brand);
+    }).catch(() => { /* Offline sign-in retains the configured build-time brand. */ });
+    return () => { active = false; };
+  }, []);
+  async function loadCaptcha() { try { setCaptcha(await ssoRequest<Captcha>("captcha")); } catch { setFailure("验证码暂不可用，请重试"); } }
+  async function repairStorage(){
+    if(busy || !window.electronAPI)return;
+    setBusy(true);setFailure('');setMigration('');
+    try{const result=await window.electronAPI.ipcInvoke('puty-store','repair-directory') as {changed?:boolean}|undefined;if(result?.changed===true)setFailure('本地存储位置已更新，原目录与文件保持不变。请重新登录；旧档案无法打开时需使用完整加密备份恢复。');}
+    catch{setFailure('本地目录未更改。请选择有效的原存储目录或新空目录；请保留原文件和密钥。');}
+    finally{setBusy(false);}
+  }
+  function changeNetwork(next:unknown){
+    if(!isNativeClient() || busy || next!=="lan" && next!=="wan" || next===network)return;
+    setBusy(true);setFailure('');
+    try{
+      // Keep the existing synchronous endpoint reset before this same-window reload.
+      setNetwork(next);selectNetwork(next);window.location.reload();
+    }catch{
+      setFailure('通讯方式切换未完成，请重试。');setBusy(false);
     }
-  }, [countdown]);
-
-  const onFinish = (params: API.Login.LoginParams) => {
-    if (loginType === 0) {
-      params.password = md5(params.password ?? "");
-    }
-    setAreaCode(params.areaCode);
-    if (params.phoneNumber) {
-      setPhoneNumber(params.phoneNumber);
-    }
-    if (params.email) {
-      setEmail(params.email);
-    }
-    login(params, {
-      onSuccess: async (data) => {
-        const { chatToken, imToken, userID } = data.data;
-        await setIMProfile({ chatToken, imToken, userID });
-        navigate("/chat");
-      },
-    });
-  };
-
-  const sendSmsHandle = () => {
-    semdSms(
-      {
-        phoneNumber: form.getFieldValue("phoneNumber") as string,
-        email: form.getFieldValue("email") as string,
-        areaCode: form.getFieldValue("areaCode") as string,
-        usedFor: 3,
-      },
-      {
-        onSuccess() {
-          setCountdown(60);
-        },
-      },
-    );
-  };
-
-  // const Point = () => (
-  //   <div
-  //     className="relative h-16 w-16 cursor-pointer rounded-md"
-  //     style={{
-  //       background: "linear-gradient(to bottom left, #DBEAFE 50%, white 50%)",
-  //     }}
-  //     onClick={() => setLoginType(loginType === 2 ? 0 : 2)}
-  //   >
-  //     <img
-  //       src={loginType === 2 ? login_pc : login_qr}
-  //       alt="login"
-  //       className=" absolute left-[25px] top-[15px]"
-  //     />
-  //   </div>
-  // );
-
-  // if (loginType === 2) {
-  //   return (
-  //     <>
-  //       <div className="flex flex-row items-end justify-end">
-  //         <Point />
-  //       </div>
-
-  //       <div className=" flex flex-col items-center">
-  //         <div className="text-xl font-medium">{t("placeholder.qrCodeLogin")}</div>
-  //         <span className=" mt-3 text-sm  text-gray-400">
-  //           {t("placeholder.qrCodeLoginTitle")}
-  //         </span>
-  //         <QRCode className="mt-8" value="https://www.openim.online/zh" size={190} />
-  //       </div>
-  //     </>
-  //   );
-  // }
-
-  const onLoginMethodChange = (key: string) => {
-    updateLoginMethod(key as "phone" | "email");
-  };
-
-  return (
-    <>
-      <div className="flex flex-row items-center justify-between">
-        <div className="text-xl font-medium">{t("placeholder.welcome")}</div>
-        {/* <Point /> */}
-      </div>
-      <Tabs
-        className={styles["login-method-tab"]}
-        activeKey={loginMethod}
-        items={[
-          { key: "phone", label: "手机号" },
-          { key: "email", label: "邮箱" },
-        ]}
-        onChange={onLoginMethodChange}
-      />
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
-        labelCol={{ prefixCls: "custom-form-item" }}
-        initialValues={{
-          areaCode: "+86",
-          phoneNumber: getPhoneNumber() ?? "",
-          email: getEmail() ?? "",
-        }}
-      >
-        {loginMethod === "phone" ? (
-          <Form.Item label={t("placeholder.phoneNumber")}>
-            <Space.Compact className="w-full">
-              <Form.Item name="areaCode" noStyle>
-                <Select options={areaCode} className="!w-28" />
-              </Form.Item>
-              <Form.Item name="phoneNumber" noStyle>
-                <Input allowClear placeholder={t("toast.inputPhoneNumber")} />
-              </Form.Item>
-            </Space.Compact>
-          </Form.Item>
-        ) : (
-          <Form.Item
-            label={t("placeholder.email")}
-            name="email"
-            rules={[{ type: "email", message: t("toast.inputCorrectEmail") }]}
-          >
-            <Input allowClear placeholder={t("toast.inputEmail")} />
-          </Form.Item>
-        )}
-
-        {loginType === LoginType.VerifyCode ? (
-          <Form.Item label={t("placeholder.verifyCode")} name="verifyCode">
-            <Space.Compact className="w-full">
-              <Input
-                allowClear
-                placeholder={t("toast.inputVerifyCode")}
-                className="w-full"
-              />
-              <Button type="primary" onClick={sendSmsHandle} loading={countdown > 0}>
-                {countdown > 0
-                  ? t("date.second", { num: countdown })
-                  : t("placeholder.sendVerifyCode")}
-              </Button>
-            </Space.Compact>
-          </Form.Item>
-        ) : (
-          <Form.Item label={t("placeholder.password")} name="password">
-            <Input.Password allowClear placeholder={t("toast.inputPassword")} />
-          </Form.Item>
-        )}
-
-        <div className="mb-10 flex flex-row justify-between">
-          <span
-            className="cursor-pointer text-sm text-gray-400"
-            onClick={() => setFormType(1)}
-          >
-            {t("placeholder.forgetPassword")}
-          </span>
-          <span
-            className="cursor-pointer text-sm text-[var(--primary)]"
-            onClick={() =>
-              setLoginType(
-                loginType === LoginType.Password
-                  ? LoginType.VerifyCode
-                  : LoginType.Password,
-              )
-            }
-          >
-            {`${
-              loginType === LoginType.Password
-                ? t("placeholder.verifyCode")
-                : t("placeholder.password")
-            }${t("placeholder.login")}`}
-          </span>
-        </div>
-
-        <Form.Item className="mb-4">
-          <Button type="primary" htmlType="submit" block loading={loginLoading}>
-            {t("placeholder.login")}
-          </Button>
-        </Form.Item>
-
-        <div className="flex flex-row items-center justify-center">
-          <span className="text-sm text-gray-400">
-            {t("placeholder.registerToast")}
-          </span>
-          <span
-            className="cursor-pointer text-sm text-blue-500"
-            onClick={() => setFormType(2)}
-          >
-            {t("placeholder.toRegister")}
-          </span>
-        </div>
-      </Form>
-    </>
-  );
-};
-
-export default LoginForm;
+  }
+  useEffect(() => {
+    const url = new URL(window.location.href), ticket = url.searchParams.get("ticket");
+    if (ticket) {
+      url.searchParams.delete("ticket"); window.history.replaceState(null, "", url);
+      setBusy(true);setMigration('');
+      void exchangeSSOTicket(ticket).then(setIMProfile).then(() => navigate("/", {replace:true}))
+        .catch(error => { setFailure(!(error instanceof SSOError) && localStorageIPCMessage(error,Boolean(window.electronAPI)) || "登录链接已失效，请重新从人事系统打开或使用统一账号登录"); void loadCaptcha(); }).finally(() => {setMigration('');setBusy(false);});
+    } else void loadCaptcha();
+  }, []);
+  return <>{changeTicket ? <Form layout="vertical" onFinish={async ({newPassword,confirmPassword}) => {
+    if (newPassword !== confirmPassword) { setFailure("两次输入的新密码不一致"); return; }
+    setBusy(true); setFailure("");setMigration('');
+    try { await ssoRequest("password/change", { changeTicket, newPassword: md5(newPassword) }); setChangeTicket(""); setFailure("密码已更新，请使用新密码重新登录"); void loadCaptcha(); }
+    catch(error) { setFailure(error instanceof Error ? error.message : "密码修改失败"); }
+    finally { setBusy(false); }
+  }}><h2 className="mb-4 text-xl">设置本人新密码</h2><Alert type="info" message="管理员已重置密码，请先设置本人新密码。"/>{failure && <Alert className="my-3" type="warning" message={failure} style={{overflowWrap:"anywhere",wordBreak:"break-word"}}/>}
+    <Form.Item name="newPassword" label="新密码" rules={[{required:true,pattern:/^(?=.*[0-9])(?=.*[a-zA-Z]).{6,20}$/,message:"请输入6至20位包含字母和数字的新密码"}]}><Input.Password autoComplete="new-password"/></Form.Item>
+    <Form.Item name="confirmPassword" label="确认新密码" rules={[{required:true}]}><Input.Password autoComplete="new-password"/></Form.Item>
+    <Button block type="primary" htmlType="submit" loading={busy}>修改并重新登录</Button><Button block type="link" onClick={() => { void ssoRequest("password/cancel",{changeTicket}).catch(()=>{}); setChangeTicket(""); setFailure(""); void loadCaptcha(); }}>返回登录</Button>
+  </Form> : <Form layout="vertical" onFinish={async ({account, password, captcha: answer}) => {
+    setBusy(true); setFailure("");setMigration('');
+    try { await setIMProfile(await loginSSO(account.trim(), md5(password), answer, captcha.captchaId || captcha.id)); navigate("/", {replace:true}); }
+    catch (error) { if(error instanceof SSOError && error.data?.reasonCode === "PASSWORD_CHANGE_REQUIRED" && error.data.changeTicket) { setChangeTicket(error.data.changeTicket); setFailure(""); } else { setFailure(!(error instanceof SSOError) && localStorageIPCMessage(error,Boolean(window.electronAPI)) || (error instanceof Error ? error.message : "登录未完成")); void loadCaptcha(); } }
+    finally { setMigration('');setBusy(false); }
+  }}>
+    <h2 className="mb-5 text-xl">{displayName}</h2>
+    {failure && <Alert type="error" message={failure} className="mb-3" style={{overflowWrap:"anywhere",wordBreak:"break-word"}}/>}
+    {migration && <Alert type="info" message={migration} className="mb-3"/>}
+    <Form.Item name="account" label="统一账号 / 工号" rules={[{required:true,message:"请输入统一账号"}]}><Input autoComplete="username"/></Form.Item>
+    <Form.Item name="password" label="密码" rules={[{required:true,message:"请输入密码"}]}><Input.Password autoComplete="current-password"/></Form.Item>
+    {(captcha.show || captcha.enabled) && <Space align="start"><Form.Item name="captcha" label="验证码" rules={[{required:true,message:"请输入验证码"}]}><Input autoComplete="off"/></Form.Item><img className="mt-7 cursor-pointer" width={100} src={captcha.image || captcha.img} onClick={() => void loadCaptcha()} alt="点击更换验证码"/></Space>}
+    <Button type="primary" htmlType="submit" loading={busy} block>登录</Button>
+    <p className="mt-4 text-xs text-gray-500">使用统一账号登录，可在个人设置中修改本人密码。</p>
+    {isNativeClient() ? <Radio.Group className="mt-1" value={network} disabled={busy} onChange={event=>changeNetwork(event.target.value)} aria-label="通讯方式">
+      <Radio value="lan">内部通讯</Radio><Radio value="wan">公网通讯</Radio>
+    </Radio.Group> : <Button type="link" onClick={() => showConfig(true)}>内网 / 公网连接</Button>}
+  </Form>}{!isNativeClient() && <ConfigModal visible={config} close={() => showConfig(false)}/>}
+    {window.electronAPI && !changeTicket && repairActionsContainer && createPortal(<Button size="small" className="app-no-drag" disabled={busy} onClick={()=>void repairStorage()}>修复存储</Button>,repairActionsContainer)}
+  </>;
+}

@@ -1,0 +1,83 @@
+name: Development checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.3
+          cache: true
+      - name: Use pinned npm
+        run: npm install --global npm@11.21.1
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+      - name: Check types, frontend behavior and build
+        working-directory: web
+        run: npm run check
+      - name: Check core services and runtime plugin framework
+        run: go test ./internal/builtinai ./internal/devtools/ai ./internal/devtools/access ./internal/logic/admin_system ./internal/runtimeplugin ./internal/plugins ./internal/pluginworker ./utility/auth ./internal/logic/admin_install ./utility/tools/dbtool ./utility/dbcompat ./utility/extend/excelexport
+      - name: Check SQLite seed is synchronized
+        run: |
+          python3 scripts/sync-sqlite-schema.py
+          git diff --exit-code -- devsource/developer/install/sqlite.sql manifest/sql/v1.0.0.sqlite.sql
+      - name: Build the core host
+        run: go build -mod=readonly -trimpath -o bin/gosuxin .
+      - name: Check SQLite installation over HTTP and shared plugin database
+        run: node scripts/test-database-install.cjs
+  mysql-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql: ['5.7', '8.0']
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: database-test-password
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pdatabase-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.3
+          cache: true
+      - name: Install schema and exercise database operations
+        env:
+          SUXIN_TEST_MYSQL_HOST: 127.0.0.1
+          SUXIN_TEST_MYSQL_PORT: ${{ job.services.mysql.ports[3306] }}
+          SUXIN_TEST_MYSQL_USER: root
+          SUXIN_TEST_MYSQL_PASSWORD: database-test-password
+          SUXIN_TEST_MYSQL_VERSION: ${{ matrix.mysql }}
+        run: go test -v ./internal/logic/admin_install
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - name: Use pinned npm
+        run: npm install --global npm@11.21.1
+      - name: Build host for HTTP tests
+        run: go build -mod=readonly -trimpath -o bin/gosuxin .
+      - name: Install, login and exercise shared plugin database over HTTP
+        env:
+          SUXIN_SMOKE_DATABASE: ${{ matrix.mysql == '5.7' && 'mysql57' || 'mysql8' }}
+          SUXIN_TEST_MYSQL_HOST: 127.0.0.1
+          SUXIN_TEST_MYSQL_PORT: ${{ job.services.mysql.ports[3306] }}
+          SUXIN_TEST_MYSQL_USER: root
+          SUXIN_TEST_MYSQL_PASSWORD: database-test-password
+        run: node scripts/test-database-install.cjs

@@ -5,6 +5,8 @@ import { forwardRef, ForwardRefRenderFunction, memo, useState } from "react";
 
 import logo from "@/assets/images/profile/logo.png";
 import { APP_VERSION, SDK_VERSION } from "@/config";
+import { appDisplayName } from "@/config/brand";
+import { useUserStore } from "@/store";
 import { logReport } from "@/routes/GlobalErrorElement";
 
 import { OverlayVisibleHandle, useOverlayVisible } from "../../hooks/useOverlayVisible";
@@ -41,6 +43,7 @@ const About: ForwardRefRenderFunction<OverlayVisibleHandle, unknown> = (_, ref) 
 export default memo(forwardRef(About));
 
 export const AboutContent = ({ closeOverlay }: { closeOverlay?: () => void }) => {
+  const displayName = useUserStore(state => appDisplayName(state.appConfig));
   const [loading, setLoading] = useState(false);
   const tryLogReport = async () => {
     setLoading(true);
@@ -62,6 +65,7 @@ export const AboutContent = ({ closeOverlay }: { closeOverlay?: () => void }) =>
         <div className="flex flex-col items-center justify-center">
           <img className="mb-2 mt-7" width={56} src={logo} alt="" />
           <div className="mb-5 flex flex-col items-center">
+            <div className="font-medium">{displayName}</div>
             <div>{APP_VERSION}</div>
             <div>{SDK_VERSION}</div>
           </div>

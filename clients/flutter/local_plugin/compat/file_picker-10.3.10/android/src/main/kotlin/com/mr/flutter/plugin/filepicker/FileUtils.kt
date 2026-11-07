@@ -39,6 +39,12 @@ import java.util.Date
 import java.util.Locale
 
 object FileUtils {
+    private fun protectedTemporary(name:String):File {
+        val dot=name.lastIndexOf('.')
+        return Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles")
+            .getMethod("createTempFile",String::class.java,String::class.java)
+            .invoke(null,if(dot>0)name.substring(0,dot) else name,if(dot>0)name.substring(dot) else ".bin") as File
+    }
     private const val TAG = "FilePickerUtils"
     // On Android, the CSV mime type from getMimeTypeFromExtension() returns
     // "text/comma-separated-values" which is non-standard and doesn't filter
@@ -308,11 +314,10 @@ object FileUtils {
     }
 
     private fun processUri(activity: Activity, uri: Uri, compressionQuality: Int): Uri {
-        return if (compressionQuality > 0 && isImage(activity.applicationContext, uri)) {
-            compressImage(uri, compressionQuality, activity.applicationContext)
-        } else {
-            uri
-        }
+        // Application image compression runs in the encrypted media pipeline.
+        // Do not materialize a plugin-owned plaintext image between selection
+        // and import, and preserve the document's original display name.
+        return uri
     }
 
     private fun addFile(
@@ -440,7 +445,7 @@ object FileUtils {
                 val compressedFile = createImageFile(context, compressFormat)
                 val originalBitmap = BitmapFactory.decodeStream(imageStream)
                 // Compress and save the image
-                val fileOutputStream = FileOutputStream(compressedFile)
+                val fileOutputStream = Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles").getMethod("outputStream",String::class.java).invoke(null,compressedFile.absolutePath) as java.io.OutputStream
                 originalBitmap.compress(compressFormat, compressionQuality, fileOutputStream)
                 fileOutputStream.flush()
                 fileOutputStream.close()
@@ -456,8 +461,7 @@ object FileUtils {
     private fun createImageFile(context: Context, compressFormat: Bitmap.CompressFormat): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "IMAGE_" + timeStamp + "_"
-        val storageDir = context.cacheDir
-        return File.createTempFile(imageFileName, "." + getCompressFormatBasedFileExtension(compressFormat), storageDir)
+        return protectedTemporary(imageFileName+"."+getCompressFormatBasedFileExtension(compressFormat))
     }
 
     /**
@@ -483,81 +487,17 @@ object FileUtils {
         return true
     }
 
-    private fun loadData(file: File, fileInfo: FileInfo.Builder) {
-        try {
-            val size = file.length().toInt()
-            val bytes = ByteArray(size)
-
-            try {
-                val buf = BufferedInputStream(FileInputStream(file))
-                buf.read(bytes, 0, bytes.size)
-                buf.close()
-            } catch (e: FileNotFoundException) {
-                Log.e(TAG, "File not found: " + e.message, null)
-            } catch (e: IOException) {
-                Log.e(TAG, "Failed to close file streams: " + e.message, null)
-            }
-            fileInfo.withData(bytes)
-        } catch (e: Exception) {
-            Log.e(
-                TAG,
-                "Failed to load bytes into memory with error $e. Probably the file is too big to fit device memory. Bytes won't be added to the file this time."
-            )
-        }
-    }
-
     @JvmStatic
     fun openFileStream(context: Context, uri: Uri, withData: Boolean): FileInfo? {
-        var fileInputStream: InputStream? = null
-        var fileOutputStream: FileOutputStream? = null
-        val fileInfo = FileInfo.Builder()
-        val fileName = getFileName(uri, context)
-        val path =
-            context.cacheDir.absolutePath + "/file_picker/" + System.currentTimeMillis() + "/" + (fileName
-                ?: "unamed")
-
-        val file = File(path)
-
-        if (!file.exists()) {
-            try {
-                file.parentFile?.mkdirs()
-
-                fileInputStream = context.contentResolver.openInputStream(uri)
-                fileOutputStream = FileOutputStream(file)
-
-                val out = BufferedOutputStream(fileOutputStream)
-                val buffer = ByteArray(8192)
-                var len: Int
-
-                while ((fileInputStream!!.read(buffer).also { len = it }) >= 0) {
-                    out.write(buffer, 0, len)
-                }
-                out.flush()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to retrieve and cache file: " + e.message, e)
-                return null
-            } finally {
-                try {
-                    fileOutputStream?.fd?.sync()
-                    fileOutputStream?.close()
-                    fileInputStream?.close()
-                } catch (ex: IOException) {
-                    Log.e(TAG, "Failed to close file streams: " + ex.message, ex)
-                }
-            }
-        }
-
-        if (withData) {
-            loadData(file, fileInfo)
-        }
-
-        fileInfo
-            .withPath(path)
-            .withName(fileName)
-            .withUri(uri)
-            .withSize(file.length())
-
-        return fileInfo.build()
+        return try {
+            val name=getFileName(uri,context) ?: "unnamed.bin"
+            val bridge=Class.forName("io.openim.flutter_openim_sdk.EncryptedSelectedFiles")
+            val path=bridge.getMethod("importUri",Context::class.java,Uri::class.java,String::class.java).invoke(null,context,uri,name) as String
+            val size=(bridge.getMethod("size",String::class.java).invoke(null,path) as Long)
+            val info=FileInfo.Builder().withPath(path).withName(name).withUri(uri).withSize(size)
+            if(withData){info.withData(bridge.getMethod("readBytes",String::class.java,java.lang.Long.TYPE).invoke(null,path,32L*1024*1024) as ByteArray)}
+            info.build()
+        }catch(rejected:Exception){null}
     }
 
     private fun getPathFromTreeUri(uri: Uri): String {

@@ -1,0 +1,12 @@
+.organization { display: flex; width: 100%; min-width: 0; height: 100%; background: #fff; }
+.departments { width: 250px; flex-shrink: 0; overflow: auto; padding: 24px 16px; border-right: 1px solid #e8eaef; }
+.organization h2 { margin: 0 0 20px; font-size: 18px; font-weight: 600; }
+.people { flex: 1; min-width: 0; padding: 24px; overflow: auto; }
+.toolbar { display: flex; align-items: center; gap: 12px; }
+.toolbar h2 { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toolbar :global(.ant-input-search) { width: min(330px, 50%); }
+.hint { margin: 16px 0; color: #687486; font-size: 13px; }
+.person { cursor: pointer; }
+.name { display: flex; align-items: center; gap: 12px; border: 0; padding: 0; background: none; cursor: pointer; text-align: left; color: inherit; }
+.pagination { margin-top: 20px; text-align: right; }
+@media (max-width: 700px) { .organization { flex-direction: column; } .departments { width: 100%; max-height: 180px; border-right: 0; border-bottom: 1px solid #e8eaef; padding: 12px; } .organization h2 { font-size: 16px; margin-bottom: 10px; } .people { padding: 16px; } .toolbar { flex-wrap: wrap; } .toolbar h2 { width: 100%; flex-basis: 100%; } .toolbar :global(.ant-input-search) { flex: 1; width: auto; } }

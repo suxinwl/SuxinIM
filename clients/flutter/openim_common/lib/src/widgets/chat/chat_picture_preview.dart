@@ -55,8 +55,9 @@ class ChatPicturePreview extends StatelessWidget {
         },
       );
 
-  Widget _networkGestureImage(MediaSource source) => ExtendedImage.network(
-        source.thumbnail,
+  Widget _networkGestureImage(MediaSource source) => ExtendedImage(
+        image: ProtectedResourceImage(source.thumbnail),
+        enableLoadState: true,
         fit: BoxFit.contain,
         mode: ExtendedImageMode.gesture,
         clearMemoryCacheWhenDispose: true,
@@ -106,7 +107,7 @@ class ChatPicturePreview extends StatelessWidget {
                 ));
               }
               return Center(
-                child: ExtendedImage.network(url),
+                child: ExtendedImage(image: ProtectedResourceImage(url),enableLoadState: true),
               );
             case LoadState.failed:
               // remove memory cached

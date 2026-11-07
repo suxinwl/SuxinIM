@@ -44,7 +44,7 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
             return
         }
 
-        when (call.method) {
+        try { when (call.method) {
             "getByteThumbnail" -> {
                 val path = call.argument<String>("path")
                 val quality = call.argument<Int>("quality")!!
@@ -75,6 +75,7 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
                 result.success(false);
             }
             "compressVideo" -> {
+                if(transcodeFuture?.isDone==false)throw IllegalStateException("Encrypted conversion already active")
                 val path = call.argument<String>("path")!!
                 val quality = call.argument<Int>("quality")!!
                 val deleteOrigin = call.argument<Boolean>("deleteOrigin")!!
@@ -83,9 +84,14 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
                 val includeAudio = call.argument<Boolean>("includeAudio") ?: true
                 val frameRate = if (call.argument<Int>("frameRate")==null) 30 else call.argument<Int>("frameRate")
 
-                val tempDir: String = context.getExternalFilesDir("video_compress")!!.absolutePath
-                val out = SimpleDateFormat("yyyy-MM-dd hh-mm-ss").format(Date())
-                val destPath: String = tempDir + File.separator + "VID_" + out + path.hashCode() + ".mp4"
+                if(android.os.Build.VERSION.SDK_INT<26){
+                    val json=Utility(channelName).getMediaInfoJson(context,path);json.put("isCancel",false);result.success(json.toString());return
+                }
+                val out = ProtectedMediaSource.name(path).substringBeforeLast('.')
+                val encryptedFile=Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles")
+                    .getMethod("createTempFile",String::class.java,String::class.java)
+                    .invoke(null,out,".mp4") as File
+                val destPath:String=encryptedFile.absolutePath
 
                 var videoTrackStrategy: TrackStrategy = DefaultVideoStrategy.atMost(340).build();
                 val audioTrackStrategy: TrackStrategy
@@ -137,15 +143,20 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
                     RemoveTrackStrategy()
                 }
 
-                val dataSource = if (startTime != null || duration != null){
-                    val source = UriDataSource(context, Uri.parse(path))
-                    TrimDataSource(source, (1000 * 1000 * (startTime ?: 0)).toLong(), (1000 * 1000 * (duration ?: 0)).toLong())
-                }else{
-                    UriDataSource(context, Uri.parse(path))
-                }
-
-
-                transcodeFuture = Transcoder.into(destPath!!)
+                val source=ProtectedTranscodeSource(path)
+                val dataSource = if(startTime!=null||duration!=null)TrimDataSource(source,1000000L*(startTime?:0),1000000L*(duration?:0)) else source
+                val bridge=Class.forName("io.openim.flutter_openim_sdk.EncryptedScratchFiles")
+                val descriptor=bridge.getMethod("descriptor",String::class.java).invoke(null,destPath) as android.os.ParcelFileDescriptor
+                val finished=java.util.concurrent.atomic.AtomicBoolean(false)
+                var registration:String?=null
+                val requestFuture=java.util.concurrent.atomic.AtomicReference<Future<Void>?>()
+                val canceled=java.util.concurrent.atomic.AtomicBoolean(false)
+                fun finish(){try{descriptor.close()}finally{registration?.let{bridge.getMethod("unregisterConsumer",String::class.java).invoke(null,it)};registration=null}}
+                fun discard(){try{bridge.getMethod("discard",String::class.java).invoke(null,destPath)}catch(ignored:Exception){}}
+                try{
+                registration=bridge.getMethod("registerConsumer",Runnable::class.java).invoke(null,Runnable{canceled.set(true);requestFuture.get()?.cancel(true);try{descriptor.close()}catch(ignored:Exception){}}) as String
+                if(canceled.get())throw IllegalStateException("Encrypted conversion canceled")
+                val future = Transcoder.into(descriptor.fileDescriptor)
                         .addDataSource(dataSource)
                         .setAudioTrackStrategy(audioTrackStrategy)
                         .setVideoTrackStrategy(videoTrackStrategy)
@@ -154,28 +165,27 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
                                 channel.invokeMethod("updateProgress", progress * 100.00)
                             }
                             override fun onTranscodeCompleted(successCode: Int) {
-                                channel.invokeMethod("updateProgress", 100.00)
-                                val json = Utility(channelName).getMediaInfoJson(context, destPath)
-                                json.put("isCancel", false)
-                                result.success(json.toString())
-                                if (deleteOrigin) {
-                                    File(path).delete()
-                                }
+                                if(!finished.compareAndSet(false,true))return
+                                try{val json = Utility(channelName).getMediaInfoJson(context, destPath);json.put("isCancel", false);result.success(json.toString())}catch(rejected:Exception){result.error("ENCRYPTED_MEDIA_UNAVAILABLE","Encrypted video unavailable",null)}finally{finish()}
+                                // Originals remain encrypted until the SDK binds/ACKs or explicitly discards them.
                             }
 
                             override fun onTranscodeCanceled() {
-                                result.success(null)
+                                if(finished.compareAndSet(false,true)){try{finish()}finally{discard()};result.success(null)}
                             }
 
                             override fun onTranscodeFailed(exception: Throwable) {
-                                result.success(null)
+                                if(finished.compareAndSet(false,true)){try{finish()}finally{discard()};result.error("ENCRYPTED_MEDIA_UNAVAILABLE","Encrypted video conversion failed",null)}
                             }
                         }).transcode()
+                requestFuture.set(future);transcodeFuture=future
+                if(canceled.get())future.cancel(true)
+                }catch(rejected:Exception){if(finished.compareAndSet(false,true)){try{finish()}finally{discard()};throw rejected}}
             }
             else -> {
                 result.notImplemented()
             }
-        }
+        }}catch(rejected:Exception){result.error("ENCRYPTED_MEDIA_UNAVAILABLE","Encrypted media operation unavailable",null)}
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -183,6 +193,7 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        transcodeFuture?.cancel(true)
         _channel?.setMethodCallHandler(null)
         _context = null
         _channel = null

@@ -1,5 +1,11 @@
 # 源码仓库说明
 
+## 2026-11-08 整套系统合并
+
+本仓库现同时包含 GoSuxinWL 宿主、HRM 及 IM 全套源码。GoSuxinWL 位于 `services/gosuxinwl/`，HRM 位于其中 `plugins/biz-suite/`，统一账号和通讯桥接位于其中 `internal/imbridge/`，管理网页位于其中 `web/`。全部为普通 Git 文件，不要求克隆旧仓库。完整导航、工具链和初始化说明见 [整套系统源码](docs/system-source.md)。
+
+当前客户端版本为 Windows 3.8.22、Web 3.8.20、Android 3.8.21；安卓风险复核、推送和 iOS 验收边界见该说明与 `docs/acceptance.md`。下文保留此前归档记录，历史版本不代表当前交付。
+
 本仓库保存原 3.5 企业项目合并官方固定版本后的独立 OpenIM38 开发源码。当前 Windows 应用为 **3.8.7 / 380701**；上游组件与 SDK 版本见 `upstream-sources.lock.json`、`runtimes.lock.json` 及各模块依赖锁。
 
 ## 各端源码入口

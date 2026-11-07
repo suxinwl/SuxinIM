@@ -2,6 +2,10 @@ package controller
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"openim38.local/identity"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/openimsdk/open-im-server/v3/pkg/authverify"
@@ -80,7 +84,7 @@ func (a *authDatabase) BatchSetTokenMapByUidPid(ctx context.Context, tokens []st
 // Create Token.
 func (a *authDatabase) CreateToken(ctx context.Context, userID string, platformID int) (string, error) {
 	isAdmin := authverify.IsManagerUserID(userID, a.adminUserIDs)
-	if !isAdmin {
+	if !isAdmin && !identity.Required() {
 		tokens, err := a.cache.GetAllTokensWithoutError(ctx, userID)
 		if err != nil {
 			return "", err
@@ -108,6 +112,14 @@ func (a *authDatabase) CreateToken(ctx context.Context, userID string, platformI
 	}
 
 	claims := tokenverify.BuildClaims(userID, platformID, a.accessExpire)
+	if identity.Required() && !isAdmin {
+		var nonce [16]byte
+		if _, err := rand.Read(nonce[:]); err != nil {
+			return "", err
+		}
+		claims.ID = hex.EncodeToString(nonce[:])
+		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(4 * time.Hour))
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(a.accessSecret))
 	if err != nil {

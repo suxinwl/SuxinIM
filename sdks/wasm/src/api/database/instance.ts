@@ -3,20 +3,29 @@
 import initSqlJs, { Database, SqlJsStatic } from '@jlongster/sql.js';
 import { SQLiteFS } from 'absurd-sql-optimized';
 import IndexedDBBackend from 'absurd-sql-optimized/dist/indexeddb-backend';
+import { durableEnabled, restoreMemoryDatabase, attachMemoryDatabase, detachMemoryDatabase } from './durable';
 (self as any).$RefreshReg$ = () => {};
 (self as any).$RefreshSig$ = () => () => {};
 
 let instance: Promise<Database> | undefined;
 let SQL: SqlJsStatic | undefined;
+let mounted = false;
 
 async function InitializeDB(filePath: string, sqlWasmPath = '/sql-wasm.wasm') {
   if (!SQL) {
     SQL = await initSqlJs({ locateFile: () => sqlWasmPath });
+  }
+  if (durableEnabled()) {
+    const restored = await restoreMemoryDatabase();
+    return attachMemoryDatabase(new SQL.Database(restored.bytes), restored.entries, restored.tombstones,restored.suppression);
+  }
+  if (!mounted) {
     const sqlFS = new SQLiteFS(SQL.FS, new IndexedDBBackend());
 
     SQL.register_for_idb(sqlFS);
     SQL.FS.mkdir('/sql');
     SQL.FS.mount(sqlFS, {}, '/sql');
+    mounted = true;
   }
 
   const path = `/sql/${filePath}`;
@@ -67,5 +76,6 @@ export async function resetInstance() {
   const db = await instance;
 
   db.close();
+  if (durableEnabled()) detachMemoryDatabase();
   instance = undefined;
 }

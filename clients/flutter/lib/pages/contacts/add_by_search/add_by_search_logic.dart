@@ -16,13 +16,19 @@ class AddContactsBySearchLogic extends GetxController {
   final refreshCtrl = RefreshController();
   final searchCtrl = TextEditingController();
   final focusNode = FocusNode();
-  final userInfoList = <UserFullInfo>[].obs;
+  final userInfoList = <DirectoryPerson>[].obs;
+  final searchError = ''.obs;
+  final searching = false.obs;
+  final searched = false.obs;
+  int _searchGeneration = 0;
   final groupInfoList = <GroupInfo>[].obs;
   late SearchType searchType;
   int pageNo = 0;
 
   @override
   void onClose() {
+    _searchGeneration++;
+    refreshCtrl.dispose();
     searchCtrl.dispose();
     focusNode.dispose();
     super.onClose();
@@ -32,6 +38,11 @@ class AddContactsBySearchLogic extends GetxController {
   void onInit() {
     searchType = Get.arguments['searchType'] ?? SearchType.user;
     searchCtrl.addListener(() {
+      _searchGeneration++;
+      userInfoList.clear();
+      searchError.value = '';
+      searched.value = false;
+      searching.value = false;
       if (searchKey.isEmpty) {
         focusNode.requestFocus();
         userInfoList.clear();
@@ -45,7 +56,7 @@ class AddContactsBySearchLogic extends GetxController {
 
   String get searchKey => searchCtrl.text.trim();
 
-  bool get isNotFoundUser => userInfoList.isEmpty && searchKey.isNotEmpty;
+  bool get isNotFoundUser => searched.value && !searching.value && searchError.value.isEmpty && userInfoList.isEmpty && searchKey.isNotEmpty;
 
   bool get isNotFoundGroup => groupInfoList.isEmpty && searchKey.isNotEmpty;
 
@@ -58,37 +69,29 @@ class AddContactsBySearchLogic extends GetxController {
     }
   }
 
-  void searchUser() async {
-    var list = await LoadingView.singleton.wrap(
-      asyncFunction: () => Apis.searchUserFullInfo(
-        content: searchKey,
-        pageNumber: pageNo = 1,
-        showNumber: 20,
-      ),
-    );
-    userInfoList.assignAll(list ?? []);
-    refreshCtrl.refreshCompleted();
-    if (null == list || list.isEmpty || list.length < 20) {
-      refreshCtrl.loadNoData();
-    } else {
-      refreshCtrl.loadComplete();
-    }
-  }
+  void searchUser() => _loadUsers();
 
-  void loadMoreUser() async {
-    var list = await LoadingView.singleton.wrap(
-      asyncFunction: () => Apis.searchUserFullInfo(
-        content: searchKey,
-        pageNumber: ++pageNo,
-        showNumber: 20,
-      ),
-    );
-    userInfoList.addAll(list ?? []);
-    refreshCtrl.refreshCompleted();
-    if (null == list || list.isEmpty || list.length < 20) {
-      refreshCtrl.loadNoData();
-    } else {
-      refreshCtrl.loadComplete();
+  void loadMoreUser() => _loadUsers(append: true);
+
+  Future<void> _loadUsers({bool append = false}) async {
+    if (searching.value || searchKey.isEmpty) return;
+    final attempt = ++_searchGeneration, query = searchKey;
+    final nextPage = append ? pageNo + 1 : 1;
+    searching.value = true; searchError.value = ''; searched.value = true;
+    if (!append) userInfoList.clear();
+    try {
+      final result = await HrmDirectory.instance.list(keyword: query, page: nextPage, pageSize: 20);
+      if (isClosed || attempt != _searchGeneration) return;
+      if (append) { userInfoList.addAll(result.items); } else { userInfoList.assignAll(result.items); }
+      pageNo = nextPage;
+      refreshCtrl.refreshCompleted();
+      if (userInfoList.length >= result.total) { refreshCtrl.loadNoData(); } else { refreshCtrl.loadComplete(); }
+    } catch (_) {
+      if (isClosed || attempt != _searchGeneration) return;
+      searchError.value = '员工搜索暂不可用，请重试';
+      refreshCtrl.loadFailed();
+    } finally {
+      if (!isClosed && attempt == _searchGeneration) searching.value = false;
     }
   }
 
@@ -100,7 +103,6 @@ class AddContactsBySearchLogic extends GetxController {
   }
 
   String getMatchContent(UserFullInfo userInfo) {
-    final keyword = searchCtrl.text;
     // String searchPrefix = "%s";
     // if (keyword == userInfo.userID) {
     //   searchPrefix = StrRes.searchIDIs;
@@ -115,7 +117,7 @@ class AddContactsBySearchLogic extends GetxController {
   }
 
   String? getShowName(dynamic info) {
-    if (info is UserFullInfo) {
+    if (info is DirectoryPerson) {
       return info.nickname;
     } else if (info is GroupInfo) {
       return info.groupName;
@@ -124,9 +126,9 @@ class AddContactsBySearchLogic extends GetxController {
   }
 
   void viewInfo(dynamic info) {
-    if (info is UserFullInfo) {
+    if (info is DirectoryPerson) {
       AppNavigator.startUserProfilePane(
-        userID: info.userID!,
+        userID: info.userID,
         nickname: info.nickname,
         faceURL: info.faceURL,
       );
@@ -143,20 +145,7 @@ class AddContactsBySearchLogic extends GetxController {
       return sprintf(StrRes.searchGroupNicknameIs, [getShowName(info)]);
     }
 
-    UserFullInfo userFullInfo = info;
-    String? tips, content;
-    if (int.tryParse(searchKey) != null) {
-      if (searchKey.length == 11) {
-        tips = StrRes.phoneNumber;
-        content = userFullInfo.phoneNumber??searchKey;
-      } else {
-        tips = StrRes.userID;
-        content = userFullInfo.userID;
-      }
-    } else {
-      tips = StrRes.searchNicknameIs;
-      content = getShowName(info);
-    }
-    return "$tips:$content";
+    final person = info as DirectoryPerson;
+    return '${person.nickname}  ·  工号：${person.employeeNo.isEmpty ? '—' : person.employeeNo}${person.department.isEmpty ? '' : '  ·  ${person.department}'}';
   }
 }

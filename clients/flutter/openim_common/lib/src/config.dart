@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'enterprise_lan_tls.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,20 +13,24 @@ class Config {
   //初始化全局信息
   static Future init(Function() runApp) async {
     WidgetsFlutterBinding.ensureInitialized();
-    if (const bool.fromEnvironment('OPENIM_DEVELOPMENT')) {
-      final ca = await rootBundle.load(
-          'packages/openim_common/assets/certificates/openim38_dev_ca.crt');
-      SecurityContext.defaultContext
-          .setTrustedCertificatesBytes(ca.buffer.asUint8List());
-    }
+    NativeLocalVault.install();
+    final ca = await rootBundle.load('packages/openim_common/assets/certificates/puty_enterprise_root_ca.crt');
+    SecurityContext.defaultContext.setTrustedCertificatesBytes(ca.buffer.asUint8List());
+    EnterpriseLanTls.instance.install(()=>serverBaseUrl);
     try {
       final path = (await getApplicationDocumentsDirectory()).path;
       cachePath = '$path/';
       await DataSp.init();
+      EnterpriseLanTls.instance.profileReady();
       await Hive.initFlutter(path);
+      await CacheController.prepareLegacyCaches();
       // await SpeechToTextUtil.instance.initSpeech();
       HttpUtil.init();
-    } catch (_) {}
+    } catch (_) {
+      // Continuing with uninitialized encrypted settings would silently fall
+      // back to plaintext/default storage. Startup must fail closed instead.
+      rethrow;
+    }
 
     runApp();
 
@@ -82,27 +87,24 @@ class Config {
   /// ip
   /// web.rentsoft.cn
   /// 203.56.175.233
-  static const _host =
-      String.fromEnvironment('OPENIM_HOST', defaultValue: '192.168.10.11');
   static const baseUrl = String.fromEnvironment('OPENIM_BASE_URL',
-      defaultValue: 'https://192.168.10.11:29880');
+      defaultValue: 'https://192.168.10.11:9885');
+  static const lanOrigin = 'https://192.168.10.11:9885';
+  static const wanOrigin = 'https://im.szputy.com:9885';
   static String get serverBaseUrl {
     final saved = DataSp.getServerConfig();
     final candidate = saved?['baseUrl'] ?? saved?['authUrl'];
     if (candidate is String) {
       final uri = Uri.tryParse(candidate);
-      if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty)
+      if (uri != null && [lanOrigin,wanOrigin].contains(uri.origin)) {
         return uri.origin;
+      }
     }
-    return baseUrl;
+    return Platform.isIOS ? wanOrigin : baseUrl;
   }
 
   static String get enterpriseUrl => '$serverBaseUrl/enterprise/v1';
 
-  static const _ipRegex =
-      '((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)';
-
-  static bool get _isIP => RegExp(_ipRegex).hasMatch(_host);
 
   /// 服务器IP
   static String get serverIp {
@@ -134,47 +136,19 @@ class Config {
   /// $apiScheme://$host/chat/
   /// $apiScheme://$host:50008
   /// 端口：50008
-  static String get appAuthUrl {
-    String? url;
-    var server = DataSp.getServerConfig();
-    if (null != server) {
-      url = server['authUrl'];
-      Logger.print('缓存authUrl: $url');
-    }
-    // to b
-    // return url ??
-    //     (_isIP ? "http://$_host:10010" : "https://$_host/organization");
-    // to c
-    return url ?? '$baseUrl/chat';
-  }
+  static String get appAuthUrl => '$serverBaseUrl/chat';
 
   /// IM sdk api地址
   /// $apiScheme://$host/api/
   /// $apiScheme://$host:50002
   /// 端口：50002
-  static String get imApiUrl {
-    String? url;
-    var server = DataSp.getServerConfig();
-    if (null != server) {
-      url = server['apiUrl'];
-      Logger.print('缓存apiUrl: $url');
-    }
-    return url ?? '$baseUrl/api';
-  }
+  static String get imApiUrl => '$serverBaseUrl/api';
 
   /// IM ws 地址
   /// $socketScheme://$host/ws
   /// $socketScheme://$host:50001
   /// 端口：50001
-  static String get imWsUrl {
-    String? url;
-    var server = DataSp.getServerConfig();
-    if (null != server) {
-      url = server['wsUrl'];
-      Logger.print('缓存wsUrl: $url');
-    }
-    return url ?? '${baseUrl.replaceFirst('https://', 'wss://')}/ws';
-  }
+  static String get imWsUrl => "${serverBaseUrl.replaceFirst('https://', 'wss://')}/ws";
 
   /// 图片存储
   static String get objectStorage {

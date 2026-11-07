@@ -1,4 +1,4 @@
-import { clipboard, ipcMain, nativeImage } from "electron";
+import { clipboard, ClipboardItem, ipcMain } from "electron";
 import { t } from "i18next";
 import Screenshots from "electron-screenshots";
 import { hideWindow, sendEvent, showWindow, toggleWindowVisible } from "./windowManage";
@@ -48,7 +48,7 @@ export default () => {
       showWindow();
     },
     writeClipboard: (bytes) => {
-      clipboard.writeImage(nativeImage.createFromBuffer(Buffer.from(bytes)));
+      return clipboard.write([new ClipboardItem({"image/png":new Blob([new Uint8Array(bytes)])})]);
     },
     respond: (bytes) => {
       // Return only once the overlay has closed, without a timer that can race

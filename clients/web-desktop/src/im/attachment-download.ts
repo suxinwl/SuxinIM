@@ -4,6 +4,12 @@ export type AttachmentDownloadRequest = {
   url: string;
   saveType?: SaveType;
   randomPrefix?: string;
+  fileName?: string;
+  fileSize?: number;
+  taskID?: string;
+  conversationID?: string;
+  clientMsgID?: string;
+  resourceProof?: string;
 };
 
 type DownloadPorts = {
@@ -41,7 +47,11 @@ export async function startAttachmentDownload(
     await ports.start({
       url: originUrl,
       saveType: data.saveType ?? "file",
-      ...(data.randomName ? { randomPrefix: ports.randomPrefix() } : {}),
+      fileName:data.fileName,
+      fileSize:data.fileSize,
+      taskID:data.clientMsgID ? `${data.clientMsgID}-${data.saveType || "file"}` : data.workMomentID ? `moment_${data.workMomentID}-${data.saveType || "file"}` : ports.randomPrefix(),
+      conversationID:data.conversationID || (data.workMomentID?`moment_${data.workMomentID}`:undefined),
+      clientMsgID:data.clientMsgID || data.workMomentID,
     });
   } catch (error) {
     ports.removeTask(originUrl);

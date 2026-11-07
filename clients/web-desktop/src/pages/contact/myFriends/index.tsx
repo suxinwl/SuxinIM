@@ -34,12 +34,14 @@ export const MyFriends = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-white">
       <div className="m-5.5 text-base font-extrabold">{t("placeholder.myFriend")}</div>
-      <div className="ml-4 mt-4 flex-1 overflow-auto pr-4">
-        <AlphabetIndex
-          ref={alphabetIndex}
-          indexList={indexList}
-          scrollToLetter={scrollToLetter}
-        />
+      <div className="relative ml-4 mt-4 min-h-0 flex-1 pr-4">
+        {indexList.length > 1 && (
+          <AlphabetIndex
+            ref={alphabetIndex}
+            indexList={indexList}
+            scrollToLetter={scrollToLetter}
+          />
+        )}
         <Virtuoso
           id="alphabet-wrap"
           className="no-scrollbar h-full overflow-x-hidden"
@@ -92,16 +94,20 @@ const LetterSection = ({
 
   return (
     <div key={indexList[index]}>
-      <div
-        ref={letter}
-        id={`letter${indexList[index]}`}
-        className={clsx("my-alphabet px-3.5 pb-1 text-sm text-[#8E9AB0FF]", {
-          "pt-4.5": Boolean(index),
-        })}
-      >
-        {indexList[index]}
-      </div>
-      <div className="mx-3.5 mb-3 h-px w-full bg-[#E8EAEFFF] bg-white" />
+      {indexList.length > 1 && (
+        <>
+          <div
+            ref={letter}
+            id={`letter${indexList[index]}`}
+            className={clsx("my-alphabet px-3.5 pb-1 text-sm text-[#8E9AB0FF]", {
+              "pt-4.5": Boolean(index),
+            })}
+          >
+            {indexList[index]}
+          </div>
+          <div className="mx-3.5 mb-3 h-px w-full bg-[#E8EAEFFF] bg-white" />
+        </>
+      )}
       {friends.map((friend) => (
         <FriendListItem
           key={friend.userID}

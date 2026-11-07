@@ -7,6 +7,45 @@ import argparse,base64,json,pathlib,secrets,shutil
 import yaml
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 
+def harden_storage_process_arguments(compose):
+ """Change only three static argv definitions; credentials stay in ENV/config.
+
+ This function deliberately uses builtins only, so the rotation worker can use
+ the identical dict patch after parsing its existing Compose YAML. Double '$'
+ is required here: Compose must leave expansion to the container's shell.
+ """
+ services = compose.get('services', {})
+ if not all(isinstance(services.get(name), dict)
+            and isinstance(services[name].get('healthcheck'), dict)
+            for name in ('mongo', 'redis')):
+  raise ValueError('storage_process_model_invalid')
+ redis_script = (
+  'umask 077; '
+  'case "$$REDIS_PASSWORD" in ""|*[!0-9a-f]*) exit 1;; esac; '
+  '[ "$${#REDIS_PASSWORD}" -eq 64 ] || exit 1; '
+  'puty_redis_config=$$(mktemp /tmp/puty-redis.XXXXXX.conf); '
+  "printf 'requirepass %s\\nappendonly yes\\n' "
+  '"$$REDIS_PASSWORD" > "$$puty_redis_config"; '
+  'exec redis-server "$$puty_redis_config"'
+ )
+ services['redis']['command'] = ['sh', '-ec', redis_script]
+ services['redis']['healthcheck']['test'] = [
+  'CMD-SHELL',
+  'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli --no-auth-warning '
+  '-h 127.0.0.1 ping | grep -qx PONG'
+ ]
+ mongo_script = (
+  'const c=new Mongo("mongodb://"+'
+  'encodeURIComponent(process.env.MONGO_INITDB_ROOT_USERNAME)+":"+'
+  'encodeURIComponent(process.env.MONGO_INITDB_ROOT_PASSWORD)+'
+  '"@127.0.0.1:27017/admin");'
+  'quit(c.getDB("admin").runCommand({ping:1}).ok===1?0:1);'
+ )
+ services['mongo']['healthcheck']['test'] = [
+  'CMD', 'mongosh', '--nodb', '--quiet', '--eval', mongo_script
+ ]
+ return compose
+
 def dump(path,value):
  path.parent.mkdir(parents=True,exist_ok=True)
  path.write_text(yaml.safe_dump(value,allow_unicode=True,sort_keys=False),encoding='utf-8')
@@ -78,7 +117,7 @@ def generate(destination,host):
  services['livekit']={'image':image('runtime'),'restart':'unless-stopped','entrypoint':['/app/bin/livekit-server'],'command':['--config','/etc/livekit.yml'],'ports':[f'{host}:27881:27881/tcp',f'{host}:27882:27882/udp',f'{host}:23478:23478/udp',f'{host}:25349:25349/tcp'],'volumes':['./bin/livekit-server:/app/bin/livekit-server:ro','./config/livekit.yml:/etc/livekit.yml:ro','./certs:/certs:ro']}
  services['nginx']={'image':image('nginx'),'restart':'unless-stopped','ports':[f'{host}:29880:29880/tcp',f'{host}:29885:29885/tcp',f'{host}:23478:23478/tcp'],'volumes':['./config/nginx.conf:/etc/nginx/nginx.conf:ro','./certs:/certs:ro','./www:/usr/share/nginx/html:ro'],'depends_on':{'enterprise-service':{'condition':'service_started'},'openim-api':{'condition':'service_started'},'chat-api':{'condition':'service_started'}}}
  for service in services.values():service['networks']=['openim38'];service['pull_policy']='never';service['logging']={'driver':'json-file','options':{'max-size':'20m','max-file':'3'}}
- dump(destination/'compose.yaml',{'name':'openim38-upgrade','services':services,'networks':{'openim38':{'name':'openim38-upgrade-net','driver':'bridge'}},'volumes':{name:{} for name in ['mongo-data','redis-data','etcd-data','kafka-data','minio-data']}})
+ dump(destination/'compose.yaml',harden_storage_process_arguments({'name':'openim38-upgrade','services':services,'networks':{'openim38':{'name':'openim38-upgrade-net','driver':'bridge'}},'volumes':{name:{} for name in ['mongo-data','redis-data','etcd-data','kafka-data','minio-data']}}))
  shutil.copy2(ROOT/'deploy/nginx.conf',destination/'config/nginx.conf')
  for name in ['certs','www/admin','bin']:(destination/name).mkdir(parents=True,exist_ok=True)
  (destination/'instance.json').write_text(json.dumps({'host':host,'testOnly':True,'stackName':'openim38-upgrade','originalDataMigrated':False},indent=2)+'\n')

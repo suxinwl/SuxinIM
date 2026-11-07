@@ -17,6 +17,7 @@ package msggateway
 import (
 	"context"
 	"fmt"
+	"openim38.local/identity"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -110,6 +111,33 @@ func (c *Client) ResetClient(ctx *UserConnContext, conn ClientConn, longConnServ
 
 // readMessage continuously reads messages from the connection.
 func (c *Client) readMessage() {
+	// The generation-owned monitor also closes idle transports after HRM
+	// revocation or dependency loss; it cannot act on a pooled successor Client.
+	if identity.Required() {
+		ctx, user, token, platform, conn := c.hbCtx, c.UserID, c.token, c.PlatformID, c.conn
+		clientIP, _ := identity.ClientIP(c.ctx.Req)
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					check, cancel := context.WithTimeout(ctx, 3*time.Second)
+					v, err := identity.Validate(check, token, user, "im", platform)
+					if err == nil {
+						err = identity.CheckSessionAccess(check, v, clientIP, "connect", "")
+					}
+					cancel()
+					if err != nil {
+						conn.Close()
+						return
+					}
+				}
+			}
+		}()
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			c.closedErr = ErrPanic
@@ -143,6 +171,19 @@ func (c *Client) readMessage() {
 
 // handleMessage processes a single message received by the client.
 func (c *Client) handleMessage(message []byte) error {
+	var hrmSession identity.Session
+	if identity.Required() {
+		check, cancel := context.WithTimeout(c.hbCtx, 3*time.Second)
+		defer cancel()
+		var err error
+		if hrmSession, err = identity.Validate(check, c.token, c.UserID, "im", c.PlatformID); err != nil {
+			return ErrClientClosed
+		}
+		ip, ipErr := identity.ClientIP(c.ctx.Req)
+		if ipErr != nil || identity.CheckSessionAccess(check, hrmSession, ip, "connect", "") != nil {
+			return ErrClientClosed
+		}
+	}
 	if c.IsCompress {
 		var err error
 		message, err = c.longConnServer.DecompressWithPool(message)
@@ -170,6 +211,14 @@ func (c *Client) handleMessage(message []byte) error {
 	ctx := mcontext.WithMustInfoCtx(
 		[]string{binaryReq.OperationID, binaryReq.SendID, constant.PlatformIDToName(c.PlatformID), c.ctx.GetConnID()},
 	)
+	ctx = identity.WithEntryZone(ctx, identity.EntryZoneFromContext(c.hbCtx))
+	if identity.Required() && binaryReq.ReqIdentifier == WSSendMsg {
+		ip, err := identity.ClientIP(c.ctx.Req)
+		if err != nil {
+			return ErrClientClosed
+		}
+		ctx = identity.WithClientSession(ctx, hrmSession, ip)
+	}
 
 	log.ZDebug(ctx, "gateway req message", "req", binaryReq.String())
 

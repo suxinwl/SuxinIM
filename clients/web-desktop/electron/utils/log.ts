@@ -3,7 +3,9 @@ import { join } from "node:path";
 import fs from "fs";
 
 const getLogger = (logsPath: string) => {
-  log.transports.file.level = "debug";
+  // Business state is persisted exclusively through the encrypted store. Never
+  // mirror renderer console payloads (tokens, messages, SQL) into plaintext logs.
+  log.transports.file.level = false;
   log.transports.file.maxSize = 52428800; // max size 50M
   log.transports.file.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}]{scope} {text}";
   let date = new Date();

@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:sprintf/sprintf.dart';
 
 import 'add_by_search_logic.dart';
 
@@ -25,7 +24,7 @@ class AddContactsBySearchPage extends StatelessWidget {
             focusNode: logic.focusNode,
             controller: logic.searchCtrl,
             hintText: logic.isSearchUser
-                ? StrRes.searchByPhoneAndUid
+                ? '搜索手机号、姓名或工号'
                 : StrRes.searchIDAddGroup,
             enabled: true,
             autofocus: true,
@@ -35,7 +34,11 @@ class AddContactsBySearchPage extends StatelessWidget {
           Divider(color: Styles.c_E8EAEF, height: 1.h),
           Obx(() => Expanded(
                 child: logic.isSearchUser
-                    ? (logic.isNotFoundUser
+                    ? (logic.searchError.value.isNotEmpty
+                        ? Center(child: TextButton(onPressed: logic.search, child: Text(logic.searchError.value)))
+                        : logic.searching.value && logic.userInfoList.isEmpty
+                        ? const Center(child: CircularProgressIndicator())
+                        : logic.isNotFoundUser
                         ? _buildNotFoundView()
                         : _buildUserListView())
                     : (logic.isNotFoundGroup
@@ -85,11 +88,11 @@ class AddContactsBySearchPage extends StatelessWidget {
                 ..width = 24.w
                 ..height = 24.h,
               12.horizontalSpace,
-              logic.getShowTitle(info)
+              Expanded(child: logic.getShowTitle(info)
             .toText
                 ..style = Styles.ts_0089FF_17sp
                 ..maxLines = 1
-                ..overflow = TextOverflow.ellipsis,
+                ..overflow = TextOverflow.ellipsis),
             ],
           ),
         ),

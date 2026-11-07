@@ -1,5 +1,9 @@
 module github.com/openimsdk/chat
 
+replace openim38.local/identity => ../identity
+
+require openim38.local/identity v0.0.0
+
 go 1.25.0
 
 require (

@@ -14,6 +14,8 @@ import 'app_pages.dart';
 class AppNavigator {
   AppNavigator._();
 
+  static void startVaultReauthorization(){if(Get.currentRoute!=AppRoutes.splash)Get.offAllNamed(AppRoutes.splash);}
+
   static void startLogin() {
     if (Get.currentRoute == AppRoutes.login) return;
     Get.offAllNamed(AppRoutes.login);

@@ -1,0 +1,20 @@
+// =================================================================================
+// 实现层服务注入文件
+// =================================================================================
+package packageName
+
+import "github.com/suxinwl/GoSuxin/internal/service"
+
+//1.定义接收器名称
+type (
+	s{serviceName} struct{}
+)
+
+//2.把s{serviceName}注册到service中
+func New{serviceName}() service.I{serviceName} {
+	return &s{serviceName}{}
+}
+
+func init() {
+	service.Register{serviceName}(New{serviceName}())
+}

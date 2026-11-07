@@ -1,9 +1,10 @@
 {
   "appId": "io.openim.enterprise.upgrade38",
-  "productName": "OpenIM38 Enterprise",
+  "productName": "PUTY内部通讯",
   "asar": true,
   "directories": {
-    "output": "release"
+    "output": "release",
+    "buildResources": "extraResources/certificates"
   },
   "files": [
     "dist-electron/**/*",
@@ -25,15 +26,19 @@
         ]
       }
     ],
-    "artifactName": "OpenIM38-Enterprise-${version}-win-x64.${ext}",
+    "artifactName": "PUTY_IM-${version}-win-x64.${ext}",
     "icon": "public/icons/icon.ico",
     "signExecutable": false
   },
   "nsis": {
     "oneClick": false,
-    "perMachine": false,
+    "perMachine": true,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "include": "scripts/nsis-enterprise-trust.nsh",
+    "shortcutName": "PUTY内部通讯",
+    "uninstallDisplayName": "PUTY内部通讯"
   },
-  "electronDist": "node_modules/electron/dist"
+  "electronDist": "node_modules/electron/dist",
+  "executableName": "PUTY_IM"
 }

@@ -1,19 +1,22 @@
-import { app, shell, systemPreferences } from "electron";
+import { app, shell, systemPreferences, dialog } from "electron";
+import fs from "node:fs";
 import { isExistMainWindow, showWindow } from "./windowManage";
 import { join } from "node:path";
 import { release } from "node:os";
 import { isMac, isProd, isWin } from "../utils";
-import { getStore } from "./storeManage";
+import { getStore, flushPreferences } from "./storeManage";
 import { singleInstanceLock } from "../config";
 import { checkClearLogs } from "../utils/log";
 import { flicker } from "./trayManage";
+import {legacyUserData} from "./localStore/bootstrap";
 
 const store = getStore();
 
 export const setSingleInstance = () => {
   if (!singleInstanceLock) return;
 
-  if (!app.requestSingleInstanceLock()) {
+  fs.mkdirSync(legacyUserData,{recursive:true});const runtime=app.getPath("userData");app.setPath("userData",legacyUserData);const acquired=app.requestSingleInstanceLock();app.setPath("userData",runtime);
+  if (!acquired) {
     app.quit();
     process.exit(0);
   }
@@ -24,6 +27,14 @@ export const setSingleInstance = () => {
 };
 
 export const setAppListener = (startApp: () => void) => {
+  let preferenceQuitSettled = false;
+  app.on("before-quit", event => {
+    if (preferenceQuitSettled) return;
+    event.preventDefault();
+    void flushPreferences().catch(() => {
+      dialog.showErrorBox("界面偏好未保存", "加密偏好保存失败，已保留上次加密设置。下次启动请检查存储目录和系统密钥保护。");
+    }).finally(() => { preferenceQuitSettled = true; app.quit(); });
+  });
   app.on("web-contents-created", (event, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
       if (!/^devtools/.test(url) && /^https?:\/\//.test(url)) {
@@ -54,7 +65,7 @@ export const setAppListener = (startApp: () => void) => {
 };
 
 export const performAppStartup = () => {
-  app.setAppUserModelId(app.getName());
+  app.setAppUserModelId("io.openim.enterprise.upgrade38");
 
   app.commandLine.appendSwitch("--autoplay-policy", "no-user-gesture-required");
   app.commandLine.appendSwitch(

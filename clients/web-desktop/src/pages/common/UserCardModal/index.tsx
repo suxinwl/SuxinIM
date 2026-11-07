@@ -23,6 +23,7 @@ import { useCopyToClipboard } from "react-use";
 
 import { message } from "@/AntdGlobalComp";
 import { BusinessAllowType, BusinessUserInfo, getBusinessUserInfo } from "@/api/login";
+import { DirectoryPerson, getDirectoryPerson } from "@/api/directory";
 import DraggableModalWrap from "@/components/DraggableModalWrap";
 import EditableContent from "@/components/EditableContent";
 import OIMAvatar from "@/components/OIMAvatar";
@@ -44,7 +45,7 @@ interface IUserCardModalProps {
   cardInfo?: CardInfo;
 }
 
-export type CardInfo = Partial<BusinessUserInfo & FriendUserItem>;
+export type CardInfo = Partial<BusinessUserInfo & FriendUserItem & DirectoryPerson>;
 
 const getGender = (gender: number) => {
   if (!gender) return "-";
@@ -55,7 +56,8 @@ const UserCardModal: ForwardRefRenderFunction<
   OverlayVisibleHandle,
   IUserCardModalProps
 > = (props, ref) => {
-  const { userID, groupID, isSelf, notAdd } = props;
+  const { userID, groupID, notAdd } = props;
+  const isSelf = props.isSelf || userID === useUserStore.getState().selfInfo.userID;
 
   const editInfoRef = useRef<OverlayVisibleHandle>(null);
   const [cardInfo, setCardInfo] = useState<CardInfo>();
@@ -63,6 +65,8 @@ const UserCardModal: ForwardRefRenderFunction<
   const [isSendRequest, setIsSendRequest] = useState(false);
   const [userFields, setUserFields] = useState<FieldRow[]>([]);
   const [gorupMemberFields, setGorupMemberFields] = useState<FieldRow[]>([]);
+  const [canDirectChat, setCanDirectChat] = useState(false);
+  const cardGeneration = useRef(0);
   const allowSendMsgNotFriend = useUserStore(
     (state) =>
       Number(state.appConfig.allowSendMsgNotFriend) === BusinessAllowType.Allow,
@@ -87,9 +91,10 @@ const UserCardModal: ForwardRefRenderFunction<
     IMSDK.on(CbEvents.OnFriendAdded, friendAddedHandler);
     refreshData();
     return () => {
+      cardGeneration.current++;
       IMSDK.off(CbEvents.OnFriendAdded, friendAddedHandler);
     };
-  }, [isOverlayOpen]);
+  }, [isOverlayOpen, userID]);
 
   const refreshSelfInfo = useCallback(() => {
     const latestInfo = useUserStore.getState().selfInfo;
@@ -98,10 +103,22 @@ const UserCardModal: ForwardRefRenderFunction<
   }, [isSelf]);
 
   const refreshData = async () => {
+    const attempt = ++cardGeneration.current;
+    setCanDirectChat(false);
     setIsFetching(true);
     // getGroupMemberInfo();
-    const tmpCardInfo = props.cardInfo ?? (await getCardInfo());
+    let tmpCardInfo: CardInfo | null | undefined = props.cardInfo;
+    try { tmpCardInfo = await getCardInfo(); } catch (_) { /* HRM may still provide the permitted directory profile. */ }
+    if (attempt !== cardGeneration.current) return;
+    try {
+      const person = await getDirectoryPerson(userID || selfInfo.userID);
+      if (attempt !== cardGeneration.current) return;
+      tmpCardInfo = { ...tmpCardInfo, ...person };
+      setCanDirectChat(person.canDirectChat === true);
+    } catch (_) { /* A hidden/non-employee profile never grants direct-chat eligibility. */ }
+    if (attempt !== cardGeneration.current) return;
     if (!tmpCardInfo) {
+      setIsFetching(false);
       feedbackToast({ error: "Get user card info data failed!" });
       closeOverlay();
       return;
@@ -150,6 +167,9 @@ const UserCardModal: ForwardRefRenderFunction<
       title: t("placeholder.nickName"),
       value: info.nickname || "",
     });
+    for (const [title, value] of [["工号", info.employeeNo], ["部门", info.department], ["岗位", info.position]]) {
+      if (value) tmpFields.push({ title: title!, value });
+    }
     const isFriend = info?.remark !== undefined;
 
     if (isFriend) {
@@ -229,6 +249,8 @@ const UserCardModal: ForwardRefRenderFunction<
   };
 
   const resetState = () => {
+    cardGeneration.current++;
+    setCanDirectChat(false);
     setCardInfo(undefined);
     setUserFields([]);
     setGorupMemberFields([]);
@@ -237,7 +259,7 @@ const UserCardModal: ForwardRefRenderFunction<
 
   const isFriend = cardInfo?.remark !== undefined;
   const showAddFriend = !isFriend && !isSelf && !notAdd;
-  const showSendMessage = !isSelf && (isFriend || allowSendMsgNotFriend);
+  const showSendMessage = !isSelf && (isFriend || canDirectChat || allowSendMsgNotFriend);
 
   return (
     <DraggableModalWrap
@@ -323,7 +345,7 @@ const UserCardModal: ForwardRefRenderFunction<
                   {t("placeholder.addFriends")}
                 </Button>
               )}
-              {isSelf && (
+              {false && isSelf && (
                 <Button
                   type="primary"
                   className="flex-1"

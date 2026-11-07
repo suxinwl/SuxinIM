@@ -32,7 +32,7 @@ const AlphabetIndex: ForwardRefRenderFunction<
   );
 
   return (
-    <div className="absolute right-3 top-14 z-10 flex scale-90 flex-col items-center">
+    <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 scale-90 flex-col items-center">
       {indexList.map((letter, idx) => {
         return (
           <span

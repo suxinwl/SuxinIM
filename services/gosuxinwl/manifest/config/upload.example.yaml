@@ -1,0 +1,38 @@
+Type: local
+MaxBodySize: 600
+AllowedExt: .jpg,.jpeg,.png,.pdf,.ico,.mp3
+local:
+  LBaseUrl: http://127.0.0.1:8603
+  LDirPath: /resource/uploads/
+alioss:
+  ABaseUrl: ''
+  AEndpoint: ''
+  AKeyId: ''
+  ASecret: ''
+  ABucketName: ''
+  ADirPath: resource/uploads
+tencentcos:
+  TBaseUrl: ''
+  TEndpoint: ''
+  TKeyId: ''
+  TSecret: ''
+  TBucketName: ''
+  TRegion: ap-nanjing
+  TDirPath: /suxin
+qiniuoss:
+  QBaseUrl: ''
+  QEndpoint: ''
+  QKeyId: ''
+  QSecret: ''
+  QBucketName: ''
+  QDirPath: image
+  QDestBucketName: ''
+  QUseHTTPS: false
+  QZone: 4
+pan123:
+  clientID: ''
+  clientSecret: ''
+  parentId: '0'
+  urlAuth: false
+  cdnKey: ''
+  uid: 0

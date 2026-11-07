@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"openim38.local/identity"
 	"strconv"
 	"strings"
 
@@ -56,6 +57,14 @@ func setURLPrefixOption[A, B, C any](_ func(client C, ctx context.Context, req *
 }
 
 func setURLPrefix(c *gin.Context, urlPrefix *string) error {
+	if identity.Required() {
+		origin := identity.EntryOrigin(c.Request)
+		if origin == "" {
+			return identity.ErrSession
+		}
+		*urlPrefix = origin + "/api/object/"
+		return nil
+	}
 	host := c.GetHeader("X-Request-Api")
 	if host != "" {
 		if strings.HasSuffix(host, "/") {
@@ -90,36 +99,59 @@ func (o *ThirdApi) InitiateMultipartUpload(c *gin.Context) {
 	opt := setURLPrefixOption(third.ThirdClient.InitiateMultipartUpload, func(req *third.InitiateMultipartUploadReq) error {
 		return setURLPrefix(c, &req.UrlPrefix)
 	})
+	opt.RespAfter = func(v *third.InitiateMultipartUploadResp) error {
+		if err := hrmObjectResponse(c, v, true); err != nil {
+			return err
+		}
+		return hrmUpload(c, v.GetUpload().GetUploadID(), true)
+	}
 	a2r.Call(c, third.ThirdClient.InitiateMultipartUpload, o.Client, opt)
 }
 
 func (o *ThirdApi) AuthSign(c *gin.Context) {
-	a2r.Call(c, third.ThirdClient.AuthSign, o.Client)
+	a2r.Call(c, third.ThirdClient.AuthSign, o.Client, &a2r.Option[third.AuthSignReq, third.AuthSignResp]{BindAfter: func(q *third.AuthSignReq) error { return hrmUpload(c, q.UploadID, false) }, RespAfter: func(v *third.AuthSignResp) error { return hrmObjectResponse(c, v, true) }})
 }
 
 func (o *ThirdApi) CompleteMultipartUpload(c *gin.Context) {
 	opt := setURLPrefixOption(third.ThirdClient.CompleteMultipartUpload, func(req *third.CompleteMultipartUploadReq) error {
+		if err := hrmUpload(c, req.UploadID, false); err != nil {
+			return err
+		}
 		return setURLPrefix(c, &req.UrlPrefix)
 	})
+	opt.RespAfter = func(v *third.CompleteMultipartUploadResp) error { return hrmObjectResponse(c, v, false) }
 	a2r.Call(c, third.ThirdClient.CompleteMultipartUpload, o.Client, opt)
 }
 
 func (o *ThirdApi) AccessURL(c *gin.Context) {
-	a2r.Call(c, third.ThirdClient.AccessURL, o.Client)
+	a2r.Call(c, third.ThirdClient.AccessURL, o.Client, &a2r.Option[third.AccessURLReq, third.AccessURLResp]{RespAfter: func(v *third.AccessURLResp) error { return hrmObjectResponse(c, v, false) }})
 }
 
 func (o *ThirdApi) InitiateFormData(c *gin.Context) {
-	a2r.Call(c, third.ThirdClient.InitiateFormData, o.Client)
+	a2r.Call(c, third.ThirdClient.InitiateFormData, o.Client, &a2r.Option[third.InitiateFormDataReq, third.InitiateFormDataResp]{RespAfter: func(v *third.InitiateFormDataResp) error {
+		if err := hrmObjectResponse(c, v, true); err != nil {
+			return err
+		}
+		return hrmUpload(c, v.Id, true)
+	}})
 }
 
 func (o *ThirdApi) CompleteFormData(c *gin.Context) {
 	opt := setURLPrefixOption(third.ThirdClient.CompleteFormData, func(req *third.CompleteFormDataReq) error {
+		if err := hrmUpload(c, req.Id, false); err != nil {
+			return err
+		}
 		return setURLPrefix(c, &req.UrlPrefix)
 	})
+	opt.RespAfter = func(v *third.CompleteFormDataResp) error { return hrmObjectResponse(c, v, false) }
 	a2r.Call(c, third.ThirdClient.CompleteFormData, o.Client, opt)
 }
 
 func (o *ThirdApi) ObjectRedirect(c *gin.Context) {
+	if identity.Required() {
+		c.AbortWithStatus(403)
+		return
+	}
 	name := c.Param("name")
 	if name == "" {
 		c.String(http.StatusBadRequest, "name is empty")

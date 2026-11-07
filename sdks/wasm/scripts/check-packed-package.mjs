@@ -9,7 +9,7 @@ const packageRoot = path.resolve(
   '..'
 );
 const result = JSON.parse(
-  execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+  execFileSync(process.execPath, [process.env.npm_execpath || path.join(path.dirname(process.execPath),'node_modules/npm/bin/npm-cli.js'), 'pack', '--dry-run', '--json', '--ignore-scripts'], {
     cwd: packageRoot,
     encoding: 'utf8',
   })

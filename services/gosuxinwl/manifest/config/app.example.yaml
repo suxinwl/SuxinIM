@@ -1,0 +1,17 @@
+app:
+  version: 1.0.0
+  runEnv: debug
+  loginCaptcha: false
+  SecretKey: CHANGE_ME_WITH_INIT_LOCAL_CONFIG
+  MaxRefresh: 600
+  TokenTimeout: 13800 # 加上 MaxRefresh 600 秒，总有效期为 4 小时
+  MultiLogin: true
+  superRoleAuth: false
+  DynamicToken: admin,wxapp
+  validityApi: true
+  apisecret: suxin-public-example
+  TokenCacheKey: suxin_token_
+  EncryptKey: CHANGE_ME_WITH_INIT_LOCAL_CONFIG
+  allowurl: localhost:9600,127.0.0.1:9600,localhost:8603,127.0.0.1:8603,www.suxinwl.com
+  PrivateHouse: ''
+  vueobjroot: web

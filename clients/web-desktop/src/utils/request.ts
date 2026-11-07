@@ -11,6 +11,7 @@ const createAxiosInstance = (baseURL: string, imToken = true) => {
 
   serves.interceptors.request.use(
     async (config) => {
+      if(/^\/?account\/(login|register|password|code)(?:\/|$)/.test(config.url || "")) throw new Error("账号、密码由人事系统统一管理");
       if (/^\/(office|rtc|signaling|enterprise)\//.test(config.url || "")) {
         config.baseURL = getEnterpriseUrl();
         config.headers.token = String(await getIMToken() || "");

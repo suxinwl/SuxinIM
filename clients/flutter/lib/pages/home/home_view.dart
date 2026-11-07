@@ -7,6 +7,7 @@ import '../contacts/contacts_view.dart';
 import '../conversation/conversation_view.dart';
 import '../mine/mine_view.dart';
 import '../workbench/workbench_view.dart';
+import '../organization/organization_view.dart';
 import 'home_logic.dart';
 
 class HomePage extends StatelessWidget {
@@ -23,6 +24,7 @@ class HomePage extends StatelessWidget {
             children: [
               ConversationPage(),
               ContactsPage(),
+              OrganizationPage(active: logic.index.value == 2),
               WorkbenchPage(),
               MinePage(),
             ],
@@ -48,6 +50,15 @@ class HomePage extends StatelessWidget {
                 imgHeight: 28.h,
                 onClick: logic.switchTab,
                 count: logic.unhandledCount.value,
+              ),
+              BottomBarItem(
+                selectedImgRes: ImageRes.homeTab2Sel,
+                unselectedImgRes: ImageRes.homeTab2Nor,
+                icon: Icons.account_tree_outlined,
+                label: '组织架构',
+                imgWidth: 28.w,
+                imgHeight: 28.h,
+                onClick: logic.switchTab,
               ),
               BottomBarItem(
                 selectedImgRes: ImageRes.homeTab3Sel,

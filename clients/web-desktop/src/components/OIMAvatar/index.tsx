@@ -1,3 +1,6 @@
+import {requiresResourceGrant,resolvePublicBrandResource} from "@/im/resources";
+import { useProtectedResource } from "@/im/useProtectedResource";
+import default_user from "@/assets/images/puty-avatar.png";
 import { toLocalFileURL } from "@/im/local-files";
 import { Avatar as AntdAvatar, AvatarProps } from "antd";
 import clsx from "clsx";
@@ -8,7 +11,6 @@ import { useMemo } from "react";
 import default_group from "@/assets/images/contact/my_groups.png";
 import { useMessageStore, useUserStore } from "@/store";
 import { avatarList, getDefaultAvatar } from "@/utils/avatar";
-import { downloadFile } from "@/utils/common";
 
 const default_avatars = avatarList.map((item) => item.name);
 
@@ -23,7 +25,7 @@ interface IOIMAvatarProps extends AvatarProps {
 
 const OIMAvatar: React.FC<IOIMAvatarProps> = (props) => {
   const {
-    src,
+    src: originalSrc,
     text,
     size = 42,
     color = "#fff",
@@ -31,10 +33,13 @@ const OIMAvatar: React.FC<IOIMAvatarProps> = (props) => {
     isgroup = false,
     isnotification,
   } = props;
+  const src=typeof originalSrc==="string"?resolvePublicBrandResource(originalSrc):originalSrc;
+  const resource = useProtectedResource(typeof src === "string" ? src : undefined);
   const [errorHolder, setErrorHolder] = React.useState<string>();
 
   const getAvatarUrl = useMemo(() => {
     if (src) {
+      if(typeof src==="string" && requiresResourceGrant(src)) return resource.src || (isgroup?default_group:default_user);
       if (default_avatars.includes(src as string))
         return getDefaultAvatar(src as string);
 
@@ -44,21 +49,10 @@ const OIMAvatar: React.FC<IOIMAvatarProps> = (props) => {
       if (cachePath && window.electronAPI?.fileExists(cachePath)) {
         return toLocalFileURL(cachePath);
       }
-      const hasTask =
-        Object.values(useMessageStore.getState().downloadMap).findIndex(
-          (task) => task.originUrl === src,
-        ) > -1;
-      if (!hasTask) {
-        downloadFile(src as string, {
-          isThumb: true,
-          saveType: "avatar",
-        });
-      }
-
       return src;
     }
-    return isgroup ? default_group : undefined;
-  }, [src, isgroup, isnotification]);
+    return isgroup ? default_group : default_user;
+  }, [src, isgroup, isnotification,resource.src]);
 
   const avatarProps = { ...props, isgroup: undefined, isnotification: undefined };
 
@@ -66,12 +60,11 @@ const OIMAvatar: React.FC<IOIMAvatarProps> = (props) => {
     if (!isgroup) {
       setErrorHolder(undefined);
     }
-  }, [isgroup]);
+  }, [isgroup, src, resource.src]);
 
   const errorHandler = () => {
-    if (isgroup) {
-      setErrorHolder(default_group);
-    }
+    if (resource.onError()) return false;
+    setErrorHolder(isgroup ? default_group : default_user);
   };
 
   return (

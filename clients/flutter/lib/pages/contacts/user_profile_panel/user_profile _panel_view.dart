@@ -34,6 +34,11 @@ class UserProfilePanelPage extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildBaseInfoView(),
+                      if (logic.directoryPerson.value != null) ...[
+                        _buildItemView(label: '工号', value: logic.directoryPerson.value!.employeeNo),
+                        _buildItemView(label: '部门', value: logic.directoryPerson.value!.department),
+                        _buildItemView(label: '岗位', value: logic.directoryPerson.value!.position),
+                      ],
                       if (logic.isGroupMemberPage) _buildEnterGroupMethodView(),
                       if (logic.iAmOwner.value && logic.groupMembersInfo != null)
                         _buildItemView(
@@ -69,7 +74,7 @@ class UserProfilePanelPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                if ((logic.isFriendship || logic.allowSendMsgNotFriend) && !logic.isMyself) _buildButtonGroup(),
+                if ((logic.isFriendship || logic.isEnterpriseColleague || logic.allowSendMsgNotFriend) && !logic.isMyself) _buildButtonGroup(),
               ],
             ),
           ),

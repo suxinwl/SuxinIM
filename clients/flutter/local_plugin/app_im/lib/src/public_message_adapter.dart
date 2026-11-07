@@ -148,6 +148,11 @@ class PublicMessageAdapter extends MessageManager {
     List<Message> messages, {
     String? conversationID,
   }) async {
+    for(final message in messages) {
+      final data=message.toJson();
+      await AppIm.enterprise.authorizeResources(data);
+      message.update(Message.fromJson(data));
+    }
     final groups = <String, List<Message>>{};
     for (final m in messages) {
       if (m.groupID?.isNotEmpty == true &&

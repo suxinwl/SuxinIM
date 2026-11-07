@@ -1,4 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "react-query";
+import { useRef, useSyncExternalStore } from "react";
+import { getResourceSessionVersion, subscribeResourceSession } from "@/im/resource-session";
+import { authorizeMomentMedia } from "./moments-media";
 
 import { getChatUrl } from "@/config";
 import { WorkMoments, WorkMomentsResponse } from "@/types/moment";
@@ -31,17 +34,21 @@ export const fetchUserMoments = async (
   { pageParam = 1 },
   userID?: string,
 ): Promise<WorkMoments[]> => {
+  const scope = getResourceSessionVersion();
   const url = `/office/work_moment/find/${!userID ? "recv" : "send"}`;
   const { data } = await request.post<WorkMomentsResponse>(url, {
     userID,
     pagination: { pageNumber: pageParam, showNumber: 20 },
   });
   // Preserve previous pages on error instead of reporting a false empty feed.
-  return data.workMoments ?? [];
+  const moments = await Promise.all((data.workMoments ?? []).map(authorizeMomentMedia));
+  if (scope !== getResourceSessionVersion()) throw new Error("Resource session changed");
+  return moments;
 };
 export const useUserMoments = (enabled: boolean, queryKey?: string) => {
+  const scope = useSyncExternalStore(subscribeResourceSession, getResourceSessionVersion);
   return useInfiniteQuery<WorkMoments[]>(
-    momentKeys.list(queryKey),
+    momentKeys.list(queryKey, scope),
     (context) => fetchUserMoments(context, queryKey),
     {
       getNextPageParam: (lastPage, pages) =>
@@ -55,22 +62,31 @@ export const useUserMoments = (enabled: boolean, queryKey?: string) => {
   );
 };
 
-export const getMomentsByID = (workMomentID: string) =>
-  request.post<{ workMoment: WorkMoments }>("/office/work_moment/get", {
+export const getMomentsByID = async (workMomentID: string) => {
+  const scope = getResourceSessionVersion();
+  const response = await request.post<{ workMoment: WorkMoments }>("/office/work_moment/get", {
     workMomentID,
   });
+  const workMoment = await authorizeMomentMedia(response.data.workMoment);
+  if (scope !== getResourceSessionVersion()) throw new Error("Resource session changed");
+  return { ...response, data: { ...response.data, workMoment } };
+};
 
-export const useMomentDetails = (enabled: boolean, initial?: WorkMoments) =>
-  useQuery(
-    momentKeys.detail(initial?.workMomentID ?? ""),
+export const useMomentDetails = (enabled: boolean, initial?: WorkMoments) => {
+  const scope = useSyncExternalStore(subscribeResourceSession, getResourceSessionVersion);
+  const initialBinding = useRef({ value: initial, scope });
+  if (initialBinding.current.value !== initial) initialBinding.current = { value: initial, scope };
+  return useQuery(
+    momentKeys.detail(initial?.workMomentID ?? "", scope),
     async () => (await getMomentsByID(initial!.workMomentID)).data.workMoment,
     {
       enabled: enabled && Boolean(initial?.workMomentID),
-      initialData: initial,
+      initialData: initialBinding.current.scope === scope ? initial : undefined,
       refetchInterval: enabled ? 5000 : false,
       refetchIntervalInBackground: false,
     },
   );
+};
 
 export const useDeleteMoments = (queryKey?: string) => {
   const queryClient = useQueryClient();
@@ -131,8 +147,9 @@ export const getMomentsUnreadCount = () =>
 
 // Query message list
 export const useLogs = () => {
+  const scope = useSyncExternalStore(subscribeResourceSession, getResourceSessionVersion);
   return useInfiniteQuery<{ data: WorkMomentsResponse }>(
-    ["MomentsMessageList"],
+    ["MomentsMessageList", scope],
     ({ pageParam = 1 }) =>
       request.post("/office/work_moment/logs", {
         pagination: {

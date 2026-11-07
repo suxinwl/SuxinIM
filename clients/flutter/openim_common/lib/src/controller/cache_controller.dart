@@ -1,19 +1,22 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:app_im/app_im.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:uuid/uuid.dart';
+import 'encrypted_cache_box.dart';
 
 /// flutter packages pub run build_runner build
 /// flutter packages pub run build_runner build --delete-conflicting-outputs
 ///
 class CacheController extends GetxController {
+  StreamSubscription<void>? _vaultInvalidated;String? _cacheAccount;
   final favoriteList = <EmojiInfo>[].obs;
   final callRecordList = <CallRecords>[].obs;
-  Box? favoriteBox;
-  Box? callRecordBox;
+  EncryptedCacheBox<EmojiInfo>? favoriteBox;
+  EncryptedCacheBox<CallRecords>? callRecordBox;
   bool _isInitFavoriteList = false;
   bool _isInitCallRecords = false;
 
@@ -106,20 +109,40 @@ class CacheController extends GetxController {
 
   @override
   void onClose() {
+    _vaultInvalidated?.cancel();
     _isInitFavoriteList = false;
     _isInitCallRecords = false;
     Hive.close();
     super.onClose();
   }
 
+  static Future<void>? _legacyMigration;
+  static Future<void> prepareLegacyCaches()=>_legacyMigration??=_migrateLegacyCaches();
+  static Future<void> _migrateLegacyCaches()async{
+    final emojiAdapter=EmojiInfoAdapter(),callAdapter=CallRecordsAdapter();
+    if(!Hive.isAdapterRegistered(emojiAdapter.typeId))Hive.registerAdapter(emojiAdapter);
+    if(!Hive.isAdapterRegistered(callAdapter.typeId))Hive.registerAdapter(callAdapter);
+    final favorite=EncryptedCacheBox<EmojiInfo>('favoriteEmoji',encode:(e)=>{'url':e.url,'width':e.width,'height':e.height},decode:(e)=>EmojiInfo(url:e['url'],width:e['width'],height:e['height']));
+    final calls=EncryptedCacheBox<CallRecords>('callRecords',encode:(e)=>e.toJson(),decode:CallRecords.fromJson);
+    if(await Hive.boxExists('favoriteEmoji')){
+      final legacy=await Hive.openBox<List>('favoriteEmoji');
+      try{for(final key in legacy.keys){await favorite.put(key.toString(),(legacy.get(key)??[]).cast<EmojiInfo>());}}
+      finally{await legacy.close();}
+      await Hive.deleteBoxFromDisk('favoriteEmoji');
+    }
+    if(await Hive.boxExists('callRecords')){
+      final legacy=await Hive.openBox<List>('callRecords');
+      try{for(final key in legacy.keys){await calls.put(key.toString(),(legacy.get(key)??[]).cast<CallRecords>());}}
+      finally{await legacy.close();}
+      await Hive.deleteBoxFromDisk('callRecords');
+    }
+  }
   @override
-  void onInit() async {
-    // Register Adapter
-    Hive.registerAdapter(EmojiInfoAdapter());
-    Hive.registerAdapter(CallRecordsAdapter());
-    // open
-    favoriteBox = await Hive.openBox<List>('favoriteEmoji');
-    callRecordBox = await Hive.openBox<List>('callRecords');
+  void onInit(){
+    _cacheAccount=DataSp.userID;
+    _vaultInvalidated=NativeLocalVault.invalidated.listen((_){final account=DataSp.userID;if(!NativeLocalVault.unlocked||account!=_cacheAccount){favoriteList.clear();callRecordList.clear();_isInitFavoriteList=false;_isInitCallRecords=false;}_cacheAccount=account;});
+    favoriteBox=EncryptedCacheBox<EmojiInfo>('favoriteEmoji',encode:(e)=>{'url':e.url,'width':e.width,'height':e.height},decode:(e)=>EmojiInfo(url:e['url'],width:e['width'],height:e['height']));
+    callRecordBox=EncryptedCacheBox<CallRecords>('callRecords',encode:(e)=>e.toJson(),decode:CallRecords.fromJson);
     super.onInit();
   }
 }

@@ -2,6 +2,7 @@ import { protocol,session,type Session } from "electron";
 import { promises as fs,createReadStream } from "node:fs";
 import { Readable } from "node:stream";
 import { resolve, sep, extname } from "node:path";
+import {localFileExists,localFileInfo,readLocalRange,remotePreviewResponse} from "./localStore/runtime";
 protocol.registerSchemesAsPrivileged([{scheme:"openim38",privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
 const registeredSessions=new WeakSet<Session>();
 export function registerLocalProtocol(target:Session=session.defaultSession){
@@ -12,9 +13,19 @@ export function registerLocalProtocol(target:Session=session.defaultSession){
   try {
    const url=new URL(request.url);let path:string;let allowed:string[];
    if(url.host!=="app")return new Response("Forbidden",{status:403});
+   if(url.pathname.startsWith('/__remote/'))return await remotePreviewResponse(request);
    if(url.pathname==="/__local") {
-    path=resolve(url.searchParams.get("path") || "");
-    allowed=[global.pathConfig.fileCachePath,global.pathConfig.sentFileCachePath,global.pathConfig.imageCachePath,global.pathConfig.videoCachePath,global.pathConfig.avatarCachePath].filter(Boolean);
+    const localPath=url.searchParams.get('path') || '';
+    if(localFileExists(localPath)) {
+      const info=await localFileInfo(localPath),headers:Record<string,string>={'Content-Type':info.type || 'application/octet-stream','Cache-Control':'no-store','Cross-Origin-Resource-Policy':'same-origin','Accept-Ranges':'bytes'};
+      let start=0,end=info.size-1,status=200;const range=request.headers.get('Range');
+      if(range){const match=/^bytes=(\d+)-(\d*)$/.exec(range);if(!match)return new Response(null,{status:416});start=Number(match[1]);end=match[2]?Math.min(Number(match[2]),end):end;if(start>end || start>=info.size)return new Response(null,{status:416});status=206;headers['Content-Range']=`bytes ${start}-${end}/${info.size}`;}
+      headers['Content-Length']=String(Math.max(0,end-start+1));
+      if(!info.size)await readLocalRange(localPath,0,-1);if(request.method==='HEAD' || !info.size)return new Response(null,{status,headers});
+      const stream=new ReadableStream({async pull(controller){try{if(start>end){controller.close();return;}const last=Math.min(end,start+1024*1024-1);controller.enqueue(await readLocalRange(localPath,start,last));start=last+1;}catch(error){controller.error(error);}}});
+      return new Response(stream,{status,headers});
+    }
+    return new Response("Local archive locked or unavailable",{status:403});
    } else if(url.pathname.startsWith("/__extra/")) {
     path=resolve(global.pathConfig.extraResourcesPath,"."+decodeURIComponent(url.pathname.slice("/__extra".length)));allowed=[global.pathConfig.extraResourcesPath];
    } else {path=resolve(root,"."+decodeURIComponent(url.pathname));allowed=[root];}

@@ -1,3 +1,5 @@
+import {filterNativePayload} from "./local-cleanup-filter";
+import {authorizePayload} from "./resources";
 import { getSDK, CbEvents, type SdkResponse, type GroupMemberItem, type PublicUserItem } from "@openim/wasm-client-sdk";
 import { enterpriseRequest } from "./enterprise";
 import { getIMUserID } from "@/utils/storage";
@@ -19,6 +21,7 @@ type Extra = Record<"pinConversation"|"setConversationPrivateChat"|"setConversat
  getGroupMessageReaderList:<T=GroupMemberItem[]>(params:any)=>Promise<SdkResponse<T>>;
  sendGroupMessageReadReceipt:EnterpriseMethod;
  stopEnterpriseSession:()=>void;
+ renewCredentials:EnterpriseMethod;
  on:(event:string,cb:(event:any)=>void)=>void;
  off:(event:string,cb:(event:any)=>void)=>void;
 };
@@ -79,13 +82,18 @@ core.on(CbEvents.OnRecvOnlineOnlyMessage,(envelope:any)=>{
 window.addEventListener("enterprise-session-revoked",()=>{stopEnterpriseSession();dispatch(CbEvents.OnKickedOffline,{});});
 const wrapped:Record<string,any>={
  stopEnterpriseSession,
+ renewCredentials:async(params:any)=>{ await core.logout(); sdkLogoutPromise=undefined; return core.login({...params,tryParse:true}); },
  sendMessage:async(params:any,operationID?:string)=>{
   await authorizeMeetingShare(params);
   const response=adaptPayload(await sendSdkMessage(core,params,operationID));
+  if(typeof window!=='undefined' && window.electronAPI && !response.errCode){
+    const ids=[...new Set(Array.from(JSON.stringify(params.message || {}).matchAll(/puty-local:\/\/pending\/([a-f0-9-]{36})/g),match=>match[1]))];
+    if(ids.length && params.message?.clientMsgID){try{await window.electronAPI.ipcInvoke('puty-store','release-pending',{ids,clientMsgID:params.message.clientMsgID});await (window as any).putyLocalCheckpoint?.();}catch{/* Keep encrypted pending objects if durable cache cleanup is unavailable. */}}
+  }
   await hydrateReads([response.data]);
   return response;
  },
- on:(event:string,cb:(event:any)=>void)=>{if(!listeners.has(event))listeners.set(event,new Set());listeners.get(event)!.add(cb);if(!sdkListeners.has(event))sdkListeners.set(event,new Map());const normalized=async(e:any)=>{let data=adaptPayload(e.data);if(event===CbEvents.OnRecvNewMessage || event===CbEvents.OnRecvNewMessages){if(Array.isArray(data)){data=data.filter(m=>!isEnterpriseHint(m));if(!data.length)return;}else if(isEnterpriseHint(data))return;await hydrateReads(Array.isArray(data)?data:[data]);}cb({...e,data});};sdkListeners.get(event)!.set(cb,normalized);core.on(event as CbEvents,normalized);},
+ on:(event:string,cb:(event:any)=>void)=>{if(!listeners.has(event))listeners.set(event,new Set());listeners.get(event)!.add(cb);if(!sdkListeners.has(event))sdkListeners.set(event,new Map());const normalized=async(e:any)=>{let data=await filterNativePayload(adaptPayload(e.data));if(data===null)return;await authorizePayload(data);if(event===CbEvents.OnRecvNewMessage || event===CbEvents.OnRecvNewMessages){if(Array.isArray(data)){data=data.filter(m=>!isEnterpriseHint(m));if(!data.length)return;}else if(isEnterpriseHint(data))return;await hydrateReads(Array.isArray(data)?data:[data]);}cb({...e,data});};sdkListeners.get(event)!.set(cb,normalized);core.on(event as CbEvents,normalized);},
  off:(event:string,cb:(event:any)=>void)=>{listeners.get(event)?.delete(cb);const normalized=sdkListeners.get(event)?.get(cb);if(normalized)core.off(event as CbEvents,normalized);sdkListeners.get(event)?.delete(cb);},
  login:async(params:any)=>{resetDatabaseClose?.();const result=await core.login({...params,tryParse:true});resetDatabaseClose?.();sdkLogoutPromise=undefined;active=true;generation++;cursor=-1;clearTimeout(timer);void poll();return result;},
  logout:async(options:{localOnly?:boolean}={})=>{
@@ -170,6 +178,7 @@ async function authorizeMeetingShare(params:any){
 }
 
 async function hydrateReads(messages:any[],conversationID?:string){
+ await authorizePayload(messages);
  const groupMessages=messages.filter(m=>m?.groupID && m.seq>0);if(!groupMessages.length)return;
  try {
   const id=conversationID || (await core.getOneConversation({sourceID:groupMessages[0].groupID,sessionType:3})).data.conversationID;
@@ -177,5 +186,5 @@ async function hydrateReads(messages:any[],conversationID?:string){
   for(const message of groupMessages){const summary=data.num?.[message.clientMsgID];if(summary)message.attachedInfoElem={...(message.attachedInfoElem || {}),groupHasReadInfo:{hasReadCount:summary.readNum,unreadCount:summary.unreadNum,hasReadUserIDList:[],groupMemberCount:summary.readNum+summary.unreadNum+1}};}
  }catch(error){console.debug("Read summary unavailable",error);}
 }
-export const ImFacade = new Proxy(core,{get(target,key){if(typeof key==="string" && key in wrapped)return wrapped[key];const value=Reflect.get(target,key);return typeof value==="function"?async(...args:any[])=>{if(key==="sendMessage")await authorizeMeetingShare(args[0]);const response=adaptPayload(await value.apply(target,args));if(key==="sendMessage")await hydrateReads([response.data]);else if(String(key).startsWith("getAdvancedHistoryMessageList"))await hydrateReads(response.data?.messageList || [],args[0]?.conversationID);return response;}:value;}}) as unknown as CompatibleCore & Extra;
+export const ImFacade = new Proxy(core,{get(target,key){if(typeof key==="string" && key in wrapped)return wrapped[key];const value=Reflect.get(target,key);return typeof value==="function"?async(...args:any[])=>{if(key==="sendMessage")await authorizeMeetingShare(args[0]);const response=adaptPayload(await value.apply(target,args));response.data=await filterNativePayload(response.data,args[0]?.conversationID);await authorizePayload(response.data);if(key==="sendMessage")await hydrateReads([response.data]);else if(String(key).startsWith("getAdvancedHistoryMessageList"))await hydrateReads(response.data?.messageList || [],args[0]?.conversationID);return response;}:value;}}) as unknown as CompatibleCore & Extra;
 export default ImFacade;

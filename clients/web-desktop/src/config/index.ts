@@ -1,12 +1,20 @@
 import buildVersion from "../../build-version.json";
-const origin = !/^https?:$/.test(window.location.protocol) ? "https://192.168.10.11:29880" : window.location.origin;
-export const WS_URL = `${origin.replace(/^http/, "ws")}/ws`;
-export const API_URL = `${origin}/api`;
-export const CHAT_URL = `${origin}/chat`;
-export const getWsUrl = () => localStorage.getItem("upgrade38:wsUrl") || import.meta.env.VITE_WS_URL || WS_URL;
-export const getApiUrl = () => localStorage.getItem("upgrade38:apiUrl") || import.meta.env.VITE_API_URL || API_URL;
-export const getChatUrl = () => localStorage.getItem("upgrade38:chatUrl") || import.meta.env.VITE_CHAT_URL || CHAT_URL;
-export const getEnterpriseUrl = () => localStorage.getItem("upgrade38:enterpriseUrl") || import.meta.env.VITE_ENTERPRISE_URL || `${new URL(getApiUrl()).origin}/enterprise/v1`;
+export const NETWORKS = { lan: "https://192.168.10.11:9885", wan: "https://im.szputy.com:9885" } as const;
+export type Network = keyof typeof NETWORKS;
+export const isNativeClient = () => Boolean(window.electronAPI);
+export const getNetwork = (): Network => typeof localStorage!=="undefined" && localStorage.getItem("puty:network") === "wan" ? "wan" : "lan";
+export const getServerOrigin = () => isNativeClient() ? NETWORKS[getNetwork()] : (window.location.origin || new URL(window.location.href).origin);
+export function setNetwork(network: Network) {
+  localStorage.setItem("puty:network", network);
+  for (const key of ["wsUrl", "apiUrl", "chatUrl", "enterpriseUrl"]) localStorage.removeItem(`upgrade38:${key}`);
+}
+export const getWsUrl = () => `${getServerOrigin().replace(/^https:/, "wss:")}/ws`;
+export const getApiUrl = () => `${getServerOrigin()}/api`;
+export const getChatUrl = () => `${getServerOrigin()}/chat`;
+export const getEnterpriseUrl = () => `${getServerOrigin()}/enterprise/v1`;
+export const WS_URL = getWsUrl();
+export const API_URL = getApiUrl();
+export const CHAT_URL = getChatUrl();
 export const APP_VERSION = buildVersion.version;
 export const APP_VERSION_CODE = buildVersion.build;
 export const SDK_VERSION = "3.8.3-patch.15.1";

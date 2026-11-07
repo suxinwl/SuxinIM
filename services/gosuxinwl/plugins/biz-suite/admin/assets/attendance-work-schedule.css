@@ -1,0 +1,15 @@
+.work-schedule-editor { padding: 20px; border: 1px solid var(--line, #dae4e0); border-radius: 14px; background: var(--surface, #fff); margin: 20px 0; }
+.work-schedule-editor[hidden], .work-schedule-editor [hidden] { display: none !important; }
+.work-schedule-week { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px; margin: 16px 0; }
+.work-schedule-day { display: flex; flex-direction: column; gap: 6px; padding: 12px 6px; text-align: center; border-radius: 8px; background: #eaf4ef; color: #245340; }
+.work-schedule-day span { font-size: 12px; line-height: 1.5; }
+.work-schedule-day.is-rest { background: #f1f3f5; color: #475569; }
+.work-schedule-choices { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 14px; }
+.work-schedule-choice { border: 1px solid #e3e8e6; border-radius: 10px; padding: 14px; }
+.work-schedule-choice h4 { margin: 0 0 8px; }
+.work-schedule-shift-list { max-height: 240px; overflow: auto; }
+.work-schedule-shift-list .check-label { margin: 8px 0; }
+dialog.attendance-rule-dialog { width: min(1100px, calc(100vw - 32px)); max-width: 1100px; }
+.attendance-rule-dialog .form-actions { position: sticky; bottom: 0; z-index: 2; padding: 14px 0; background: #fff; border-top: 1px solid #e3e8e6; }
+[data-custom-schedule][hidden] { display: none !important; }
+@media (max-width:700px) { .work-schedule-week { grid-template-columns: repeat(2,minmax(0,1fr)); } .work-schedule-editor { padding: 12px; } }

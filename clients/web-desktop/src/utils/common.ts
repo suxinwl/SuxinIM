@@ -1,3 +1,5 @@
+import {attachmentSourceName,attachmentMessageSourceName} from "@/im/attachment-name";
+import {authorizeResource} from "@/im/resources";
 import { t } from "i18next";
 import { v4 as uuidv4 } from "uuid";
 
@@ -128,7 +130,7 @@ export const formatContacts = (data: FriendUserItem[], key = "nickname") => {
     return I1;
   };
 
-  const arr = [];
+  const arr: string[] = [];
 
   for (i = 0; i < data.length; i++) {
     // @ts-ignore
@@ -136,7 +138,7 @@ export const formatContacts = (data: FriendUserItem[], key = "nickname") => {
     arr.push(firstName.toUpperCase());
   }
 
-  const arrlist = [];
+  const arrlist: string[] = [];
   for (i = 0; i < arr.length; i++) {
     if (arrlist.indexOf(arr[i]) === -1) {
       arrlist.push(arr[i]);
@@ -202,13 +204,19 @@ export const checkIsSafari = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export const downloadFile = async (originUrl: string, data: DownloadData) => {
+  if(!data.fileName && data.clientMsgID){
+    const message=useMessageStore.getState().historyMessageList.find(value=>value.clientMsgID===data.clientMsgID);
+    const element=message?.fileElem || message?.videoElem || message?.pictureElem;
+    if(element){const file=element as any;data={...data,fileName:attachmentMessageSourceName(message),fileSize:file.fileSize || file.videoSize || file.sourcePicture?.size};}
+  }
+  try {originUrl=await authorizeResource(originUrl,{purpose:"save"});}catch(error){feedbackToast({error});return;}
   if (window.electronAPI) {
     try {
       await startAttachmentDownload(originUrl, data, {
         getTask: (url) => useMessageStore.getState().downloadMap[url],
         addTask: (url, task) => useMessageStore.getState().addDownloadTask(url, task),
         removeTask: (url) => useMessageStore.getState().removeDownloadTask(url),
-        start: (request) => window.electronAPI!.ipcInvoke("startDownload", request),
+        start: async (request) => { const {getResourceProof}=await import("@/im/resources");return window.electronAPI!.ipcInvoke("startDownload", {...request,resourceProof:await getResourceProof(originUrl)}); },
         randomPrefix: uuidv4,
       });
     } catch (error) {
@@ -219,7 +227,7 @@ export const downloadFile = async (originUrl: string, data: DownloadData) => {
   const linkNode = document.createElement("a");
   linkNode.style.display = "none";
   const idx = originUrl.lastIndexOf("/");
-  linkNode.download = originUrl.slice(idx + 1);
+  linkNode.download = data.fileName || decodeURIComponent(new URL(originUrl).pathname.split('/').pop() || 'attachment');
   linkNode.href = originUrl;
   document.body.appendChild(linkNode);
   linkNode.click();

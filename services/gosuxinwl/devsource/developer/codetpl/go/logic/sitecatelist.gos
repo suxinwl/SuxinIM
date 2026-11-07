@@ -1,0 +1,128 @@
+// =================================================================================
+// 实现层文件
+// =================================================================================
+package packageName
+
+import (
+	"context"
+
+	"github.com/suxinwl/GoSuxin/api/{api_apth}"
+	"github.com/suxinwl/GoSuxin/internal/dao"
+	"github.com/suxinwl/GoSuxin/utility/extend/excelexport"
+	"github.com/suxinwl/GoSuxin/utility/gf"
+
+	"github.com/suxinwl/GoSuxin/framework/container/gmap"
+	"github.com/suxinwl/GoSuxin/framework/frame/g"
+)
+
+//列表
+func (s *s{serviceName}) {fileName}List(ctx context.Context, req *{module}.{fileName}ListReq) (res *gf.R) {
+	whereMap := gmap.New()
+//{ReplaySearch}
+	MDB := dao.{daoTableName}.Ctx(ctx).Where(whereMap)
+	totalCount, _ := MDB.Clone().Count()
+	list, err := MDB.Fields("{fields}").Page(req.Page, req.PageSize).Order("id desc").All()
+	if err != nil {
+		res = gf.Failed().SetMsg("获取数据失败").SetData(err)
+		return
+	}
+//{ReplayFieldVal}
+	res = gf.Success().SetMsg("获取数据列表").SetData(gf.Map{
+		"page":     req.Page,
+		"pageSize": req.PageSize,
+		"total":    totalCount,
+		"items":    list})
+	return
+}
+
+// 添加、编辑
+func (s *s{serviceName}) {fileName}Save(ctx context.Context, req *{module}.{fileName}SaveReq) (res *gf.R) {
+//{ReplayArrayToStr}
+	if req.Id == gf.ZeroValue {
+		addId, err := dao.{daoTableName}.Ctx(ctx).Data(req).InsertAndGetId()
+		if err != nil {
+			res = gf.Failed().SetMsg("添加失败").SetData(err)
+		} else {
+			if addId != 0 {
+				dao.{daoTableName}.Ctx(ctx).Where("id", addId).Update(map[string]interface{}{"weigh": addId})
+			}
+			res = gf.Success().SetMsg("添加成功！")
+		}
+	} else {
+		result, err := dao.{daoTableName}.Ctx(ctx).Data(req).Where("id", req.Id).Update()
+		if err != nil {
+			res = gf.Failed().SetMsg("更新失败").SetData(err)
+		} else {
+			res = gf.Success().SetMsg("更新成功！").SetData(result)
+		}
+	}
+	return
+}
+
+// 更新状态
+func (s *s{serviceName}) {fileName}Status(ctx context.Context, req *{module}.{fileName}StatusReq) (res *gf.R) {
+	result, err := dao.{daoTableName}.Ctx(ctx).Where("id", req.Id).Update(gf.Map{"status": req.Status})
+	if err != nil {
+		res = gf.Failed().SetMsg("更新失败").SetData(err)
+		return
+	}
+	msg := "更新成功！"
+	if result == nil {
+		msg = "暂无数据更新"
+	}
+	res = gf.Success().SetMsg(msg)
+	return
+}
+
+// 删除
+func (s *s{serviceName}) {fileName}Del(ctx context.Context, req *{module}.{fileName}DelReq) (res *gf.R) {
+	result, err := dao.{daoTableName}.Ctx(ctx).WhereIn("id", req.Ids).Delete()
+	if err != nil {
+		res = gf.Failed().SetMsg("删除失败").SetData(err)
+		return
+	}
+	res = gf.Success().SetMsg("删除成功").SetData(result)
+	return
+}
+
+// 获取内容详情
+func (s *s{serviceName}) {fileName}Content(ctx context.Context, req *{module}.{fileName}ContentReq) (res *gf.R) {
+	data, err := dao.{daoTableName}.Ctx(ctx).Where("id", req.Id).One()
+	if err != nil {
+		res = gf.Failed().SetMsg("获取内容失败").SetData(err)
+		return
+	}
+//{ReplayToJSON}
+	res = gf.Success().SetMsg("获取内容详情").SetData(data)
+	return
+}
+
+// 导出Excel数据
+func (s *s{serviceName}) {fileName}ExportExcel(ctx context.Context, req *{module}.{fileName}ExportExcelReq) (res *gf.R) {
+	whereMap := gmap.New()
+//{ReplaySearch}
+	list, err := dao.{daoTableName}.Ctx(ctx).Where(whereMap).Order("id desc").All()
+	if err != nil {
+		res = gf.Failed().SetMsg("获取数据失败").SetData(err)
+		return
+	}
+	for _, val := range list {
+//{ReplayExportExcel}
+		if gf.Int(val["sex"]) == 1 {
+			val["sex"] = g.NewVar("男")
+		} else if gf.Int(val["sex"]) == 2 {
+			val["sex"] = g.NewVar("女")
+		} else {
+			val["sex"] = g.NewVar("保密")
+		}
+	}
+	var columns = make([]interface{}, 0)
+	columns = gf.Interfaces(req.Columns)
+	_, err = excelexport.ExportToExcel(ctx, &list, columns, "{tableName}", "")
+	if err != nil {
+		res = gf.Failed().SetMsg("导出失败").SetData(err)
+		return
+	}
+	return
+}
+

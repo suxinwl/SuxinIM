@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:app_im/app_im.dart';
 import 'package:get/get.dart';
-import 'package:openim/pages/mine/server_config/server_config_binding.dart';
-import 'package:openim/pages/mine/server_config/server_config_view.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/controller/im_controller.dart';
+import '../../core/controller/app_controller.dart';
 import '../../core/controller/push_controller.dart';
 import '../../routes/app_navigator.dart';
+import 'password_change_page.dart';
 
 enum LoginType {
   phone,
@@ -54,6 +54,9 @@ extension LoginTypeExt on LoginType {
 }
 
 class LoginLogic extends GetxController {
+  String get displayName => AppBrand.nameFrom(Get.isRegistered<AppController>()
+      ? Get.find<AppController>().clientConfigMap
+      : null);
   final imLogic = Get.find<IMController>();
   final pushLogic = Get.find<PushController>();
   final phoneCtrl = TextEditingController();
@@ -63,6 +66,95 @@ class LoginLogic extends GetxController {
   final enabled = false.obs;
   final areaCode = "+86".obs;
   final isPasswordLogin = true.obs;
+  final internalNetwork = (Config.serverBaseUrl == Config.lanOrigin).obs;
+  final networkConfigurationKnown = true.obs;
+  final switchingNetwork = false.obs;
+  final loggingIn = false.obs;
+  final networkError = ''.obs;
+  bool get busy => switchingNetwork.value || loggingIn.value;
+  bool get canLogin =>
+      enabled.value &&
+      !busy &&
+      networkConfigurationKnown.value &&
+      networkError.value.isEmpty;
+  final captchaRequired = false.obs;
+  final captchaImage = ''.obs;
+  String captchaId = '';
+  int _captchaRequest = 0;
+  Future<void> loadCaptcha() async {
+    final request = ++_captchaRequest;
+    final origin = Config.serverBaseUrl;
+    try {
+      final value = await HrmSSO.request('captcha');
+      if (isClosed ||
+          request != _captchaRequest ||
+          origin != Config.serverBaseUrl) return;
+      captchaRequired.value = value['show'] == true || value['enabled'] == true;
+      captchaImage.value = (value['image'] ?? value['img'] ?? '').toString();
+      captchaId = (value['captchaId'] ?? value['id'] ?? '').toString();
+    } catch (_) {
+      if (!isClosed &&
+          request == _captchaRequest &&
+          origin == Config.serverBaseUrl) {
+        IMViews.showToast('验证码暂不可用，请重试');
+      }
+    }
+  }
+
+  Future<void> switchNetwork(bool internal) async {
+    if (busy ||
+        (networkConfigurationKnown.value &&
+            internal == internalNetwork.value &&
+            networkError.value.isEmpty)) return;
+    switchingNetwork.value = true;
+    networkError.value = '';
+    ++_captchaRequest;
+    captchaId = '';
+    captchaImage.value = '';
+    captchaRequired.value = false;
+    verificationCodeCtrl.clear();
+    try {
+      await imLogic.prepareLogin();
+      if (isClosed) return;
+      if (await DataSp.removeLoginCertificate() != true)
+        throw StateError('Protected session update failed');
+      final origin = internal ? Config.lanOrigin : Config.wanOrigin;
+      final previousOrigin = Config.serverBaseUrl;
+      try {
+        if (await DataSp.putServerConfig({'baseUrl': origin}) != true)
+          throw StateError('Protected connection update failed');
+        networkConfigurationKnown.value = true;
+      } catch (_) {
+        // Protected preference writes update their RAM view before the native
+        // commit. Restore the prior origin before presenting it as selected.
+        try {
+          if (await DataSp.putServerConfig({'baseUrl': previousOrigin}) != true)
+            throw StateError('Protected connection restore failed');
+          networkConfigurationKnown.value = true;
+        } catch (_) {
+          networkConfigurationKnown.value = false;
+        }
+        rethrow;
+      }
+      if (isClosed) return;
+      internalNetwork.value = Config.serverBaseUrl == Config.lanOrigin;
+      await imLogic.reconfigureServer();
+      if (isClosed) return;
+      await Future.wait([
+        if (Get.isRegistered<AppController>())
+          Get.find<AppController>().queryPublicBrand(),
+        loadCaptcha(),
+      ]);
+    } catch (_) {
+      if (!isClosed) networkError.value = '通讯连接未完成，请重试或切换其他连接';
+    } finally {
+      if (!isClosed) {
+        internalNetwork.value = Config.serverBaseUrl == Config.lanOrigin;
+        switchingNetwork.value = false;
+      }
+    }
+  }
+
   final versionInfo = ''.obs;
   final loginType = LoginType.phone.obs;
   String? get email =>
@@ -85,7 +177,7 @@ class LoginLogic extends GetxController {
     }
 
     loginType.value =
-        (await DataSp.getLoginType()) == 0 ? LoginType.phone : LoginType.email;
+        (DataSp.getLoginType()) == 0 ? LoginType.phone : LoginType.email;
   }
 
   @override
@@ -109,6 +201,9 @@ class LoginLogic extends GetxController {
   void onReady() {
     super.onReady();
     getPackageInfo();
+    loadCaptcha();
+    if (Get.isRegistered<AppController>())
+      Get.find<AppController>().queryPublicBrand();
   }
 
   _onChanged() {
@@ -120,40 +215,31 @@ class LoginLogic extends GetxController {
             verificationCodeCtrl.text.trim().isNotEmpty;
   }
 
-  login() {
-    DataSp.putLoginType(loginType.value.rawValue);
-    LoadingView.singleton.wrap(asyncFunction: () async {
-      var suc = await _login();
-      if (suc && !isClosed && imLogic.session.active) {
-        Get.find<CacheController>().resetCache();
-        AppNavigator.startMain();
-      }
-    });
+  Future<void> login() async {
+    if (busy || networkError.value.isNotEmpty) return;
+    loggingIn.value = true;
+    try {
+      await DataSp.putLoginType(loginType.value.rawValue);
+      await LoadingView.singleton.wrap(asyncFunction: () async {
+        var suc = await _login();
+        if (suc && !isClosed && imLogic.session.active) {
+          Get.find<CacheController>().resetCache();
+          AppNavigator.startMain();
+        }
+      });
+    } catch (_) {
+      if (!isClosed) IMViews.showToast('登录未完成，请检查网络或重试');
+    } finally {
+      if (!isClosed) loggingIn.value = false;
+    }
   }
 
   Future<bool> _login() async {
     try {
       await imLogic.prepareLogin();
       if (isClosed) return false;
-      if (phone?.isNotEmpty == true &&
-          !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
-        IMViews.showToast(StrRes.plsEnterRightPhone);
-        return false;
-      }
-
-      if (email?.isNotEmpty == true && !phoneCtrl.text.isEmail) {
-        IMViews.showToast(StrRes.plsEnterRightEmail);
-        return false;
-      }
-      final password = IMUtils.emptyStrToNull(pwdCtrl.text);
-      final code = IMUtils.emptyStrToNull(verificationCodeCtrl.text);
-      final data = await Apis.login(
-        areaCode: areaCode.value,
-        phoneNumber: phone,
-        email: email,
-        password: isPasswordLogin.value ? password : null,
-        verificationCode: isPasswordLogin.value ? null : code,
-      );
+      final data = await HrmSSO.login(phoneCtrl.text.trim(), pwdCtrl.text,
+          captcha: verificationCodeCtrl.text.trim(), captchaId: captchaId);
       if (isClosed) return false;
       await imLogic.prepareLogin();
       if (isClosed) return false;
@@ -171,8 +257,19 @@ class LoginLogic extends GetxController {
       Logger.print('push login success');
       return true;
     } catch (e) {
+      if (e is HrmPasswordChallenge && !isClosed) {
+        await Get.to<bool>(
+            () => PasswordChangePage(changeTicket: e.changeTicket));
+        pwdCtrl.clear();
+        verificationCodeCtrl.clear();
+        await loadCaptcha();
+        return false;
+      }
       Logger.print('Login failed: ${e.runtimeType}');
-      if (!isClosed) IMViews.showToast('登录未完成，请检查网络或重试');
+      if (!isClosed) {
+        IMViews.showToast(e is HrmSessionError ? e.message : '登录未完成，请检查网络或重试');
+        await loadCaptcha();
+      }
     }
     return false;
   }
@@ -219,11 +316,6 @@ class LoginLogic extends GetxController {
     String? code = await IMViews.showCountryCodePicker();
     if (null != code) areaCode.value = code;
   }
-
-  void configService() => Get.to(
-        () => ServerConfigPage(),
-        binding: ServerConfigBinding(),
-      );
 
   void registerNow() => AppNavigator.startRegister();
 

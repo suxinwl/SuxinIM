@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:video_player/video_player.dart';
+import 'package:app_im/app_im.dart';
 
 import '../custom_cupertino_controls.dart';
 
@@ -17,33 +17,18 @@ abstract class VideoControllerService {
 }
 
 class CachedVideoControllerService extends VideoControllerService {
-  final BaseCacheManager _cacheManager;
-
-  CachedVideoControllerService(this._cacheManager);
+  CachedVideoControllerService();
 
   @override
   Future<VideoPlayerController> getVideo(String videoUrl) async {
-    final file = await getCacheFile(videoUrl);
-
-    if (file == null) {
-      Logger.print('[VideoControllerService]: No video in cache');
-
-      Logger.print('[VideoControllerService]: Saving video to cache');
-      unawaited(_cacheManager.downloadFile(videoUrl));
-
-      return VideoPlayerController.network(videoUrl);
-    } else {
-      Logger.print('[VideoControllerService]: Loading video from cache');
-      return VideoPlayerController.file(file);
-    }
+    final url=await AppIm.enterprise.authorizeResource(videoUrl);
+    return VideoPlayerController.networkUrl(Uri.parse(url),httpHeaders:AppIm.enterprise.resourceHeaders(url));
   }
 
   @override
   Future<File?> getCacheFile(String videoUrl) async {
     // TODO: implement getCacheFile
-    final fileInfo = await _cacheManager.getFileFromCache(videoUrl);
-
-    return fileInfo?.file;
+    return null;
   }
 }
 
@@ -51,6 +36,7 @@ class ChatVideoPlayerView extends StatefulWidget {
   const ChatVideoPlayerView({
     Key? key,
     this.path,
+    this.taskID,
     this.url,
     this.coverUrl,
     this.file,
@@ -60,6 +46,7 @@ class ChatVideoPlayerView extends StatefulWidget {
     this.muted = false,
   }) : super(key: key);
   final String? path;
+  final String? taskID;
   final String? url;
   final File? file;
   final String? coverUrl;
@@ -73,56 +60,44 @@ class ChatVideoPlayerView extends StatefulWidget {
 }
 
 class _ChatVideoPlayerViewState extends State<ChatVideoPlayerView> with SingleTickerProviderStateMixin {
-  late VideoPlayerController _videoPlayerController;
+  VideoPlayerController? _videoPlayerController;
+  StreamSubscription<void>? _invalidated;int _attempt=0;String? _error;
   ChewieController? _chewieController;
 
-  final _cachedVideoControllerService = CachedVideoControllerService(DefaultCacheManager());
+  final _cachedVideoControllerService = CachedVideoControllerService();
 
   @override
   void initState() {
-    initializePlayer();
     super.initState();
+    _invalidated=NativeLocalVault.invalidated.listen((_){_attempt++;_chewieController?.pause();_chewieController?.dispose();_chewieController=null;final player=_videoPlayerController;_videoPlayerController=null;unawaited(player?.dispose());if(mounted)setState(()=>_error='当前媒体预览已关闭，请重新授权打开');});
+    initializePlayer();
   }
 
   @override
   void dispose() {
     _chewieController?.pause();
-    _videoPlayerController.dispose();
+    _attempt++;_invalidated?.cancel();
+    _videoPlayerController?.dispose();
     _chewieController?.dispose();
     super.dispose();
   }
 
   Future<void> initializePlayer() async {
-    var file = widget.file;
-
-    if (file == null) {
-      bool existFile = false;
-      if (IMUtils.isNotNullEmptyStr(_path) && (await Permissions.checkStorage())) {
-        file = File(_path!);
-        existFile = await file.exists();
-        if (!existFile) {
-          file = null;
-        }
-      }
-    }
-
-    if (null != file && file.existsSync()) {
-      _videoPlayerController = VideoPlayerController.file(file);
-    } else {
-      _videoPlayerController = await _cachedVideoControllerService.getVideo(_url!);
-    }
-
-    await _videoPlayerController.initialize();
-    if (widget.muted) {
-      _videoPlayerController.setVolume(0);
-    }
-    _createChewieController();
-    setState(() {});
+    final attempt=++_attempt;VideoPlayerController? player;
+    try{
+      String? path=widget.file?.path??_path;
+      if(path!=null){try{await NativeLocalVault.sourceInfo(path);}catch(_){path=null;}}
+      if(Platform.isIOS){await NativeLocalVault.nativePreview(path:path,taskID:widget.taskID,url:path==null&&widget.taskID==null?_url:null);if(mounted&&attempt==_attempt)setState(()=>_error='媒体预览已关闭');return;}
+      player=widget.taskID!=null?VideoPlayerController.networkUrl(await NativeLocalVault.attachmentPreviewUri(widget.taskID!)):path!=null?VideoPlayerController.networkUrl(await NativeLocalVault.sourcePreviewUri(path)):await _cachedVideoControllerService.getVideo(_url!);
+      await player.initialize();
+      if(!mounted||attempt!=_attempt||!NativeLocalVault.unlocked){await player.dispose();return;}
+      _videoPlayerController=player;if(widget.muted)await player.setVolume(0);_createChewieController();setState((){});
+    }catch(_){await player?.dispose();if(mounted&&attempt==_attempt)setState(()=>_error='媒体预览不可用，请重新授权后重试');}
   }
 
   void _createChewieController() {
     _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
+      videoPlayerController: _videoPlayerController!,
       autoPlay: widget.autoPlay,
       looping: false,
       allowFullScreen: false,
@@ -148,7 +123,7 @@ class _ChatVideoPlayerViewState extends State<ChatVideoPlayerView> with SingleTi
   }
 
   Future<void> toggleVideo() async {
-    await _videoPlayerController.pause();
+    await _videoPlayerController?.pause();
     await initializePlayer();
   }
 
@@ -157,7 +132,8 @@ class _ChatVideoPlayerViewState extends State<ChatVideoPlayerView> with SingleTi
     return SafeArea(
       child: Stack(
         children: [
-          if (_chewieController != null && _chewieController!.videoPlayerController.value.isInitialized)
+          if(_error!=null)Center(child:Text(_error!,style:const TextStyle(color:Colors.white)))
+          else if (_chewieController != null && _chewieController!.videoPlayerController.value.isInitialized)
             Chewie(controller: _chewieController!)
           else
             _buildCoverView(context),

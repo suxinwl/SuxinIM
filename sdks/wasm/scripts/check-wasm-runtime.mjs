@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const projectDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -12,7 +12,7 @@ const coreDir = path.resolve(
     path.join(projectDir, '..', 'openim-sdk-core')
 );
 
-await import(path.join(projectDir, 'assets', 'wasm_exec.js'));
+await import(pathToFileURL(path.join(projectDir, 'assets', 'wasm_exec.js')).href);
 
 const go = new globalThis.Go();
 const wasm = fs.readFileSync(path.join(projectDir, 'assets', 'openIM.wasm'));

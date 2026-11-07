@@ -162,7 +162,6 @@ io.flutter:arm64_v8a_release:1.0.0-ef0cd000916d64fa0c5d09cc809fa7ad244a5767=deve
 io.flutter:flutter_embedding_release:1.0.0-ef0cd000916d64fa0c5d09cc809fa7ad244a5767=developmentReleaseRuntimeClasspath
 io.github.webrtc-sdk:android:144.7559.09=developmentReleaseRuntimeClasspath
 io.livekit:noise:2.0.0=developmentReleaseRuntimeClasspath
-io.openim:core-sdk:3.8.3-patch15=developmentReleaseRuntimeClasspath
 javax.inject:javax.inject:1=developmentReleaseRuntimeClasspath
 me.leolin:ShortcutBadger:1.1.22=developmentReleaseRuntimeClasspath
 org.apache.tika:tika-core:3.2.3=developmentReleaseRuntimeClasspath

@@ -1,0 +1,18 @@
+{
+  "format": "PUTY-LOCAL-STORE-1",
+  "syntheticOnly": true,
+  "masterHex": "1111111111111111111111111111111111111111111111111111111111111111",
+  "noncePrefixHex": "0001020304050607",
+  "context": {
+    "account": "test_interop",
+    "type": "attachment",
+    "objectID": "synthetic-object-1"
+  },
+  "plainBase64": "UFVUWSDlkIjmiJDpmYTku7YgLyBzeW50aGV0aWMgb25seQo=",
+  "ciphertextBase64": "UFVUWUxTMQoAAACdeyJhY2NvdW50IjoidGVzdF9pbnRlcm9wIiwiY2h1bmtTaXplIjoxMDQ4NTc2LCJmb3JtYXQiOiJQVVRZLUxPQ0FMLVNUT1JFLTEiLCJub25jZVByZWZpeCI6IkFBRUNBd1FGQmdjPSIsIm9iamVjdElEIjoic3ludGhldGljLW9iamVjdC0xIiwidHlwZSI6ImF0dGFjaG1lbnQifQAAACOv9c/W78r2t5pK6/sPzvNfVRYqsnDKeHxipf60u3SuTZDGjth0wc00CKDmm0rkC4RT/1IAAAAAe4wjlNj6JCe87FE7InolyA==",
+  "largeVector": {
+    "plainByte": 97,
+    "plainLength": 1048597,
+    "ciphertextSHA256": "bedabca8b00663ec6a4526248f469b3529c27cf4896dd8b5bc9fc5afa2657f5d"
+  }
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"openim38.local/identity"
 	"os"
 	"os/signal"
 	"strings"
@@ -63,12 +64,33 @@ func main() {
 	up := &enterprise.Upstream{IMBase: env("OPENIM_API", "http://openim-api:10002"), ChatBase: env("CHAT_API", "http://chat-api:10008"), ChatAdminBase: env("CHAT_ADMIN_API", "http://chat-admin-api:10009"), IMAdminID: env("OPENIM_ADMIN_ID", "imAdmin"), IMSecret: required("OPENIM_SECRET"), HTTP: &http.Client{Timeout: 60 * time.Second}}
 	app := &enterprise.Server{Store: store, Auth: &enterprise.SessionAuth{Inner: auth, Store: store}, SessionRevoker: auth, IM: up, Upstream: up, Media: media, Presence: media, Catalog: &enterprise.GRPCCatalog{Auth: auth}, Cipher: cipher, WebhookSecret: required("WEBHOOK_SECRET")}
 	server := &http.Server{Addr: env("LISTEN_ADDR", ":18090"), Handler: app, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 32 << 10}
+	var bridgeServer *http.Server
+	app.Messages = client.Database(env("OPENIM_MONGO_DATABASE", "openim38")).Collection("msg")
+	if identity.Required() {
+		bridge, err := enterprise.NewHRMBridge(app, auth)
+		if err != nil {
+			fatal(err)
+		}
+		app.HRM = bridge
+		if err = bridge.State.Redis.Ping(dbctx).Err(); err != nil {
+			fatal(err)
+		}
+		bridgeServer = &http.Server{Addr: env("HRM_BRIDGE_LISTEN", "127.0.0.1:10010"), Handler: bridge, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, MaxHeaderBytes: 8192}
+		go func() {
+			if err := bridgeServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				fatal(err)
+			}
+		}()
+	}
 	go app.Run(ctx)
 	go func() {
 		<-ctx.Done()
 		shutdown, done := context.WithTimeout(context.Background(), 15*time.Second)
 		defer done()
 		_ = server.Shutdown(shutdown)
+		if bridgeServer != nil {
+			_ = bridgeServer.Shutdown(shutdown)
+		}
 	}()
 	slog.Info("enterprise service starting", "listen", server.Addr, "database", env("MONGO_DATABASE", "openim38_enterprise"))
 	if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

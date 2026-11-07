@@ -1,6 +1,9 @@
 import { toLocalFileURL, isLocalFileURL, localFilePath } from "@/im/local-files";
-import { Image } from "antd";
-import { useEffect, useState } from "react";
+import ProtectedPreviewGroup from "@/components/ProtectedPreviewGroup";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { authorizeResource, requiresResourceGrant } from "@/im/resources";
+import { getResourceSessionVersion, subscribeResourceSession } from "@/im/resource-session";
+import { momentMediaSource } from "@/api/moments-media";
 
 import CacheImage from "@/components/CacheImage";
 import PreviewToolsBar from "@/components/PreviewToolsBar";
@@ -15,7 +18,10 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
     current: 0,
     visible: false,
   });
-  const [previewList, setPreviewList] = useState<string[]>([]);
+  const sessionVersion = useSyncExternalStore(subscribeResourceSession, getResourceSessionVersion);
+  const previewKey = JSON.stringify([sessionVersion, moments.workMomentID, moments.content.metas?.map(meta => momentMediaSource(meta, "original"))]);
+  const [previews, setPreviews] = useState<{ key: string; items: string[] }>();
+  const previewList = previews?.key === previewKey ? previews.items : [];
   const imageCache = useUserStore((state) => state.imageCache);
   const currentTask = useMessageStore((state) =>
     getDownloadTask({
@@ -30,24 +36,30 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
   const isVideoDownloaded = isLocalFileURL(previewList[0]);
 
   useEffect(() => {
-    if (moments.content.metas) {
-      setPreviewList(
-        moments.content.metas.map((meta) =>
-          imageCache[meta.original]
-            ? toLocalFileURL(imageCache[meta.original])
-            : meta.original,
-        ),
-      );
-    }
+    let live = true;
+    void Promise.all((moments.content.metas ?? []).map(async meta => {
+      try {
+        const source = momentMediaSource(meta, "original"), url = await authorizeResource(source);
+        return !requiresResourceGrant(source) && imageCache[source] ? toLocalFileURL(imageCache[source]) : url;
+      } catch { return ""; }
+    })).then(items => { if (live) setPreviews({ key: previewKey, items }); });
     const downloadSuccessHandler = (url: string, filePath: string) => {
-      const { workMomentID } = useMessageStore.getState().downloadMap[url];
+      const { workMomentID } = useMessageStore.getState().downloadMap[url] ?? {};
 
       if (workMomentID?.split("-")[0] === moments.workMomentID) {
-        setPreviewList((list) => {
-          const tmpList = [...list];
-          tmpList[Number(workMomentID.split("-")[1]) || 0] = toLocalFileURL(filePath);
-          return tmpList;
-        });
+        const index = Number(workMomentID.split("-")[1]) || 0;
+        const meta = moments.content.metas?.[index];
+        const source = meta && momentMediaSource(meta, "original");
+        if (!source) return;
+        // A local file must not bypass access checks after a SID/policy change.
+        void authorizeResource(source, { force: true }).then(() => {
+          if (!live) return;
+          setPreviews(current => {
+            if (current?.key !== previewKey) return current;
+            const items = [...current.items]; items[index] = toLocalFileURL(filePath);
+            return { key: previewKey, items };
+          });
+        }).catch(() => {});
       }
     };
 
@@ -56,48 +68,15 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
       downloadSuccessHandler,
     );
     return () => {
+      live = false;
       unsubscribeSuccess?.();
     };
-  }, []);
+  }, [previewKey]);
 
-  const tryPlayVideo = () => {
-    if (!isTextWithVideo) return;
-
-    if (isVideoDownloaded || !window.electronAPI) {
-      emitter.emit("OPEN_VIDEO_PLAYER", previewList[0]);
-      return;
-    }
-    if (
-      currentTask?.downloadState === "downloading" ||
-      currentTask?.downloadState === "resume"
-    ) {
-      window.electronAPI?.ipcInvoke("pauseDownload", currentTask.downloadUrl!);
-      updateDownloadTask(currentTask.downloadUrl!, {
-        downloadState: "pause",
-      });
-      return;
-    }
-
-    if (currentTask?.downloadState === "pause") {
-      window.electronAPI?.ipcInvoke("resumeDownload", currentTask.downloadUrl!);
-      updateDownloadTask(currentTask.downloadUrl!, {
-        downloadState: "downloading",
-      });
-      return;
-    }
-    const sourceUrl = moments.content.metas?.[0].original;
-    if (!currentTask && sourceUrl) {
-      downloadFile(sourceUrl, {
-        isMediaMessage: true,
-        showError: true,
-        isThumb: true,
-        saveType: isTextWithVideo ? "video" : "image",
-        workMomentID: moments.workMomentID,
-      });
-    }
-  };
+  const tryPlayVideo=()=>{if(isTextWithVideo && previewList[0])emitter.emit("OPEN_VIDEO_PLAYER",previewList[0]);};
 
   const downloadOrShowFinder = (current: number) => {
+    if (!previewList[current]) return;
     const currentTask = getDownloadTask({
       downloadMap: useMessageStore.getState().downloadMap,
       compareKey: "workMomentID",
@@ -124,34 +103,22 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
     });
   };
 
-  const checkDownload = (current: number) => {
-    if (window.electronAPI && previewList[current].startsWith("http")) {
-      setTimeout(
-        () =>
-          downloadFile(previewList[current], {
-            isMediaMessage: true,
-            showError: true,
-            isThumb: true,
-            saveType: isTextWithVideo ? "video" : "image",
-            workMomentID: `${moments.workMomentID}-${current}`,
-          }),
-        200,
-      );
-    }
-  };
-
   const onPreviewIdxChange = (next: number) => {
     setPreviewState((state) => ({ ...state, current: next }));
-    checkDownload(next);
+
   };
 
   const getImageUrl = (metas?: MomentMeta) => {
     if (!metas) {
       metas = moments.content.metas?.[0];
     }
-    let sourceUrl = imageCache[metas?.thumb ?? ""] || metas?.thumb;
+    // Protected images go through CacheImage's viewer authorization, even when
+    // an older sender URL happens to exist in the shared disk-cache index.
+    let sourceUrl = metas && momentMediaSource(metas, "thumb");
+    if (!requiresResourceGrant(sourceUrl || "")) sourceUrl = imageCache[sourceUrl ?? ""] || sourceUrl;
     if (!isTextWithVideo) {
-      sourceUrl = imageCache[metas?.original ?? ""] || sourceUrl;
+      const original = metas && momentMediaSource(metas, "original");
+      sourceUrl = original && requiresResourceGrant(original) ? original : imageCache[original ?? ""] || sourceUrl;
     }
     return sourceUrl as string;
   };
@@ -160,7 +127,7 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
     <div>
       {
         <div className="grid w-fit grid-cols-3">
-          <Image.PreviewGroup
+          <ProtectedPreviewGroup
             items={previewList}
             preview={{
               current: previewState.current,
@@ -171,7 +138,7 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
               toolbarRender: (originalNode, { current }) => (
                 <PreviewToolsBar
                   workMomentID={`${moments.workMomentID}-${current}`}
-                  isFileDownloaded={!previewList[current].startsWith("http")}
+                  isFileDownloaded={Boolean(previewList[current]) && !previewList[current].startsWith("http")}
                   dom={originalNode as JSX.Element}
                   onDownloadOrShowFinder={() => downloadOrShowFinder(current)}
                 />
@@ -192,7 +159,7 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
                     <FileDownloadIcon
                       size={40}
                       pausing={currentTask?.downloadState === "pause"}
-                      finished={isVideoDownloaded || !window.electronAPI}
+                      finished={true}
                       percent={currentTask?.progress ?? 0}
                     />
                   </div>
@@ -209,7 +176,7 @@ const MomentsMediaRow = ({ moments }: { moments: WorkMoments }) => {
                 />
               ))
             )}
-          </Image.PreviewGroup>
+          </ProtectedPreviewGroup>
         </div>
       }
     </div>

@@ -53,6 +53,8 @@ class GlobalSearchPage extends StatelessWidget {
   Widget _buildAllListView() => ListView(
         padding: EdgeInsets.only(top: 10.h),
         children: [
+          if (logic.employees.isNotEmpty || logic.employeesLoading.value || logic.employeeError.value.isNotEmpty)
+            _buildEnterpriseList(summary: true),
           if (logic.contactsList.isNotEmpty)
             _buildCommonContainer(
               title: StrRes.globalSearchContacts,
@@ -148,19 +150,32 @@ class GlobalSearchPage extends StatelessWidget {
         ],
       );
 
-  Widget _buildContactsListView() =>
-      logic.searchKey.isNotEmpty && logic.contactsList.isEmpty
-          ? _emptyListView
-          : ListView(
+  Widget _buildContactsListView() => ListView(
               padding: EdgeInsets.only(top: 10.h),
-              children: logic.contactsList
+              children: [_buildEnterpriseList(), ...logic.contactsList
                   .map((e) => _buildItemView(
                         nickname: e.nickname,
                         faceURL: e.faceURL,
                         onTap: () => logic.viewUserProfile(e),
                       ))
-                  .toList(),
+                  ],
             );
+
+  Widget _buildEnterpriseList({bool summary = false}) => _buildCommonContainer(
+    title: '企业同事（手机号 / 姓名 / 工号）',
+    children: [
+      if (logic.employeesLoading.value && logic.employees.isEmpty) const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())),
+      if (logic.employeeError.value.isNotEmpty) TextButton(onPressed: logic.retryEmployees, child: Text(logic.employeeError.value)),
+      for (final person in (summary ? logic.subList(logic.employees) : logic.employees)) _buildItemView(
+        nickname: person.nickname, faceURL: person.faceURL,
+        content: '工号：${person.employeeNo.isEmpty ? '—' : person.employeeNo} · ${person.department}',
+        onTap: () => logic.viewDirectoryPerson(person),
+      ),
+      if (!summary && logic.employees.length < logic.employeeTotal.value) TextButton(onPressed: logic.employeesLoading.value ? null : logic.loadMoreEmployees, child: const Text('加载更多同事')),
+    ],
+    seeMoreStr: summary && logic.employeeTotal.value > 2 ? '查看更多企业同事' : null,
+    onSeeMore: () => logic.switchTab(1),
+  );
 
   Widget _buildGroupListView() =>
       logic.searchKey.isNotEmpty && logic.groupList.isEmpty

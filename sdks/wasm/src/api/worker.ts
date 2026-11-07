@@ -1,4 +1,5 @@
 import { RPC, RPCMessageEvent } from 'rpc-shooter';
+import { durableMethod, localCleanup,localCleanupPreview } from './database/durable';
 import {
   init,
   closeDB,
@@ -220,6 +221,11 @@ const rpc = new RPC({
     targetEndpoint: ctx,
   }),
 });
+const registerDurableMethod = rpc.registerMethod.bind(rpc);
+(rpc as any).registerMethod = (name: string, method: (...args: any[]) => any) => registerDurableMethod(name, durableMethod(name, method));
+rpc.registerMethod('putyLocalCleanup', localCleanup);
+rpc.registerMethod('putyLocalCleanupPreview',localCleanupPreview);
+rpc.registerMethod('putyLocalCheckpoint',async()=>({checkpointed:true}));
 
 // upload
 rpc.registerMethod('fileMapSet', fileMapSet);

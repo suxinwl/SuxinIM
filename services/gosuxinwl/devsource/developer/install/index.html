@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=0.3,minimum-scale=0.3,maximum-scale=1,viewport-fit=cover">
+	<link rel="shortcut icon" type="image/x-icon" href="/resource/static/brand/favicon.ico?v=suxin1">
+	<title>安装GoSuxin开发框架</title>
+	<style >
+			body {
+			background: #E8F7FF;
+			margin: 0;
+			padding: 0;
+			line-height: 1.5;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale;
+		}
+
+		body, input, button {
+			font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, 'Microsoft Yahei', Arial, sans-serif;
+			font-size: 14px;
+			color: #4e5969;
+		}
+		a {
+			color: #4e73df;
+			text-decoration: none;
+		}
+
+		a:hover {
+			color: #1b3fa8;
+		}
+		.form-field{
+			position: relative;
+		}
+		.form-field:first-child input {
+			border-top-left-radius: 4px;
+			border-top-right-radius: 4px;
+		}
+
+		.form-field:last-child input {
+			border-bottom-left-radius: 4px;
+			border-bottom-right-radius: 4px;
+		}
+
+		.form-field input {
+			background: #fff;
+			border: 2px solid transparent;
+			transition: background 0.2s, border-color 0.2s, color 0.2s;
+			width: 100%;
+			padding: 11px 11px 11px 170px;
+			box-sizing: border-box;
+			border-bottom: 2px #E8F7FF solid;
+		}
+
+		.form-field input:focus {
+			border-color: #94BFFF;
+			background: #fff;
+			color: #444;
+			outline: none;
+		}
+
+		.form-field label {
+			float: left;
+			width: 160px;
+			text-align: right;
+			margin-right: -160px;
+			position: relative;
+			margin-top: 11px;
+			font-size: 14px;
+			pointer-events: none;
+			opacity: 0.7;
+		}
+		.form-field .slelcet-file{
+			position: absolute;
+			right: 6px;
+			bottom: 10px;
+		}
+		.save-btn, .btn {
+			background: #165DFF;
+			color: #fff;
+			border: 0;
+			font-weight: bold;
+			border-radius: 4px;
+			cursor: pointer;
+			padding: 15px 80px;
+			-webkit-appearance: none;
+		}
+
+		.save-btn[disabled] {
+			opacity: 0.5;
+		}
+
+		.form-buttons {
+			margin-top: 20px;
+			text-align: center;
+			height: 52px;
+			line-height: 52px;
+		}
+
+		.form-buttons .btn {
+			margin-right: 5px;
+		}
+		.install{
+			width: 100%;
+		}
+		.install .formbox{
+			max-width: 600px;
+			margin: 0 auto;
+			margin-top: 10px;
+		}
+		.install .formbox .logo{
+			text-align: center;
+		}
+		.install .formbox .title{
+			text-align: center;
+		}
+		.install .formbox .content{
+			margin-top: 10px;
+		}
+		.install .formbox .content .form-wrap{
+			background: #ffffff;
+			padding: 15px 5px;
+			border-radius: 5px;
+		}
+		.install .formbox .content .link{
+			margin-top: 15px;
+			text-align: center;
+			margin-bottom: 5px;
+		}
+		.content .divider{
+				padding-left: 50px;
+				padding-bottom: 5px;
+		}
+		.content .divider .htitle{
+			font-size: 15px;
+				font-weight: 600;
+				display: flex;
+				align-items: center;
+		}
+		.content .divider .titleRadio{
+			display: flex;
+				align-items: center;
+		}
+		.content .divider .installtig{
+				color: #c9cdd4;
+				font-size: 12px;
+				padding-left: 10px;
+		}
+		.content .divider .tigred{
+				color: #4e73df;
+				font-size: 11px;
+		}
+		#error, #success,  #warmtips {
+			background: #D83E3E;
+			color: #fff;
+			padding: 15px 20px;
+			border-radius: 4px;
+			margin-bottom: 20px;
+		}
+
+		#success {
+			background: #00b42a;
+			font-size: 15px;
+		}
+
+		#warmtips {
+			background: #ffcdcd;
+			font-size: 14px;
+			color: #e74c3c;
+		}
+		input[type=text]::placeholder{
+			color: #c9cdd4;
+		}
+		.web-dir-tig{
+			color: #858990;
+			font-size: 12px;
+			padding: 5px 10px 0px 10px;
+		}
+		.lock-tig{
+			padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+			background: #FF7D00;
+            font-size: 16px;
+            color: #ffffff;
+		}
+	</style>
+  </head>
+<body>
+	<div class="install">
+		<div class="formbox"  id="app">
+			<div class="logo">
+				<img src="/resource/static/brand/logo.png?v=suxin1">
+			</div>
+			<div class="title">
+				<h1>GoSuxin开发框架(安装界面)</h1>
+			</div>
+			<div class="content" v-if="isLock">
+				<div class="lock-tig">如果需要重新安装请删除“devsource/developer/install/”目录下的“install.lock”文件，重新刷新页面，即可重新安装</div>
+			</div>
+			<div class="content" v-else>
+				<div id="error"  v-if="showErr">{{errMsg}}</div>
+				<div id="success" v-if="showSucc">{{succMsg}}</div>
+				<div id="warmtips" style="display:none"></div>
+				<div class="form-wrap">
+					<div class="divider">
+						<div class="htitle">配置数据库：</div>
+					</div>
+					<div class="form-field">
+                        <label>数据库类型：</label>
+                        <select v-model="formDB.type" style="padding:10px;width:100%;max-width:400px">
+                            <option value="mysql8">MySQL 8</option>
+                            <option value="mysql57">MySQL 5.7</option>
+                            <option value="sqlite">SQLite</option>
+                        </select>
+                    </div>
+                    <div class="form-field" v-if="formDB.type === 'sqlite'">
+                        <label>SQLite 文件路径：</label>
+                        <input type="text" v-model="formDB.path" placeholder="storage/database/gosuxin.db">
+                    </div>
+                    <div class="form-field" v-if="formDB.type !== 'sqlite'">
+                        <label>MySQL数据库地址：</label>
+						<input type="text" v-model="formDB.host" placeholder="连接数据库的访问地址(ip)，如：127.0.0.1">
+					</div>
+					<div class="form-field" v-if="formDB.type !== 'sqlite'">
+						<label>MySQL 端  口  号：</label>
+						<input type="text"  v-model="formDB.port" placeholder="连接数据库的端口号，如：3306">
+					</div>
+					<div class="form-field" v-if="formDB.type !== 'sqlite'">
+						<label>MySQL 用户名：</label>
+						<input type="text"  v-model="formDB.user" placeholder="连接数据库的用户名，如：root">
+					</div>
+					<div class="form-field" v-if="formDB.type !== 'sqlite'">
+						<label>MySQL 密 码：</label>
+						<input type="text" v-model="formDB.pass" placeholder="连接数据库的密码，如：root">
+					</div>
+					<div class="form-field" v-if="formDB.type !== 'sqlite'">
+						<label>MySQL数据库名称：</label>
+						<input type="text" v-model="formDB.name" placeholder="数据库名称，如：gosuxin，编码要求utf8mb4">
+					</div>
+					<div class="form-field">
+						<label>数据表名前缀：</label>
+						<input type="text" name="prefix" v-model="formDB.prefix" readonly>
+					</div>
+					<div class="form-field">
+						<label>超级管理员账号：</label>
+						<input type="text" name="username" v-model="formApp.username" required="" placeholder="后台管理超级管理员账号，如：admin">
+					</div>
+					<div class="form-field">
+						<label>超级管理员密码：</label>
+						<input type="text" name="password" v-model="formApp.password" required="" placeholder="后台管理超级管理员登录密码，如：admin888">
+					</div>
+					<div class="divider" style="padding-top: 10px;">
+						<div class="htitle">前端代码开发目录<span class="installtig">若电脑配置较低影响开发时热加载速度-建议前端代码放在go项目目录之外</span></div>
+					</div>
+					<div class="form-field ">
+						<label>前端所在目录：</label>
+						<input type="text" name="vuepath" v-model="formApp.vueobjroot" placeholder="前端代码开发目录(绝对路径)，若不填默认安装后端根目录web下">
+					</div>
+					<div class="web-dir-tig" v-if="formApp.vueobjroot">
+						温馨提示：如果配置前端安装目录有其他文件，系统会自动创建名为gosuxin-web目录用于存放前端代码，防止指定的目录有其他文件和解压文件混在一起不好区分。
+					</div>
+					<div class="form-buttons">
+						<button class="save-btn" :disabled="saveLoading" @click="handleSave">{{saveLoading?"安装中..":"立即安装"}}</button>
+					</div>
+				</div>
+				<div class="link">
+					<span>中国·深圳 &amp; <a href="https://www.suxinwl.com/" target="_blank">Suxin技术团队</a> | <a href="https://www.suxinwl.com" target="_blank">GoSuxin开发框架开发文档</a></span>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="/install/vue.js"></script>
+<script src="/install/axios.min.js"></script>
+<script>
+  var app = new Vue({
+        el: '#app',
+        data: {
+            formDB: {
+				type:"mysql8",
+				path:"storage/database/gosuxin.db",
+				host:"127.0.0.1",
+				port:"3306",
+				user:"",
+				pass:"",
+				name:"",
+				prefix:"gf_",
+			},
+            formApp:{
+				username:"admin",
+				password:"admin888",
+				vueobjroot:"",
+			},
+			isLock:false,//是否已经安装
+			saveLoading:false,
+			showErr:false,
+			errMsg:"",
+			showSucc:false,
+			succMsg:"",
+        },
+        methods: {
+			getData(){
+				var that = this;
+				axios.get('/admin/install/getConfig').then(function(response){
+				  if(response.data.code==0){
+					that.formDB = Object.assign({},that.formDB,response.data.data.database)
+					that.isLock = response.data.data.isLock
+					that.formApp = Object.assign({},that.formApp, response.data.data.app)
+				  }else{
+					that.showError("接口请求失败,错误提示："+response.data.message)
+				  }
+				}).catch(function (error) {
+					that.showError("接口请求失败")
+					console.log(error);
+				});
+			},
+            handleSave: function () {
+				var that = this;
+				that.saveLoading=true
+				axios.post('/admin/install/save',{formDB:this.formDB,formApp:this.formApp}).then(function(response){
+					var res= response.data
+					if(res.code==0){
+						console.log(res)
+						that.showSuccess(res.message)
+					}else{
+						that.showError(res.message)
+					}
+					that.saveLoading=false
+				}).catch(function (error) {
+					console.error(error);
+					that.saveLoading=false
+				});
+            },
+			showError(msg){
+				this.showErr=true
+				this.errMsg=msg
+				var that = this;
+				setTimeout(()=>{
+					that.showErr=false
+				},3000)
+			},
+			showSuccess(msg){
+				this.showSucc=true
+				this.succMsg=msg
+				var that = this;
+				setTimeout(()=>{
+					that.showSucc=false
+					that.getData()
+				},3000)
+			},
+        },
+        created() {
+           this.getData()
+        },
+
+    })
+</script>
+</html>
+
